@@ -1,0 +1,92 @@
+ID;Module;User Story;Type;Statut
+A-01;Auth & Onboarding;En tant que nouveau visiteur je veux créer un compte avec mon email/mot de passe afin d'accéder aux outils.;Existant;Done
+A-02;Auth & Onboarding;En tant que nouveau visiteur je veux me connecter via Google OAuth afin de m'inscrire sans mot de passe.;Existant;Done
+A-03;Auth & Onboarding;En tant qu'utilisateur je veux recevoir un email de vérification après inscription afin de valider mon compte.;Existant;Done
+A-04;Auth & Onboarding;En tant qu'utilisateur je veux réinitialiser mon mot de passe par email afin de ne pas être bloqué en cas d'oubli.;Existant;Done
+A-05;Auth & Onboarding;En tant que nouvel utilisateur je veux renseigner mon prénom lors de l'onboarding afin que l'interface me reconnaisse.;Existant;Done
+A-06;Auth & Onboarding;En tant qu'utilisateur je veux être redirigé vers /login si je tente d'accéder à une page protégée sans être connecté.;Existant;Done
+D-01;Dashboard;En tant que manager connecté je veux voir un tableau de bord centralisé avec mes collaborateurs / mini-jeux / OKR et académie afin d'accéder rapidement à tout.;Existant;Done
+D-02;Dashboard;En tant que manager je veux voir la progression globale de mon équipe sur les OKR (jauge circulaire) directement depuis le dashboard.;Existant;Done
+D-03;Dashboard;En tant que manager je veux voir mon nombre de badges académie acquis vs total depuis le dashboard.;Existant;Done
+D-04;Dashboard;En tant que manager je veux être invité à passer au plan premium depuis le dashboard si je suis en version gratuite.;Existant;Done
+F-01;Feedback SBI;En tant que manager je veux décrire une situation en langage naturel et recevoir un feedback structuré au format SBI afin de communiquer clairement.;Existant;Done
+F-02;Feedback SBI;En tant que manager je veux choisir le ton du feedback (bienveillant / direct / formel) afin de l'adapter à ma relation avec le collaborateur.;Existant;Done
+F-03;Feedback SBI;En tant que manager je veux choisir le canal de communication (oral / écrit / asynchrone) afin que le feedback soit formulé de manière appropriée.;Existant;Done
+F-04;Feedback SBI;En tant que manager je veux être alerté si mon input contient un jugement de personnalité afin d'éviter les biais dans mon feedback.;Existant;Done
+F-05;Feedback SBI;En tant que manager je veux pouvoir déplier la structure SBI du feedback généré afin de comprendre la méthode et progresser.;Existant;Done
+F-06;Feedback SBI;En tant que manager je veux voir le résultat en streaming (token par token) afin de ne pas attendre une réponse bloquée.;Existant;Done
+F-07;Feedback SBI;En tant que manager je veux itérer sur un feedback généré (rends-le plus court / reformule le S) sans tout réécrire.;Évolution;To Do
+F-08;Feedback SBI;En tant que manager je veux consulter l'historique de mes feedbacks générés afin de retrouver un feedback passé.;Évolution;To Do
+R-01;Recrutement;En tant que recruteur je veux décrire un poste et recevoir un guide d'entretien complet (questions / relances / drapeaux) afin de structurer mes entretiens.;Existant;Done
+R-02;Recrutement;En tant que candidat je veux simuler un entretien en mode côté candidat afin de me préparer à répondre.;Existant;Done
+R-03;Recrutement;En tant que manager je veux choisir le type d'entretien (technique / comportemental / motivation) afin d'obtenir des questions adaptées.;Existant;Done
+RM-01;Réunion Maker;En tant que manager je veux décrire mon contexte de réunion et recevoir une checklist et un découpage sur-mesure afin de la préparer efficacement.;Existant;Done
+RM-02;Réunion Maker;En tant que manager je veux préciser la durée et le nombre de participants afin que le timing proposé soit réaliste.;Existant;Done
+C-01;1:1 Coach;En tant que manager je veux ajouter un collaborateur (prénom / poste / niveau de séniorité) afin de démarrer son programme de coaching.;Existant;Done
+C-02;1:1 Coach;En tant que manager je veux générer un plan managérial sur mesure pour chaque collaborateur (axes de développement / compétences / trajectoire) via l'IA.;Existant;Done
+C-03;1:1 Coach;En tant que manager je veux préparer une session 1:1 hebdomadaire guidée pour un collaborateur afin de structurer notre échange.;Existant;In Progress
+C-04;1:1 Coach;En tant que manager je veux visualiser les sessions complétées vs restantes pour un collaborateur afin de suivre la progression.;Existant;Done
+C-05;1:1 Coach;En tant que manager je veux voir un résumé du plan (axes / compétences / trajectoire) dans un onglet dédié.;Existant;Done
+C-06;1:1 Coach;En tant que manager je veux avoir accès à 4 semaines gratuites et 12 semaines premium afin de tester avant de payer.;Existant;Done
+C-07;1:1 Coach;En tant que collaborateur je veux recevoir un lien externe (token) pour remplir un formulaire d'auto-évaluation sans me connecter afin que mon manager ait mes inputs.;Existant;Done
+C-08;1:1 Coach;En tant que manager je veux recevoir une suggestion de contenu de session basée sur la session précédente afin de garder la continuité.;Évolution;To Do
+O-01;OKR;En tant que manager je veux définir les OKR de l'entreprise (Objectif + Key Results) afin d'aligner toute l'équipe.;Existant;Done
+O-02;OKR;En tant que manager je veux générer des OKR collaborateur à partir des OKR company via l'IA afin de cascader les objectifs.;Existant;Done
+O-03;OKR;En tant que manager je veux mettre à jour la progression de chaque Key Result (valeur actuelle) afin de suivre l'avancement.;Existant;Done
+O-04;OKR;En tant que manager je veux voir la progression moyenne de l'équipe (% moyen des KRs renseignés) dans une jauge visuelle.;Existant;Done
+O-05;OKR;En tant que manager je veux demander une assistance IA pour reformuler ou améliorer un KR afin qu'il soit mesurable.;Existant;Done
+AC-01;Académie;En tant que manager je veux suivre des parcours thématiques (CNV / leadership etc.) composés de quiz afin de monter en compétences.;Existant;Done
+AC-02;Académie;En tant que manager je veux répondre à des quiz à choix multiple avec feedback immédiat afin d'apprendre par la pratique.;Existant;Done
+AC-03;Académie;En tant que manager je veux gagner un badge par parcours complété afin d'avoir une récompense visible.;Existant;Done
+AC-04;Académie;En tant que manager je veux voir ma progression (quiz réussis / total) pour chaque parcours afin de savoir où j'en suis.;Existant;Done
+AC-05;Académie;En tant que manager je veux que ma progression soit sauvegardée afin de reprendre là où je me suis arrêté.;Existant;Done
+AC-06;Académie;En tant que manager je veux que le quiz adapte sa difficulté selon mes réponses précédentes (mode adaptatif).;Évolution;To Do
+MJ-01;Mini-jeux (commun);En tant qu'animateur je veux créer une room de jeu avec un code partageable afin d'inviter mon équipe.;Existant;Done
+MJ-02;Mini-jeux (commun);En tant que joueur je veux rejoindre une room via un code afin de participer sans compte.;Existant;Done
+MJ-03;Mini-jeux (commun);En tant que joueur je veux choisir un pseudo et une couleur d'avatar afin de me distinguer dans le lobby.;Existant;Done
+MJ-04;Mini-jeux (commun);En tant qu'animateur je veux voir les joueurs arriver dans le lobby en temps réel (polling 2s) afin de savoir quand lancer la partie.;Existant;Done
+MJ-05;Mini-jeux (commun);En tant qu'animateur je veux lancer la partie depuis le lobby afin de synchroniser tous les joueurs.;Existant;Done
+MJ-06;Mini-jeux (commun);En tant que joueur je veux être redirigé automatiquement à chaque phase (lobby > jeu > résultats) sans action manuelle.;Existant;Done
+MJ-07;Mini-jeux (commun);En tant qu'animateur je veux partager un QR code de la room afin de faciliter l'accès sur mobile.;Existant;Done
+IB-01;Icebreakers;En tant qu'animateur je veux tirer une anecdote aléatoire parmi une banque afin de lancer une conversation légère en réunion.;Existant;Done
+IB-02;Icebreakers;En tant qu'animateur je veux lancer un icebreaker multijoueur où chaque participant reçoit une anecdote unique à présenter.;Existant;Done
+IB-03;Icebreakers;En tant que joueur je veux voter pour la meilleure anecdote parmi celles présentées afin d'élire un gagnant.;Existant;Done
+AN-01;Anecdotes;En tant qu'animateur je veux lancer une session où chaque joueur propose une anecdote vraie ou fausse afin que les autres devinent.;Existant;Done
+AN-02;Anecdotes;En tant que joueur je veux voter pour vraie ou fausse sur l'anecdote présentée afin de marquer des points.;Existant;Done
+DW-01;Draw It;En tant que dessinateur je veux recevoir un mot à dessiner sur un canvas partagé afin que les autres devinent.;Existant;Done
+DW-02;Draw It;En tant que joueur je veux soumettre une réponse en temps réel et être notifié si je trouve le bon mot.;Existant;Done
+DW-03;Draw It;En tant que joueur je veux voir les traits de dessin apparaître en quasi-temps réel afin de suivre le dessin.;Existant;Done
+DW-04;Draw It;En tant que joueur je veux voir l'historique des parties précédentes afin de revivre les meilleurs moments.;Existant;Done
+TR-01;Tribu;En tant que joueur je veux répondre à des questions sur mes affinités (musique / films / valeurs) afin que l'IA identifie mes tribus.;Existant;Done
+TR-02;Tribu;En tant que manager je veux voir les tribus communes entre membres de l'équipe afin de mieux comprendre les dynamiques de groupe.;Existant;Done
+TR-03;Tribu;En tant que joueur je veux rejouer la partie avec une nouvelle configuration de questions.;Existant;Done
+CH-01;Chaîne;En tant que joueur je veux jouer à un jeu d'association de mots tour par tour (chaque mot doit être associé au précédent) afin de créer une chaîne collective.;Existant;Done
+CH-02;Chaîne;En tant que joueur je veux avoir 30 secondes max pour proposer mon mot afin de maintenir le rythme.;Existant;Done
+CH-03;Chaîne;En tant que joueur je veux voter pour le mot le plus surprenant ou créatif de la chaîne afin d'élire un gagnant.;Existant;Done
+CH-04;Chaîne;En tant qu'animateur je veux choisir le mot de départ parmi une banque de 60 mots thématiques afin de lancer la session.;Existant;Done
+HU-01;Humeur;En tant que manager je veux lancer un sondage d'humeur anonyme en temps réel afin de prendre le pouls de l'équipe.;Existant;Done
+HU-02;Humeur;En tant que joueur je veux indiquer mon humeur (emoji/échelle) anonymement afin de contribuer sans pression.;Existant;Done
+HU-03;Humeur;En tant que manager je veux voir la distribution des humeurs agrégées afin d'adapter ma posture en réunion.;Existant;Done
+HU-04;Humeur;En tant que manager je veux lancer un sondage d'humeur en mode direct (sans room) afin d'obtenir une réponse rapide.;Existant;Done
+BO-01;Boussole;En tant que manager je veux lancer un questionnaire d'alignement sur des sujets clés (vision / priorités) et voir les résultats calculés afin de mesurer la cohésion d'équipe.;Existant;Done
+BO-02;Boussole;En tant que joueur je veux répondre à des affirmations sur une échelle afin de positionner ma boussole.;Existant;Done
+BO-03;Boussole;En tant que manager je veux voir les résultats agrégés par segment (aligné / mitigé / divergent) afin d'identifier les points de désaccord.;Existant;Done
+TV-01;TVML;En tant qu'animateur je veux proposer des affirmations clivantes et voir si les participants votent vrai ou faux afin de déclencher des débats.;Existant;Done
+TV-02;TVML;En tant que joueur je veux voir les résultats révélés après tous les votes afin de découvrir les opinions des autres.;Existant;Done
+PR-01;Profil & Premium;En tant qu'utilisateur je veux voir mon profil (prénom / email / statut premium / statistiques d'usage) afin de suivre mon activité.;Existant;Done
+PR-02;Profil & Premium;En tant qu'utilisateur je veux demander un accès premium afin de débloquer les fonctionnalités avancées.;Existant;Done
+PR-03;Profil & Premium;En tant qu'utilisateur je veux payer mon abonnement premium via Stripe afin de gérer mon accès en autonomie.;Évolution;To Do
+PR-04;Profil & Premium;En tant que manager je veux voir mon classement / rang comparé aux autres utilisateurs afin d'être motivé à progresser.;Existant;Done
+AD-01;Administration;En tant qu'admin je veux voir la liste de tous les utilisateurs (email / statut / date d'inscription) afin de gérer la base.;Existant;Done
+AD-02;Administration;En tant qu'admin je veux promouvoir un utilisateur en premium manuellement afin de gérer les accès sans Stripe.;Existant;Done
+AD-03;Administration;En tant qu'admin je veux voir les analytics d'usage (outils les plus utilisés / rétention) afin de piloter le produit.;Existant;Done
+EV-01;Évolutions futures;En tant que manager je veux activer un mode itératif sur le feedback généré pour le retoucher sans tout réécrire.;Évolution;To Do
+EV-02;Évolutions futures;En tant qu'utilisateur je veux accéder à une page Méthodologie expliquant les frameworks utilisés (SBI / CNV / DESC) afin de comprendre les choix produit.;Évolution;To Do
+EV-03;Évolutions futures;En tant qu'utilisateur je veux payer via Stripe et gérer mon abonnement (upgrade / downgrade / annulation) en autonomie.;Évolution;To Do
+EV-04;Évolutions futures;En tant que manager je veux recevoir une suggestion automatique de session 1:1 basée sur la précédente afin d'assurer la continuité du coaching.;Évolution;To Do
+EV-05;Évolutions futures;En tant que manager je veux exporter un feedback ou un plan de session en PDF afin de le partager facilement.;Évolution;To Do
+EV-06;Évolutions futures;En tant que manager je veux recevoir un rappel hebdomadaire (email/notif) pour préparer ma session 1:1 afin de maintenir la cadence.;Évolution;To Do
+EV-07;Évolutions futures;En tant qu'utilisateur je veux consulter l'historique de tous mes feedbacks/recrutements générés afin de ne pas perdre mes contenus.;Évolution;To Do
+EV-08;Évolutions futures;En tant qu'admin je veux configurer et publier de nouveaux parcours académie sans modifier le code afin de faire évoluer le contenu.;Évolution;To Do
+EV-09;Évolutions futures;En tant que joueur je veux recevoir un lien de rejoin si je me déconnecte d'un mini-jeu en cours afin de ne pas perdre ma place.;Évolution;To Do
+EV-10;Évolutions futures;En tant que manager je veux intégrer Posture dans Slack afin de lancer des sondages d'humeur ou des icebreakers directement depuis mon channel équipe.;Évolution;To Do
