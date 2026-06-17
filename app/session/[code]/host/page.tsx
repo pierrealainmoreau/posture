@@ -447,14 +447,14 @@ export default function SessionHostPage() {
                       ) : (
                         <button
                           onClick={() => openLinkModal(p.id)}
-                          title={linkedCollab ? "Modifier le lien collaborateur" : "Associer à un collaborateur"}
-                          className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ${
                             linkedCollab
-                              ? "text-violet-500 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40"
-                              : "text-gray-300 dark:text-gray-600 hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                              ? "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800"
+                              : "text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-600 dark:hover:text-violet-400"
                           }`}
                         >
-                          <Link2 size={13} />
+                          <Link2 size={11} />
+                          {linkedCollab ? "Lié" : "Lier"}
                         </button>
                       )}
                     </li>
