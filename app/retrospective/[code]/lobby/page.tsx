@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { RetroRoom, RetroPlayer } from "@/lib/retrospective/types";
 import { useI18n } from "@/lib/i18n";
 
@@ -192,6 +193,7 @@ export default function RetroLobbyPage() {
               {starting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
               {starting ? t.lobby.starting : t.lobby.launchVote}
             </button>
+            <DemoBotsButton game="retrospective" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

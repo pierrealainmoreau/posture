@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play, Users, Minus, Plus } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import { suggestRoles } from "@/lib/undercover/types";
 import type { RoomStateResponse, UndercoverPlayer } from "@/lib/undercover/types";
 
@@ -354,6 +355,7 @@ export default function UndercoverLobbyPage() {
                   : "Réduisez le nombre d'infiltrés — il faut au moins 1 Civil."}
               </p>
             )}
+            <DemoBotsButton game="undercover" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         ) : (
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 flex items-center justify-center gap-2">

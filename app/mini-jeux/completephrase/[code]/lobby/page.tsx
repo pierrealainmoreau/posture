@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { CompletePhraseRoom, CompletePhrasePlayer } from "@/lib/completephrase/types";
 
 export default function CompletePhraseLobbyPage() {
@@ -209,6 +210,7 @@ export default function CompletePhraseLobbyPage() {
                 En attente d&apos;au moins 2 participants pour démarrer.
               </p>
             )}
+            <DemoBotsButton game="completephrase" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { RotiRoom, RotiPlayer } from "@/lib/roti/types";
 
 const breadcrumbs = [
@@ -192,6 +193,7 @@ export default function RotiLobbyPage() {
               {starting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
               {starting ? "Démarrage…" : "Lancer le vote"}
             </button>
+            <DemoBotsButton game="roti" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

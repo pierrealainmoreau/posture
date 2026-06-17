@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { KudoRoom, KudoPlayer } from "@/lib/kudo-cards/types";
 
 export default function KudoLobbyPage() {
@@ -192,6 +193,7 @@ export default function KudoLobbyPage() {
                 Attendez au moins 2 participants pour démarrer.
               </p>
             )}
+            <DemoBotsButton game="kudo-cards" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

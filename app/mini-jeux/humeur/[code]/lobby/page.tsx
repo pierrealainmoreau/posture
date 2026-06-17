@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { HumeurRoom, HumeurPlayer } from "@/lib/humeur/types";
 
 export default function HumeurLobbyPage() {
@@ -217,6 +218,7 @@ export default function HumeurLobbyPage() {
                 En attente d&apos;au moins 2 participants pour démarrer.
               </p>
             )}
+            <DemoBotsButton game="humeur" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

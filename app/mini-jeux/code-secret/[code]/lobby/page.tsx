@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play, Lock } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import { DIFFICULTY_META, TEAM_META } from "@/lib/code-secret/types";
 import type { RoomResponse } from "@/lib/code-secret/types";
 
@@ -186,6 +187,7 @@ export default function CodeSecretLobbyPage() {
             {players.length < 2 && (
               <p className="text-xs text-center text-gray-400 dark:text-gray-500">En attente d&apos;au moins 2 joueurs.</p>
             )}
+            <DemoBotsButton game="code-secret" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         ) : (
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 flex items-center justify-center gap-2">

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { TribuRoom, TribuPlayer } from "@/lib/tribu/types";
 
 export default function TribuLobbyPage() {
@@ -221,6 +222,7 @@ export default function TribuLobbyPage() {
                 En attente d&apos;au moins 4 joueurs pour démarrer.
               </p>
             )}
+            <DemoBotsButton game="tribu" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

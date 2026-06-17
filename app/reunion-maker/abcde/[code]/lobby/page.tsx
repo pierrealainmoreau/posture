@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Crown, Loader2, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { AbcdeRoom, AbcdePlayer } from "@/lib/abcde/types";
 
 export default function AbcdeLobbyPage() {
@@ -173,6 +174,7 @@ export default function AbcdeLobbyPage() {
               {starting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
               {starting ? "Démarrage…" : "Lancer l'atelier"}
             </button>
+            <DemoBotsButton game="abcde" code={upperCode} playerId={playerId} />
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import type { SpeedRetroRoom, SpeedRetroPlayer } from "@/lib/speed-retro/types";
 
 const breadcrumbs = [
@@ -203,6 +204,7 @@ export default function SpeedRetroLobbyPage() {
               {starting ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
               {starting ? "Démarrage…" : "Lancer la rétrospective"}
             </button>
+            <DemoBotsButton game="speed-retro" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 
