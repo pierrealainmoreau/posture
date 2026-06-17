@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
+import { DemoBotsButton } from "@/components/DemoBotsButton";
 import { useI18n } from "@/lib/i18n";
 
 interface BoussolerRoom {
@@ -227,6 +228,7 @@ export default function BoussoleLobbyPage() {
                 En attente d&apos;au moins 2 joueurs pour démarrer.
               </p>
             )}
+            <DemoBotsButton game="boussole" code={upperCode} playerId={playerId} playerSecret={playerSecret} />
           </div>
         )}
 

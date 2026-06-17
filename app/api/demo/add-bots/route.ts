@@ -36,6 +36,7 @@ const GAME_TABLES: Record<string, {
   roti:          { roomTable: "roti_rooms",          playerTable: "roti_players",         extraFields: { is_host: false } },
   "kudo-cards":  { roomTable: "kudo_rooms",          playerTable: "kudo_players",         extraFields: { is_host: false } },
   abcde:         { roomTable: "abcde_rooms",         playerTable: "abcde_players",        extraFields: { is_host: false }, noSecret: true },
+  boussole:      { roomTable: "boussole_rooms",      playerTable: "boussole_players",     extraFields: { is_host: false } },
 };
 
 export async function POST(req: NextRequest) {
