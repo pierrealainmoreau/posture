@@ -8,7 +8,7 @@ import { AVATAR_COLORS } from "@/lib/retrospective/types";
 
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
-  { href: "/retrospective/speed", label: "Speed Retro" },
+  { href: "/toolbox/speed-retro", label: "Speed Retro" },
   { label: "Rejoindre" },
 ];
 

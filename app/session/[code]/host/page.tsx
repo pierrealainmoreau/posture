@@ -30,7 +30,7 @@ const GAME_LS_KEY: Record<GameType, (code: string) => string> = {
 };
 
 const GAME_LOBBY_URL: Record<GameType, (code: string) => string> = {
-  retrospective: (c) => `/retrospective/${c}/lobby`,
+  retrospective: (c) => `/toolbox/health-radar/${c}/lobby`,
   abcde:         (c) => `/toolbox/abcde/${c}/lobby`,
   kudo_cards:    (c) => `/toolbox/kudo-cards/${c}/lobby`,
   roti:          (c) => `/toolbox/roti/${c}/lobby`,

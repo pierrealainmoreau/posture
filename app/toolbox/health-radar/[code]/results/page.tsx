@@ -12,7 +12,7 @@ import {
   scoreBgClass,
   type RetroRoom,
   type RetroPlayer,
-} from "@/lib/retrospective/types";
+} from "@/lib/toolbox/health-radar/types";
 import { useI18n } from "@/lib/i18n";
 import { ContinueSessionButton } from "@/components/ContinueSessionButton";
 
@@ -35,7 +35,7 @@ export default function RetroResultsPage() {
 
   const breadcrumbs = [
     { href: "/", label: t.common.home },
-    { href: "/retrospective", label: t.retrospective.title },
+    { href: "/toolbox/health-radar", label: t.retrospective.title },
     { label: t.common.results },
   ];
 
@@ -51,14 +51,14 @@ export default function RetroResultsPage() {
 
   useEffect(() => {
     async function load() {
-      const res = await fetch(`/api/retrospective/room/${upperCode}`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
       if (!res.ok) { setLoading(false); return; }
       const d = await res.json() as ResultsData;
-      if (d.status === "lobby") { router.replace(`/retrospective/${upperCode}/lobby`); return; }
-      if (d.status === "voting") { router.replace(`/retrospective/${upperCode}/vote`); return; }
+      if (d.status === "lobby") { router.replace(`/toolbox/health-radar/${upperCode}/lobby`); return; }
+      if (d.status === "voting") { router.replace(`/toolbox/health-radar/${upperCode}/vote`); return; }
       setData(d);
       setLoading(false);
     }
@@ -186,14 +186,14 @@ export default function RetroResultsPage() {
               </button>
               <ContinueSessionButton gameType="retrospective" roomCode={upperCode} />
               <Link
-                href="/retrospective/create"
+                href="/toolbox/health-radar/create"
                 className="flex items-center justify-center gap-2 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
               >
                 <Plus size={14} />
                 Nouvelle session
               </Link>
               <Link
-                href="/retrospective"
+                href="/toolbox/health-radar"
                 className="flex items-center justify-center gap-2 py-3 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 Toutes les sessions

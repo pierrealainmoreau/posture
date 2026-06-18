@@ -17,6 +17,12 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      { source: "/retrospective",               destination: "/toolbox/health-radar",        permanent: true },
+      { source: "/retrospective/speed",         destination: "/toolbox/speed-retro",         permanent: true },
+      { source: "/retrospective/speed/:path*",  destination: "/toolbox/speed-retro/:path*",  permanent: true },
+      { source: "/retrospective/roti",          destination: "/toolbox/roti",                permanent: true },
+      { source: "/retrospective/roti/:path*",   destination: "/toolbox/roti/:path*",         permanent: true },
+      { source: "/retrospective/:path*",        destination: "/toolbox/health-radar/:path*", permanent: true },
       { source: "/mini-jeux",                    destination: "/toolbox",             permanent: true },
       { source: "/mini-jeux/:path*",            destination: "/toolbox/:path*",      permanent: true },
       { source: "/boussole",                    destination: "/toolbox/boussole",    permanent: true },

@@ -10,7 +10,7 @@ import { AVATAR_COLORS } from "@/lib/retrospective/types";
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
   { href: "/reunion-maker", label: "Réunion Maker" },
-  { href: "/retrospective/roti", label: "ROTI" },
+  { href: "/toolbox/roti", label: "ROTI" },
   { label: "Créer" },
 ];
 

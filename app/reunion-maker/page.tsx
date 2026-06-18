@@ -90,7 +90,7 @@ export default function ReunionMakerHubPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
               <Link
-                href="/retrospective"
+                href="/toolbox/health-radar"
                 className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-sm transition-all"
               >
                 <div className="w-9 h-9 bg-teal-50 dark:bg-teal-950 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-100 dark:group-hover:bg-teal-900 transition-colors">
@@ -105,7 +105,7 @@ export default function ReunionMakerHubPage() {
               </Link>
 
               <Link
-                href="/retrospective/speed"
+                href="/toolbox/speed-retro"
                 className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-sm transition-all"
               >
                 <div className="w-9 h-9 bg-orange-50 dark:bg-orange-950 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900 transition-colors">
@@ -120,7 +120,7 @@ export default function ReunionMakerHubPage() {
               </Link>
 
               <Link
-                href="/retrospective/roti"
+                href="/toolbox/roti"
                 className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all"
               >
                 <div className="w-9 h-9 bg-violet-50 dark:bg-violet-950 rounded-lg flex items-center justify-center mb-4 group-hover:bg-violet-100 dark:group-hover:bg-violet-900 transition-colors">

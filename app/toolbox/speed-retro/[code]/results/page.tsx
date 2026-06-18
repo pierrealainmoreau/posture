@@ -11,7 +11,7 @@ import { ContinueSessionButton } from "@/components/ContinueSessionButton";
 
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
-  { href: "/retrospective/speed", label: "Speed Retro" },
+  { href: "/toolbox/speed-retro", label: "Speed Retro" },
   { label: "Résultats" },
 ];
 

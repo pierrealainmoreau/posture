@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle2, ChevronDown } from "lucide-react";
 import { Header } from "@/components/Header";
-import { RETRO_CRITERIA, type RetroRoom, type RetroPlayer } from "@/lib/retrospective/types";
+import { RETRO_CRITERIA, type RetroRoom, type RetroPlayer } from "@/lib/toolbox/health-radar/types";
 import { useI18n } from "@/lib/i18n";
 
 const SCORE_CONFIG: Record<number, { bg: string; ring: string; text: string; activeBg: string; activeText: string }> = {
@@ -130,13 +130,13 @@ export default function RetroVotePage() {
   // Load identity
   useEffect(() => {
     const stored = localStorage.getItem(`retro_player_${upperCode}`);
-    if (!stored) { router.replace(`/retrospective/join?code=${upperCode}`); return; }
+    if (!stored) { router.replace(`/toolbox/health-radar/join?code=${upperCode}`); return; }
     try {
       const { playerId: pid, playerSecret: secret } = JSON.parse(stored) as { playerId: string; playerSecret?: string };
       setPlayerId(pid);
       setPlayerSecret(secret ?? "");
     } catch {
-      router.replace(`/retrospective/join?code=${upperCode}`);
+      router.replace(`/toolbox/health-radar/join?code=${upperCode}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [upperCode]);
@@ -145,14 +145,14 @@ export default function RetroVotePage() {
   useEffect(() => {
     if (!playerId) return;
     async function init() {
-      const res = await fetch(`/api/retrospective/room/${upperCode}`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
       if (!res.ok) { setLoading(false); return; }
       const data = await res.json() as RetroRoom & { players: RetroPlayer[] };
-      if (data.status === "lobby") { router.replace(`/retrospective/${upperCode}/lobby`); return; }
-      if (data.status === "finished") { router.replace(`/retrospective/${upperCode}/results`); return; }
+      if (data.status === "lobby") { router.replace(`/toolbox/health-radar/${upperCode}/lobby`); return; }
+      if (data.status === "finished") { router.replace(`/toolbox/health-radar/${upperCode}/results`); return; }
       setRoom(data);
       setPlayers(data.players ?? []);
       // Check if already voted
@@ -168,14 +168,14 @@ export default function RetroVotePage() {
   useEffect(() => {
     if (!submitted || !playerId) return;
     async function poll() {
-      const res = await fetch(`/api/retrospective/room/${upperCode}`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
       if (!res.ok) return;
       const data = await res.json() as RetroRoom & { players: RetroPlayer[] };
       setPlayers(data.players ?? []);
-      if (data.status === "finished") router.push(`/retrospective/${upperCode}/results`);
+      if (data.status === "finished") router.push(`/toolbox/health-radar/${upperCode}/results`);
     }
     poll();
     pollRef.current = setInterval(poll, 2000);
@@ -187,7 +187,7 @@ export default function RetroVotePage() {
     if (!allRated || submitting) return;
     setSubmitting(true);
     setVoteError(null);
-    const res = await fetch(`/api/retrospective/room/${upperCode}/vote`, {
+    const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}/vote`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Player-Secret": playerSecret },
       body: JSON.stringify({ playerId, votes: scores, comment }),
@@ -204,12 +204,12 @@ export default function RetroVotePage() {
   async function handleFinish() {
     setFinishing(true);
     try {
-      await fetch(`/api/retrospective/room/${upperCode}/finish`, {
+      await fetch(`/api/toolbox/health-radar/room/${upperCode}/finish`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Player-Secret": playerSecret },
         body: JSON.stringify({ playerId }),
       });
-      router.push(`/retrospective/${upperCode}/results`);
+      router.push(`/toolbox/health-radar/${upperCode}/results`);
     } catch {
       setFinishing(false);
     }
