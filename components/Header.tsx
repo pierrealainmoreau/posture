@@ -95,21 +95,12 @@ export function Header({ backHref, currentTool, parentHref, parentLabel, breadcr
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
 
           {/* Logo */}
-          {guestMode ? (
-            <div className="flex items-center gap-2.5 text-gray-900 dark:text-white opacity-70">
-              <Logo withWordmark size={30} />
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded">
-                Beta
-              </span>
-            </div>
-          ) : (
-            <Link href="/" className="flex items-center gap-2.5 hover:opacity-75 transition-opacity text-gray-900 dark:text-white">
-              <Logo withWordmark size={30} />
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded">
-                Beta
-              </span>
-            </Link>
-          )}
+          <Link href="/" className={`flex items-center gap-2.5 hover:opacity-75 transition-opacity text-gray-900 dark:text-white${guestMode ? " opacity-70" : ""}`}>
+            <Logo withWordmark size={30} />
+            <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded">
+              Beta
+            </span>
+          </Link>
 
           {/* Actions */}
           <div className="flex items-center gap-2">
