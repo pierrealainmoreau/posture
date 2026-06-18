@@ -7,7 +7,7 @@ import {
   Eye, Crown, Loader2, ChevronRight,
   Shuffle, BookOpen, GraduationCap, Quote,
   Trophy, UserRoundCheck, CalendarDays, Target, SmilePlus, Sparkles,
-  Activity, Zap, Search,
+  Activity, Zap, Brain, Users, UserPlus, Check,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { PMFBanner } from "@/components/PMFBanner";
@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { loadProgress } from "@/lib/academie/storage";
 import { computePathwayStatus } from "@/lib/academie/progress";
 import { ALL_PATHWAYS } from "@/lib/academie/pathways/index";
-import type { CollaboratorOkr } from "@/lib/types";
+import type { Collaborator } from "@/lib/types";
 
 // ── Section label ─────────────────────────────────────────────────────────────
 
@@ -31,60 +31,39 @@ function SectionLabel({ color, children }: { color: string; children: React.Reac
   );
 }
 
-// ── OKR circular gauge ────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-function OkrCircleGauge({ pct, defined = false }: { pct: number | null; defined?: boolean }) {
-  const r = 20;
-  const circ = 2 * Math.PI * r;
-  const p = pct ?? 0;
-  const offset = circ * (1 - p / 100);
-  const strokeColor =
-    p >= 70 ? "#22c55e" :
-    p >= 40 ? "#f59e0b" :
-    p >  0  ? "#ef4444" : "transparent";
+type WeeklyCoachData = {
+  configured: boolean;
+  is_weekend?: boolean;
+  template?: { title: string; description: string; category: string; route: string } | null;
+  completed?: boolean;
+  week_progress?: { day: number; completed: boolean }[];
+};
 
-  return (
-    <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 52, height: 52 }}>
-      <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="26" cy="26" r={r} fill="none" stroke="currentColor"
-          strokeWidth="4" className="text-gray-100 dark:text-gray-800" />
-        {p > 0 && (
-          <circle cx="26" cy="26" r={r} fill="none"
-            stroke={strokeColor} strokeWidth="4"
-            strokeDasharray={circ} strokeDashoffset={offset}
-            strokeLinecap="round" />
-        )}
-      </svg>
-      <div className="absolute flex flex-col items-center leading-none">
-        {pct === null ? (
-          <span className="text-[9px] text-gray-400">…</span>
-        ) : p === 0 ? (
-          defined
-            ? <span className="text-[10px] font-bold text-gray-400">0%</span>
-            : <span className="text-xs font-bold text-gray-300 dark:text-gray-700">—</span>
-        ) : (
-          <span className={`text-[11px] font-bold ${
-            p >= 70 ? "text-green-600 dark:text-green-400" :
-            p >= 40 ? "text-amber-500 dark:text-amber-400" :
-                      "text-red-500 dark:text-red-400"
-          }`}>{p}%</span>
-        )}
-      </div>
-    </div>
-  );
-}
+type CollabPreview = Pick<Collaborator, "id" | "first_name" | "last_name" | "role">;
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const AVATAR_COLORS = [
+  { bg: "bg-violet-100 dark:bg-violet-950", text: "text-violet-700 dark:text-violet-300" },
+  { bg: "bg-teal-100 dark:bg-teal-950",    text: "text-teal-700 dark:text-teal-300"    },
+  { bg: "bg-amber-100 dark:bg-amber-950",  text: "text-amber-700 dark:text-amber-300"  },
+];
+
+const DAY_NAMES = ["", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "", ""];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const router = useRouter();
 
-  const [firstName,        setFirstName]        = useState<string | null>(null);
-  const [userId,           setUserId]           = useState<string | null>(null);
-  const [role,             setRole]             = useState<string>("user");
-  const [acadStats,        setAcadStats]        = useState({ badges: 0 });
-  const [okrProgress,      setOkrProgress]      = useState<number | null>(null);
-  const [okrHasCollabOkrs, setOkrHasCollabOkrs] = useState(false);
+  const [firstName,     setFirstName]     = useState<string | null>(null);
+  const [userId,        setUserId]        = useState<string | null>(null);
+  const [role,          setRole]          = useState<string>("user");
+  const [acadStats,     setAcadStats]     = useState({ badges: 0 });
+  const [weeklyCoach,   setWeeklyCoach]   = useState<WeeklyCoachData | null>(null);
+  const [collaborators, setCollaborators] = useState<CollabPreview[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -92,26 +71,20 @@ export default function Home() {
       if (!user) { router.replace("/login"); return; }
       setUserId(user.id);
 
-      // OKR progress — non-bloquant
-      fetch("/api/coach/okr/company").then(async (res) => {
-        if (!res.ok) { setOkrProgress(0); return; }
-        const okrData = await res.json().catch(() => null);
-        if (!okrData?.id) { setOkrProgress(0); return; }
-        const collabRes = await fetch(`/api/coach/okr/collaborator?company_okr_id=${okrData.id}`);
-        if (!collabRes.ok) { setOkrProgress(0); return; }
-        const rows = (await collabRes.json().catch(() => [])) as CollaboratorOkr[];
-        setOkrHasCollabOkrs(rows.length > 0);
-        const trackedPcts = rows.flatMap((okr) =>
-          okr.key_results
-            .filter((kr) => kr.current !== undefined && kr.current !== null && kr.current !== "")
-            .map((kr) => Math.round(parseFloat(kr.current!) || 0))
-        );
-        setOkrProgress(
-          trackedPcts.length > 0
-            ? Math.round(trackedPcts.reduce((a, b) => a + b, 0) / trackedPcts.length)
-            : 0
-        );
-      }).catch(() => setOkrProgress(0));
+      // Weekly Coach — non-bloquant
+      fetch("/api/weekly-coach/today")
+        .then((r) => r.json())
+        .then(setWeeklyCoach)
+        .catch(() => setWeeklyCoach({ configured: false }));
+
+      // Collaborateurs (max 3 pour le widget home)
+      supabase
+        .from("collaborators")
+        .select("id, first_name, last_name, role")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(3)
+        .then(({ data }) => setCollaborators((data as CollabPreview[]) ?? []));
 
       const [profileRes] = await Promise.all([
         supabase.from("profiles").select("first_name, role").eq("id", user.id).single(),
@@ -138,7 +111,10 @@ export default function Home() {
     );
   }
 
-  const totalBadges = ALL_PATHWAYS.length;
+  const totalBadges  = ALL_PATHWAYS.length;
+  const todayDayNum  = new Date().getDay(); // 0=Dim, 1=Lun…6=Sam
+  const todayLabel   = DAY_NAMES[todayDayNum] ?? "";
+  const completedCount = (weeklyCoach?.week_progress ?? []).filter((d) => d.completed).length;
 
   return (
     <div className="min-h-screen bg-[#f9f9f8] dark:bg-gray-950 flex flex-col">
@@ -252,9 +228,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <SmilePlus size={20} className="text-yellow-500 dark:text-yellow-400" />
               </div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                Humeur
-              </p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Humeur</p>
             </Link>
 
             <Link
@@ -264,9 +238,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Shuffle size={20} className="text-cyan-600 dark:text-cyan-400" />
               </div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                Icebreaker
-              </p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Icebreaker</p>
             </Link>
 
             <Link
@@ -276,9 +248,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <BookOpen size={20} className="text-emerald-600 dark:text-emerald-400" />
               </div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                Anecdotes
-              </p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Anecdotes</p>
             </Link>
 
             <Link
@@ -288,9 +258,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Activity size={20} className="text-teal-600 dark:text-teal-400" />
               </div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                Health Radar
-              </p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Health Radar</p>
             </Link>
 
             <Link
@@ -300,9 +268,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Zap size={20} className="text-violet-600 dark:text-violet-400" />
               </div>
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                Speed Retro
-              </p>
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Speed Retro</p>
             </Link>
 
             <Link
@@ -312,9 +278,7 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <ChevronRight size={20} className="text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 leading-tight">
-                Tous
-              </p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 leading-tight">Tous</p>
             </Link>
           </div>
         </section>
@@ -323,84 +287,243 @@ export default function Home() {
         <section>
           <SectionLabel color="bg-emerald-600 dark:bg-emerald-500">Entre les réunions</SectionLabel>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 grid-rows-2 gap-3">
 
-            {/* OKR */}
-            <Link
-              href="/coach/okr"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150 flex flex-col"
-            >
+            {/* ── Col 1, lignes 1+2 : Weekly Coach ── */}
+            <div className="row-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-green-300 dark:hover:border-green-700 transition-all duration-150">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-7 h-7 bg-violet-50 dark:bg-violet-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Target size={13} className="text-violet-700 dark:text-violet-400" />
+                <div className="w-8 h-8 bg-green-50 dark:bg-green-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <Brain size={15} className="text-green-700 dark:text-green-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">OKR</span>
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">Objectifs & Key Results</p>
-              <div className="flex items-center gap-3 flex-1 mb-3">
-                <OkrCircleGauge pct={okrProgress} defined={okrHasCollabOkrs} />
-                <div className="min-w-0">
-                  {okrProgress === null ? (
-                    <p className="text-[11px] text-gray-400 dark:text-gray-500">Chargement…</p>
-                  ) : okrProgress === 0 && !okrHasCollabOkrs ? (
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                      Aucune progression renseignée
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-                        Progression équipe
-                      </p>
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                        Moyenne des KRs
-                      </p>
-                    </>
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">Weekly Coach</span>
+                  {todayLabel && !weeklyCoach?.is_weekend && weeklyCoach?.configured && (
+                    <span className="text-[10px] font-medium bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-md">
+                      {todayLabel}
+                    </span>
                   )}
                 </div>
               </div>
-              <p className="mt-auto text-[11px] font-semibold text-violet-600 dark:text-violet-400 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition-colors">
-                Gérer les OKR →
-              </p>
-            </Link>
 
-            {/* Académie */}
+              {/* État : chargement */}
+              {!weeklyCoach && (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">Chargement…</p>
+              )}
+
+              {/* État : non configuré */}
+              {weeklyCoach && !weeklyCoach.configured && (
+                <>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+                    Configurez votre coach pour recevoir une action managériale chaque jour.
+                  </p>
+                  <Link
+                    href="/coach/weekly"
+                    className="mt-auto text-[11px] font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                  >
+                    Configurer →
+                  </Link>
+                </>
+              )}
+
+              {/* État : week-end */}
+              {weeklyCoach?.configured && weeklyCoach.is_weekend && (
+                <>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+                    Bon week-end ! Récap de la semaine :
+                  </p>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {(weeklyCoach.week_progress ?? []).map(({ day, completed }) => (
+                      <div
+                        key={day}
+                        className={`w-2.5 h-2.5 rounded-full ${completed ? "bg-green-600 dark:bg-green-500" : "border border-gray-200 dark:border-gray-700"}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                    {completedCount} / 5 actions complétées
+                  </p>
+                </>
+              )}
+
+              {/* État : action du jour complétée */}
+              {weeklyCoach?.configured && !weeklyCoach.is_weekend && weeklyCoach.completed && (
+                <>
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <Check size={13} className="text-green-600 dark:text-green-400" />
+                    <span className="text-[11px] font-semibold text-green-600 dark:text-green-400">
+                      Action du jour faite !
+                    </span>
+                  </div>
+                  {weeklyCoach.template && (
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2.5 mb-3">
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic">
+                        &ldquo;{weeklyCoach.template.description}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5 mt-auto">
+                    {(weeklyCoach.week_progress ?? []).map(({ day, completed }) => (
+                      <div
+                        key={day}
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          completed
+                            ? "bg-green-600 dark:bg-green-500"
+                            : todayDayNum === day
+                            ? "border-2 border-green-500 bg-green-50 dark:bg-green-950"
+                            : "border border-gray-200 dark:border-gray-700"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                      {completedCount} / 5
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* État : action du jour à faire */}
+              {weeklyCoach?.configured && !weeklyCoach.is_weekend && !weeklyCoach.completed && weeklyCoach.template && (
+                <>
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2.5 mb-3">
+                    <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                      &ldquo;{weeklyCoach.template.description}&rdquo;
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-3">
+                    {(weeklyCoach.week_progress ?? []).map(({ day, completed }) => (
+                      <div
+                        key={day}
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          completed
+                            ? "bg-green-600 dark:bg-green-500"
+                            : todayDayNum === day
+                            ? "border-2 border-green-500 bg-green-50 dark:bg-green-950"
+                            : "border border-gray-200 dark:border-gray-700"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">
+                      {completedCount} / 5
+                    </span>
+                  </div>
+                  <Link
+                    href={weeklyCoach.template.route ?? "/coach"}
+                    className="mt-auto inline-flex items-center gap-1 text-[11px] font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                  >
+                    Faire l&apos;action <ChevronRight size={12} />
+                  </Link>
+                </>
+              )}
+
+              {/* État : configuré mais pas de template */}
+              {weeklyCoach?.configured && !weeklyCoach.is_weekend && !weeklyCoach.completed && !weeklyCoach.template && (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                  Aucune action prévue aujourd&apos;hui.
+                </p>
+              )}
+            </div>
+
+            {/* ── Col 2, lignes 1+2 : Mon équipe ── */}
+            <div className="row-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-150">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <Users size={15} className="text-blue-700 dark:text-blue-400" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">Mon équipe</span>
+                  {collaborators.length > 0 && (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                      {collaborators.length} collaborateur{collaborators.length > 1 ? "s" : ""}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {collaborators.length === 0 ? (
+                <>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+                    Ajoutez vos collaborateurs pour accéder à leurs fiches rapidement.
+                  </p>
+                  <Link
+                    href="/coach"
+                    className="mt-auto text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  >
+                    Ajouter un membre →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col flex-1 divide-y divide-gray-100 dark:divide-gray-800">
+                    {collaborators.map((c, i) => {
+                      const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                      const initials = ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
+                      return (
+                        <Link
+                          key={c.id}
+                          href={`/coach/${c.id}`}
+                          className="flex items-center gap-2.5 py-2.5 hover:opacity-75 transition-opacity"
+                        >
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
+                            {initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">
+                              {c.first_name} {c.last_name}
+                            </p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{c.role}</p>
+                          </div>
+                          <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                  <Link
+                    href="/coach"
+                    className="mt-3 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  >
+                    Voir l&apos;équipe →
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* ── Col 3, ligne 1 : Quiz ── */}
             <Link
               href="/academie"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150 flex flex-col"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-7 h-7 bg-amber-50 dark:bg-amber-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <GraduationCap size={13} className="text-amber-600 dark:text-amber-400" />
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-8 h-8 bg-amber-50 dark:bg-amber-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <GraduationCap size={15} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">Académie</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-white">Quiz</span>
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2.5">Quiz & e-learning</p>
-              <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/60 rounded-lg px-2.5 py-1.5 mb-3 w-fit">
+              <div className="flex items-center gap-1.5 mt-auto">
                 <Trophy size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
                   {acadStats.badges} / {totalBadges} badges
                 </span>
               </div>
-              <p className="mt-auto text-[11px] font-semibold text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+              <p className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                 {acadStats.badges === 0 ? "Commencer →" : "Continuer →"}
               </p>
             </Link>
 
-            {/* Recruter */}
+            {/* ── Col 3, ligne 2 : Recrutement ── */}
             <Link
               href="/recruitment"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150 flex flex-col"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-7 h-7 bg-emerald-50 dark:bg-emerald-950 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Search size={13} className="text-emerald-700 dark:text-emerald-400" />
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-8 h-8 bg-pink-50 dark:bg-pink-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                  <UserPlus size={15} className="text-pink-700 dark:text-pink-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">Recruter</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-white">Recrutement</span>
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-auto mb-2">
                 Fiches de poste, entretiens
               </p>
-              <p className="mt-auto text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+              <p className="text-[11px] font-semibold text-pink-600 dark:text-pink-400">
                 Ouvrir →
               </p>
             </Link>
