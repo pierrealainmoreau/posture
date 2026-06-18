@@ -20,10 +20,9 @@ import type { Collaborator } from "@/lib/types";
 
 // ── Section label ─────────────────────────────────────────────────────────────
 
-function SectionLabel({ color, children }: { color: string; children: React.ReactNode }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <div className={`w-[7px] h-[7px] rounded-[2px] flex-shrink-0 ${color}`} />
+    <div className="mb-4">
       <span className="text-sm font-bold uppercase tracking-[0.07em] text-gray-700 dark:text-gray-300">
         {children}
       </span>
@@ -163,7 +162,7 @@ export default function Home() {
 
         {/* ── Section 1 : Avant la réunion ──────────────────────────── */}
         <section>
-          <SectionLabel color="bg-blue-600 dark:bg-blue-500">Avant la réunion</SectionLabel>
+          <SectionLabel>Avant la réunion</SectionLabel>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <Link
@@ -218,7 +217,7 @@ export default function Home() {
 
         {/* ── Section 2 : En réunion ────────────────────────────────── */}
         <section>
-          <SectionLabel color="bg-amber-500 dark:bg-amber-400">En réunion</SectionLabel>
+          <SectionLabel>En réunion</SectionLabel>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link
@@ -285,7 +284,7 @@ export default function Home() {
 
         {/* ── Section 3 : Entre les réunions ────────────────────────── */}
         <section>
-          <SectionLabel color="bg-emerald-600 dark:bg-emerald-500">Entre les réunions</SectionLabel>
+          <SectionLabel>Entre les réunions</SectionLabel>
 
           <div className="grid grid-cols-3 grid-rows-2 gap-3">
 
