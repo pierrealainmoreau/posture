@@ -210,7 +210,7 @@ export default function ProfilePage() {
       stat: { count: rc,  limit: stats?.usage_limit, label: rc !== 1 ? t.profile.usagePlural : t.profile.usageSingular, used: rc > 0 } },
     { id: "reunion-maker", shortLabel: t.reunionMaker.title,      href: "/reunion-maker",  icon: CalendarDays,  color: "teal"   as const,
       stat: { count: rmc, limit: stats?.usage_limit, label: rmc !== 1 ? t.profile.meetingPlural : t.profile.meetingSingular, used: rmc > 0 } },
-    { id: "mini-jeux",     shortLabel: t.common.miniJeux,         href: "/mini-jeux",      icon: Users,         color: "green"  as const,
+    { id: "mini-jeux",     shortLabel: t.common.miniJeux,         href: "/toolbox",      icon: Users,         color: "green"  as const,
       stat: { count: mgc, label: mgc !== 1 ? t.profile.gamePlural : t.profile.gameSingular, used: mgc > 0 } },
     { id: "academie",      shortLabel: t.academie.title,          href: "/academie",       icon: GraduationCap, color: "amber"  as const,
       stat: { count: academiePassedCount, limit: academieTotal, label: academiePassedCount !== 1 ? t.profile.quizPlural : t.profile.quizSingular, used: academiePassedCount > 0 } },

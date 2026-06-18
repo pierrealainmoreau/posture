@@ -57,7 +57,7 @@ export default function ReunionMakerHubPage() {
             </Link>
 
             <Link
-              href="/mini-jeux/abcde"
+              href="/toolbox/abcde"
               className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all"
             >
               <div className="flex items-start justify-between mb-4">
@@ -135,7 +135,7 @@ export default function ReunionMakerHubPage() {
               </Link>
 
               <Link
-                href="/mini-jeux/kudo-cards"
+                href="/toolbox/kudo-cards"
                 className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all"
               >
                 <div className="w-9 h-9 bg-amber-50 dark:bg-amber-950 rounded-lg flex items-center justify-center mb-4 group-hover:bg-amber-100 dark:group-hover:bg-amber-900 transition-colors">
