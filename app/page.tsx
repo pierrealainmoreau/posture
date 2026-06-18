@@ -222,17 +222,17 @@ export default function Home() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link
               href="/toolbox/humeur"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <SmilePlus size={20} className="text-yellow-500 dark:text-yellow-400" />
+                <SmilePlus size={20} className="text-rose-500 dark:text-rose-400" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Humeur</p>
             </Link>
 
             <Link
               href="/icebreaker"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Shuffle size={20} className="text-cyan-600 dark:text-cyan-400" />
@@ -242,7 +242,7 @@ export default function Home() {
 
             <Link
               href="/toolbox/anecdotes"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <BookOpen size={20} className="text-emerald-600 dark:text-emerald-400" />
@@ -251,8 +251,8 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/toolbox/boussole"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              href="/toolbox/health-radar"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Activity size={20} className="text-teal-600 dark:text-teal-400" />
@@ -262,7 +262,7 @@ export default function Home() {
 
             <Link
               href="/toolbox/speed-retro"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <Zap size={20} className="text-violet-600 dark:text-violet-400" />
