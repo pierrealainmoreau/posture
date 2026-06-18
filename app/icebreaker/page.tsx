@@ -370,7 +370,7 @@ export default function IcebreakerPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/" parentHref="/mini-jeux" parentLabel={t.common.miniJeux} currentTool="Icebreakers" />
+      <Header backHref="/" parentHref="/toolbox" parentLabel={t.common.miniJeux} currentTool="Icebreakers" />
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-5 flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-center">
 

@@ -31,17 +31,17 @@ const GAME_LS_KEY: Record<GameType, (code: string) => string> = {
 
 const GAME_LOBBY_URL: Record<GameType, (code: string) => string> = {
   retrospective: (c) => `/retrospective/${c}/lobby`,
-  abcde:         (c) => `/mini-jeux/abcde/${c}/lobby`,
-  kudo_cards:    (c) => `/mini-jeux/kudo-cards/${c}/lobby`,
-  roti:          (c) => `/mini-jeux/roti/${c}/lobby`,
-  undercover:    (c) => `/mini-jeux/undercover/${c}/lobby`,
-  chaine:        (c) => `/mini-jeux/chaine/${c}/lobby`,
-  code_secret:   (c) => `/mini-jeux/code-secret/${c}/lobby`,
-  speed_retro:   (c) => `/mini-jeux/speed-retro/${c}/lobby`,
-  draw:          (c) => `/mini-jeux/draw/${c}/lobby`,
-  boussole:      (c) => `/mini-jeux/boussole/${c}/lobby`,
-  humeur:        (c) => `/mini-jeux/humeur/${c}/lobby`,
-  tribu:         (c) => `/mini-jeux/tribu/${c}/lobby`,
+  abcde:         (c) => `/toolbox/abcde/${c}/lobby`,
+  kudo_cards:    (c) => `/toolbox/kudo-cards/${c}/lobby`,
+  roti:          (c) => `/toolbox/roti/${c}/lobby`,
+  undercover:    (c) => `/toolbox/undercover/${c}/lobby`,
+  chaine:        (c) => `/toolbox/chaine/${c}/lobby`,
+  code_secret:   (c) => `/toolbox/code-secret/${c}/lobby`,
+  speed_retro:   (c) => `/toolbox/speed-retro/${c}/lobby`,
+  draw:          (c) => `/toolbox/draw/${c}/lobby`,
+  boussole:      (c) => `/toolbox/boussole/${c}/lobby`,
+  humeur:        (c) => `/toolbox/humeur/${c}/lobby`,
+  tribu:         (c) => `/toolbox/tribu/${c}/lobby`,
 };
 
 const GAME_LABEL: Record<GameType, string> = {
