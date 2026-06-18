@@ -244,7 +244,7 @@ export default function Home() {
         <section>
           <SectionLabel color="bg-amber-500 dark:bg-amber-400">En réunion</SectionLabel>
 
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link
               href="/mini-jeux/humeur"
               className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
@@ -302,6 +302,18 @@ export default function Home() {
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">
                 Speed Retro
+              </p>
+            </Link>
+
+            <Link
+              href="/mini-jeux"
+              className="bg-white dark:bg-gray-900 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-3 text-center hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-sm transition-all duration-150"
+            >
+              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
+                <ChevronRight size={20} className="text-gray-400 dark:text-gray-500" />
+              </div>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 leading-tight">
+                Tous
               </p>
             </Link>
           </div>
