@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   const isBoussoleGuestPage = pathSegments[1] === "boussole";
 
   // Retrospective participant pages are public — the room code is the access credential.
-  // Only creation requires a manager account (/retrospective/create, /retrospective/*/create).
+  // Only creation requires a manager account (/toolbox/health-radar/create).
   const isRetrospectivePage =
     pathSegments[1] === "retrospective" && pathSegments[2] !== undefined && pathSegments[2] !== "create";
 

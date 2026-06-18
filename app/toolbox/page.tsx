@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare, Zap, Star, Gift, Layers } from "lucide-react";
+import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare, Zap, Star, Gift, Layers, Activity } from "lucide-react";
 import { Header } from "@/components/Header";
 import { TrackUsage } from "@/components/TrackUsage";
 import { useI18n } from "@/lib/i18n";
@@ -110,6 +110,15 @@ const GAMES_STATIC: GameBase[] = [
     available: true,
     tags:      ["meetingEnd"],
     duration:  "1 min",
+  },
+  {
+    key:       "healthRadar",
+    href:      "/toolbox/health-radar",
+    icon:      <Activity size={22} className="text-teal-600 dark:text-teal-400" />,
+    iconBg:    "bg-teal-50 dark:bg-teal-950",
+    available: true,
+    tags:      ["meetingEnd", "cohesion", "seminar"],
+    duration:  "15 min",
   },
   {
     key:       "kudoCards",

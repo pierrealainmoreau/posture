@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/Header";
-import { AVATAR_COLORS } from "@/lib/retrospective/types";
+import { AVATAR_COLORS } from "@/lib/toolbox/health-radar/types";
 import { useI18n } from "@/lib/i18n";
 
 export default function RetroCreatePage() {
@@ -32,7 +32,7 @@ export default function RetroCreatePage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/retrospective/room", {
+      const res = await fetch("/api/toolbox/health-radar/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pseudo: pseudo.trim(), avatarColor }),
@@ -49,7 +49,7 @@ export default function RetroCreatePage() {
         `retro_player_${data.code}`,
         JSON.stringify({ playerId: data.playerId, playerSecret: data.playerSecret, pseudo: pseudo.trim(), avatarColor })
       );
-      router.push(`/retrospective/${data.code}/lobby`);
+      router.push(`/toolbox/health-radar/${data.code}/lobby`);
     } catch {
       setError(t.common.error);
       setCreating(false);
@@ -58,7 +58,7 @@ export default function RetroCreatePage() {
 
   const breadcrumbs = [
     { href: "/", label: t.common.home },
-    { href: "/retrospective", label: t.retrospective.title },
+    { href: "/toolbox/health-radar", label: t.retrospective.title },
     { label: t.retrospective.createSession },
   ];
 

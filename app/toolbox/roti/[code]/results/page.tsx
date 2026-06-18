@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
-  { href: "/retrospective/roti", label: "ROTI" },
+  { href: "/toolbox/roti", label: "ROTI" },
   { label: "Résultats" },
 ];
 

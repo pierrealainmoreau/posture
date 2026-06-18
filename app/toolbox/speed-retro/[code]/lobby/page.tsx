@@ -10,7 +10,7 @@ import type { SpeedRetroRoom, SpeedRetroPlayer } from "@/lib/speed-retro/types";
 
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
-  { href: "/retrospective/speed", label: "Speed Retro" },
+  { href: "/toolbox/speed-retro", label: "Speed Retro" },
   { label: "Lobby" },
 ];
 
@@ -31,7 +31,7 @@ export default function SpeedRetroLobbyPage() {
 
   const shareUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/retrospective/speed/join?code=${upperCode}`
+      ? `${window.location.origin}/toolbox/speed-retro/join?code=${upperCode}`
       : "";
 
   useEffect(() => {

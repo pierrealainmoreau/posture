@@ -6,7 +6,7 @@ import { Loader2, Crown, Play } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
 import { DemoBotsButton } from "@/components/DemoBotsButton";
-import type { RetroRoom, RetroPlayer } from "@/lib/retrospective/types";
+import type { RetroRoom, RetroPlayer } from "@/lib/toolbox/health-radar/types";
 import { useI18n } from "@/lib/i18n";
 
 export default function RetroLobbyPage() {
@@ -27,12 +27,12 @@ export default function RetroLobbyPage() {
 
   const shareUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/retrospective/join?code=${upperCode}`
+      ? `${window.location.origin}/toolbox/health-radar/join?code=${upperCode}`
       : "";
 
   const breadcrumbs = [
     { href: "/", label: t.common.home },
-    { href: "/retrospective", label: t.retrospective.title },
+    { href: "/toolbox/health-radar", label: t.retrospective.title },
     { label: t.retrospective.statusLobby },
   ];
 
@@ -40,7 +40,7 @@ export default function RetroLobbyPage() {
   useEffect(() => {
     const stored = localStorage.getItem(`retro_player_${upperCode}`);
     if (!stored) {
-      router.replace(`/retrospective/join?code=${upperCode}`);
+      router.replace(`/toolbox/health-radar/join?code=${upperCode}`);
       return;
     }
     try {
@@ -48,7 +48,7 @@ export default function RetroLobbyPage() {
       setPlayerId(pid);
       setPlayerSecret(secret ?? "");
     } catch {
-      router.replace(`/retrospective/join?code=${upperCode}`);
+      router.replace(`/toolbox/health-radar/join?code=${upperCode}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [upperCode]);
@@ -58,7 +58,7 @@ export default function RetroLobbyPage() {
     if (!playerId) return;
 
     async function fetchRoom() {
-      const res = await fetch(`/api/retrospective/room/${upperCode}`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache, no-store" },
       });
@@ -78,8 +78,8 @@ export default function RetroLobbyPage() {
       setPlayers(fetchedPlayers);
       setLoading(false);
 
-      if (data.status === "voting") router.push(`/retrospective/${upperCode}/vote`);
-      else if (data.status === "finished") router.push(`/retrospective/${upperCode}/results`);
+      if (data.status === "voting") router.push(`/toolbox/health-radar/${upperCode}/vote`);
+      else if (data.status === "finished") router.push(`/toolbox/health-radar/${upperCode}/results`);
     }
 
     fetchRoom();
@@ -92,7 +92,7 @@ export default function RetroLobbyPage() {
     setStarting(true);
     setStartError(null);
     try {
-      const res = await fetch(`/api/retrospective/room/${upperCode}/start`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Player-Secret": playerSecret },
         body: JSON.stringify({ playerId }),
@@ -205,7 +205,7 @@ export default function RetroLobbyPage() {
             <button
               onClick={() => {
                 localStorage.removeItem(`retro_player_${upperCode}`);
-                router.replace(`/retrospective/join?code=${upperCode}`);
+                router.replace(`/toolbox/health-radar/join?code=${upperCode}`);
               }}
               className="px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
             >

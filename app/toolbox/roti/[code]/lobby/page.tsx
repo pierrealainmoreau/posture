@@ -11,7 +11,7 @@ import type { RotiRoom, RotiPlayer } from "@/lib/roti/types";
 const breadcrumbs = [
   { href: "/", label: "Accueil" },
   { href: "/reunion-maker", label: "Réunion Maker" },
-  { href: "/retrospective/roti", label: "ROTI" },
+  { href: "/toolbox/roti", label: "ROTI" },
   { label: "Lobby" },
 ];
 
@@ -32,7 +32,7 @@ export default function RotiLobbyPage() {
 
   const shareUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/retrospective/roti/join?code=${upperCode}`
+      ? `${window.location.origin}/toolbox/roti/join?code=${upperCode}`
       : "";
 
   useEffect(() => {

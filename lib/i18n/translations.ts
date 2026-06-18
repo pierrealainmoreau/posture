@@ -324,6 +324,7 @@ const fr = {
       codeSecret: "L'équipe reçoit un message codé à déchiffrer avant que le timer n'atteigne zéro. Indices disponibles — mais chacun coûte des points.",
       thisorthat: "Vote instantané : chaque question affiche deux options professionnelles, tout le monde choisit en même temps, résultats révélés en direct.",
       completephrase: "Un starter, des complétions anonymes, un mur de post-its révélé en direct. Parfait pour créer de l'ouverture en équipe.",
+      healthRadar: "Bilan d'équipe sur 9 critères : engagement, communication, clarté des rôles… Votes anonymes, résultats révélés en direct.",
     },
     labels: {
       humeur: "Humeur du jour",
@@ -342,6 +343,7 @@ const fr = {
       codeSecret: "Code Secret",
       thisorthat: "This or That",
       completephrase: "Continuez la phrase",
+      healthRadar: "Health Radar",
     },
   },
   anecdotes: {
@@ -1677,6 +1679,7 @@ const en: Translations = {
       codeSecret: "The team receives a coded message to decipher before the timer hits zero. Hints available — but each one costs points.",
       thisorthat: "Instant vote: each question shows two professional options, everyone picks at once, results revealed live.",
       completephrase: "A starter phrase, anonymous completions, a post-it wall revealed live. Perfect for opening up team conversations.",
+      healthRadar: "Team health check on 9 criteria: engagement, communication, clarity of roles… Anonymous votes, results revealed live.",
     },
     labels: {
       humeur: "Daily Mood",
@@ -1695,6 +1698,7 @@ const en: Translations = {
       codeSecret: "Secret Code",
       thisorthat: "This or That",
       completephrase: "Complete the sentence",
+      healthRadar: "Health Radar",
     },
   },
   anecdotes: {
@@ -3024,6 +3028,7 @@ const es: Translations = {
       codeSecret: "El equipo recibe un mensaje codificado para descifrar antes de que el temporizador llegue a cero.",
       thisorthat: "Voto instantáneo: cada pregunta muestra dos opciones profesionales, todos eligen a la vez, resultados revelados en directo.",
       completephrase: "Una frase inicial, completaciones anónimas, un muro de post-its revelado en directo. Perfecto para abrir conversaciones en equipo.",
+      healthRadar: "Control de salud del equipo en 9 criterios: compromiso, comunicación, claridad de roles… Votos anónimos, resultados revelados en directo.",
     },
     labels: {
       humeur: "Humor del día",
@@ -3042,6 +3047,7 @@ const es: Translations = {
       codeSecret: "Código Secreto",
       thisorthat: "This or That",
       completephrase: "Completa la frase",
+      healthRadar: "Health Radar",
     },
   },
   anecdotes: {

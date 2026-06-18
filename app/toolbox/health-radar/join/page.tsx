@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/Header";
-import { AVATAR_COLORS } from "@/lib/retrospective/types";
+import { AVATAR_COLORS } from "@/lib/toolbox/health-radar/types";
 import { useI18n } from "@/lib/i18n";
 
 function JoinForm() {
@@ -31,7 +31,7 @@ function JoinForm() {
     setError(null);
 
     try {
-      const res = await fetch(`/api/retrospective/room/${upperCode}/players`, {
+      const res = await fetch(`/api/toolbox/health-radar/room/${upperCode}/players`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pseudo: pseudo.trim(), avatarColor }),
@@ -57,7 +57,7 @@ function JoinForm() {
         `retro_player_${upperCode}`,
         JSON.stringify({ playerId: data.playerId, playerSecret: data.playerSecret, pseudo: pseudo.trim(), avatarColor })
       );
-      router.push(`/retrospective/${upperCode}/lobby`);
+      router.push(`/toolbox/health-radar/${upperCode}/lobby`);
     } catch {
       setError(t.common.error);
       setJoining(false);
@@ -66,7 +66,7 @@ function JoinForm() {
 
   const breadcrumbs = [
     { href: "/", label: t.common.home },
-    { href: "/retrospective", label: t.retrospective.title },
+    { href: "/toolbox/health-radar", label: t.retrospective.title },
     { label: t.retrospective.join },
   ];
 

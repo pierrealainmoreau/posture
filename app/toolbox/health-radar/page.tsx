@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
-import type { RetroRoom } from "@/lib/retrospective/types";
+import type { RetroRoom } from "@/lib/toolbox/health-radar/types";
 
 interface RoomRow extends RetroRoom {
   player_count: number;
@@ -20,8 +20,8 @@ function RoomCard({ room }: { room: RoomRow }) {
   });
   const isActive = room.status !== "finished";
   const href = isActive
-    ? `/retrospective/${room.code}/lobby`
-    : `/retrospective/${room.code}/results`;
+    ? `/toolbox/health-radar/${room.code}/lobby`
+    : `/toolbox/health-radar/${room.code}/results`;
 
   const statusLabel =
     room.status === "lobby" ? t.retrospective.statusLobby
@@ -78,7 +78,7 @@ export default function RetrospectivePage() {
   const [isAuth, setIsAuth] = useState(false);
 
   useEffect(() => {
-    fetch("/api/retrospective/room")
+    fetch("/api/toolbox/health-radar/room")
       .then((r) => {
         if (r.status === 401) { setLoading(false); return null; }
         setIsAuth(true);
@@ -114,14 +114,14 @@ export default function RetrospectivePage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/retrospective/join"
+              href="/toolbox/health-radar/join"
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Hash size={14} />
               {t.common.join}
             </Link>
             <Link
-              href="/retrospective/create"
+              href="/toolbox/health-radar/create"
               className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 dark:bg-teal-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
             >
               <Plus size={14} />

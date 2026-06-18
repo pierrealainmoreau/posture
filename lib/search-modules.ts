@@ -1,8 +1,8 @@
 export const MODULES = [
   { id: "humeur",           name: "Humeur du jour",        description: "Prenez la température en temps réel — chaque participant vote sur son état d'esprit.", href: "/toolbox/humeur",          emoji: "😊" },
-  { id: "roti",             name: "ROTI",                  description: "Évaluez le retour sur temps investi d'une réunion en 30 secondes.",                       href: "/retrospective/roti",        emoji: "⭐" },
-  { id: "retrospective",    name: "Rétrospective santé",   description: "Bilan d'équipe sur 9 critères : engagement, communication, clarté des rôles…",            href: "/retrospective",             emoji: "🩺" },
-  { id: "speed-retro",      name: "Speed Retro",           description: "Rétrospective rapide en mode post-its : ce qui va bien, ce qui bloque, les actions.",      href: "/retrospective/speed",       emoji: "⚡" },
+  { id: "roti",             name: "ROTI",                  description: "Évaluez le retour sur temps investi d'une réunion en 30 secondes.",                       href: "/toolbox/roti",        emoji: "⭐" },
+  { id: "retrospective",    name: "Rétrospective santé",   description: "Bilan d'équipe sur 9 critères : engagement, communication, clarté des rôles…",            href: "/toolbox/health-radar",             emoji: "🩺" },
+  { id: "speed-retro",      name: "Speed Retro",           description: "Rétrospective rapide en mode post-its : ce qui va bien, ce qui bloque, les actions.",      href: "/toolbox/speed-retro",       emoji: "⚡" },
   { id: "kudo-cards",       name: "Kudo Cards",            description: "Envoyez des cartes de reconnaissance révélées en direct lors de votre session.",           href: "/reunion-maker/kudo-cards",  emoji: "🏆" },
   { id: "abcde",            name: "Atelier ABCDE",         description: "Facilitez une prise de décision collective en 5 étapes avec vote et synthèse IA.",         href: "/reunion-maker/abcde",       emoji: "🎯" },
   { id: "boussole",         name: "Boussole",              description: "Alignez votre équipe sur des valeurs et des principes communs.",                           href: "/boussole",                  emoji: "🧭" },
