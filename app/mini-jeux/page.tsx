@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare } from "lucide-react";
+import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare, Zap, Star, Gift, Layers } from "lucide-react";
 import { Header } from "@/components/Header";
 import { TrackUsage } from "@/components/TrackUsage";
 import { useI18n } from "@/lib/i18n";
@@ -94,8 +94,44 @@ const GAMES_STATIC: GameBase[] = [
     duration:  "15 min",
   },
   {
+    key:       "speedRetro",
+    href:      "/mini-jeux/speed-retro",
+    icon:      <Zap size={22} className="text-violet-600 dark:text-violet-400" />,
+    iconBg:    "bg-violet-50 dark:bg-violet-950",
+    available: true,
+    tags:      ["cohesion", "seminar"] as Tag[],
+    duration:  "20 min",
+  },
+  {
+    key:       "roti",
+    href:      "/mini-jeux/roti",
+    icon:      <Star size={22} className="text-amber-500 dark:text-amber-400" />,
+    iconBg:    "bg-amber-50 dark:bg-amber-950",
+    available: true,
+    tags:      ["meetingStart"] as Tag[],
+    duration:  "1 min",
+  },
+  {
+    key:       "kudoCards",
+    href:      "/mini-jeux/kudo-cards",
+    icon:      <Gift size={22} className="text-rose-600 dark:text-rose-400" />,
+    iconBg:    "bg-rose-50 dark:bg-rose-950",
+    available: true,
+    tags:      ["cohesion", "onboarding"] as Tag[],
+    duration:  "10 min",
+  },
+  {
+    key:       "abcde",
+    href:      "/mini-jeux/abcde",
+    icon:      <Layers size={22} className="text-indigo-600 dark:text-indigo-400" />,
+    iconBg:    "bg-indigo-50 dark:bg-indigo-950",
+    available: true,
+    tags:      ["cohesion", "seminar"] as Tag[],
+    duration:  "20-30 min",
+  },
+  {
     key:       "boussole",
-    href:      "/boussole",
+    href:      "/mini-jeux/boussole",
     icon:      <Compass size={22} className="text-indigo-600 dark:text-indigo-400" />,
     iconBg:    "bg-indigo-50 dark:bg-indigo-950",
     available: true,

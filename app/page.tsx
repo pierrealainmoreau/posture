@@ -282,7 +282,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/boussole"
+              href="/mini-jeux/boussole"
               className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
@@ -294,7 +294,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/retrospective/speed"
+              href="/mini-jeux/speed-retro"
               className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">

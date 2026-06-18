@@ -42,15 +42,15 @@ const GAME_LABEL: Record<GameType, string> = {
 // URL du lobby pour chaque jeu, paramétrée par le code de la room
 const GAME_LOBBY_URL: Record<GameType, (code: string) => string> = {
   retrospective: (c) => `/retrospective/${c}/lobby`,
-  abcde:         (c) => `/reunion-maker/abcde/${c}/lobby`,
-  kudo_cards:    (c) => `/reunion-maker/kudo-cards/${c}/lobby`,
-  roti:          (c) => `/retrospective/roti/${c}/lobby`,
+  abcde:         (c) => `/mini-jeux/abcde/${c}/lobby`,
+  kudo_cards:    (c) => `/mini-jeux/kudo-cards/${c}/lobby`,
+  roti:          (c) => `/mini-jeux/roti/${c}/lobby`,
   undercover:    (c) => `/mini-jeux/undercover/${c}/lobby`,
   chaine:        (c) => `/mini-jeux/chaine/${c}/lobby`,
   code_secret:   (c) => `/mini-jeux/code-secret/${c}/lobby`,
-  speed_retro:   (c) => `/retrospective/speed/${c}/lobby`,
+  speed_retro:   (c) => `/mini-jeux/speed-retro/${c}/lobby`,
   draw:          (c) => `/mini-jeux/draw/${c}/lobby`,
-  boussole:      (c) => `/boussole/${c}/lobby`,
+  boussole:      (c) => `/mini-jeux/boussole/${c}/lobby`,
   humeur:        (c) => `/mini-jeux/humeur/${c}/lobby`,
   tribu:         (c) => `/mini-jeux/tribu/${c}/lobby`,
 };
