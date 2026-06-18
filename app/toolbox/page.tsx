@@ -63,7 +63,7 @@ const GAMES_STATIC: GameBase[] = [
     icon:      <BookOpen size={22} className="text-emerald-600 dark:text-emerald-400" />,
     iconBg:    "bg-emerald-50 dark:bg-emerald-950",
     available: true,
-    tags:      ["knowledge", "cohesion"],
+    tags:      ["meetingStart", "knowledge", "cohesion"],
     duration:  "10 min",
   },
   {
@@ -81,7 +81,7 @@ const GAMES_STATIC: GameBase[] = [
     icon:      <Scale size={22} className="text-purple-600 dark:text-purple-400" />,
     iconBg:    "bg-purple-50 dark:bg-purple-950",
     available: true,
-    tags:      ["knowledge", "onboarding", "fun"],
+    tags:      ["knowledge", "onboarding", "fun", "cohesion"],
     duration:  "10 min",
   },
   {
@@ -117,7 +117,7 @@ const GAMES_STATIC: GameBase[] = [
     icon:      <Gift size={22} className="text-rose-600 dark:text-rose-400" />,
     iconBg:    "bg-rose-50 dark:bg-rose-950",
     available: true,
-    tags:      ["meetingEnd", "cohesion", "onboarding"],
+    tags:      ["meetingEnd", "cohesion"],
     duration:  "10 min",
   },
   {
@@ -126,7 +126,7 @@ const GAMES_STATIC: GameBase[] = [
     icon:      <Layers size={22} className="text-indigo-600 dark:text-indigo-400" />,
     iconBg:    "bg-indigo-50 dark:bg-indigo-950",
     available: true,
-    tags:      ["knowledge", "cohesion", "seminar"],
+    tags:      ["knowledge", "seminar"],
     duration:  "20-30 min",
   },
   {
@@ -180,7 +180,7 @@ const GAMES_STATIC: GameBase[] = [
     icon:      <MessageSquare size={22} className="text-fuchsia-600 dark:text-fuchsia-400" />,
     iconBg:    "bg-fuchsia-50 dark:bg-fuchsia-950",
     available: true,
-    tags:      ["meetingStart", "cohesion"],
+    tags:      ["meetingStart", "cohesion", "knowledge", "seminar"],
     duration:  "5 min",
   },
 ];
