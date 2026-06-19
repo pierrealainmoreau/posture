@@ -367,7 +367,7 @@ export default function IcebreakerV2Page() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       <Header backHref="/" currentTool="Icebreakers" />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-5 flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-5 flex flex-col lg:flex-row gap-10 items-start lg:items-center justify-center">
 
         {/* ── LEFT : card ───────────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-4 flex-shrink-0">

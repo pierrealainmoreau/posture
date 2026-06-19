@@ -62,6 +62,57 @@ export async function GET(
   }
 }
 
+// DELETE /api/sessions/[code] — supprimer définitivement la session (host only)
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { code: string } }
+) {
+  try {
+    const admin = createAdminSupabaseClient();
+    const code = params.code.toUpperCase();
+
+    const { participantId, playerSecret } = (await req.json()) as {
+      participantId: string;
+      playerSecret: string;
+    };
+
+    const isValid = await verifyPlayerSecret(
+      admin,
+      "session_participants",
+      participantId,
+      playerSecret
+    );
+    if (!isValid) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+    }
+
+    const { data: participant } = await admin
+      .from("session_participants")
+      .select("is_host, session_id")
+      .eq("id", participantId)
+      .single();
+
+    if (!participant?.is_host) {
+      return NextResponse.json({ error: "Seul l'hôte peut supprimer la session" }, { status: 403 });
+    }
+
+    const { error } = await admin
+      .from("sessions")
+      .delete()
+      .eq("code", code)
+      .eq("id", participant.session_id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true }, NO_CACHE);
+  } catch (err) {
+    console.error("[DELETE /api/sessions/[code]]", err);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
 // PATCH /api/sessions/[code] — terminer la session (host only)
 export async function PATCH(
   req: NextRequest,

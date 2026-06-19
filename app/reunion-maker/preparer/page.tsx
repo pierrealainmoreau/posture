@@ -589,7 +589,7 @@ export default function ReunionMakerPreparerPage() {
       <Header breadcrumbs={breadcrumbs} />
       <TrackUsage toolId="reunion-maker" />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
         <UsageIndicator />
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">

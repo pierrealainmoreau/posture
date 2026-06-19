@@ -166,7 +166,7 @@ export default function FeedbackPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Header backHref="/" currentTool={t.feedback.title} />
       <TrackUsage toolId="feedback" />
-      <main className="mx-auto max-w-6xl px-6 py-6">
+      <main className="mx-auto max-w-5xl px-6 py-6">
         <UsageIndicator />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
