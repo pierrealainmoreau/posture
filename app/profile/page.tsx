@@ -20,10 +20,13 @@ import {
   Loader2,
   Hand,
   Star,
+  Pencil,
+  ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Header } from "@/components/Header";
 import { PMFBanner } from "@/components/PMFBanner";
+import { EditProfileModal, type ProfileEditData } from "@/components/EditProfileModal";
 import { createClient } from "@/lib/supabase/client";
 import { loadProgress } from "@/lib/academie/storage";
 import { ALL_PATHWAYS } from "@/lib/academie/pathways/index";
@@ -144,6 +147,8 @@ export default function ProfilePage() {
   const [badgesEarned, setBadgesEarned]             = useState<string[]>([]);
   const [suggestions, setSuggestions]               = useState<Suggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [profileEditData, setProfileEditData]       = useState<ProfileEditData | null>(null);
+  const [showEditModal, setShowEditModal]           = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -153,10 +158,16 @@ export default function ProfilePage() {
       setCreatedAt(user.created_at ?? null);
       const { data: profile } = await supabase
         .from("profiles")
-        .select("first_name")
+        .select("first_name, avatar_url, linkedin_url, coach_interest, newsletter_opt_in")
         .eq("id", user.id)
         .single();
       setFirstName(profile?.first_name ?? user.email ?? "");
+      setProfileEditData({
+        avatar_url: profile?.avatar_url ?? null,
+        linkedin_url: profile?.linkedin_url ?? null,
+        coach_interest: profile?.coach_interest ?? null,
+        newsletter_opt_in: profile?.newsletter_opt_in ?? true,
+      });
       const progress = await loadProgress(user.id);
       setBadgesEarned(progress.badges_earned);
       const passed = ALL_PATHWAYS.reduce((total, pathway) => {
@@ -255,11 +266,18 @@ export default function ProfilePage() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 pt-6 pb-16 space-y-10">
 
         {/* ── Header ── */}
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 text-xl font-bold select-none">
-            {firstName.charAt(0).toUpperCase()}
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-100 dark:border-gray-800">
+            {profileEditData?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profileEditData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 text-xl font-bold select-none">
+                {firstName.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{firstName}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
               {createdAt && (
@@ -274,7 +292,25 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
+            {profileEditData?.linkedin_url && (
+              <a
+                href={profileEditData.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <ExternalLink size={11} />
+                LinkedIn
+              </a>
+            )}
           </div>
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label="Modifier le profil"
+          >
+            <Pencil size={15} />
+          </button>
         </div>
 
         {/* ── Tools ── */}
@@ -401,6 +437,19 @@ export default function ProfilePage() {
         </section>
 
       </main>
+
+      {showEditModal && userId && profileEditData && (
+        <EditProfileModal
+          userId={userId}
+          firstName={firstName}
+          initialData={profileEditData}
+          onClose={() => setShowEditModal(false)}
+          onSaved={(data) => {
+            setProfileEditData(data);
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
