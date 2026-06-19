@@ -7,7 +7,7 @@ import {
   Eye, Crown, Loader2, ChevronRight,
   Shuffle, BookOpen, GraduationCap, Quote,
   Trophy, UserRoundCheck, CalendarDays, Target, SmilePlus, Sparkles,
-  Activity, Zap, Brain, Users, UserPlus, Check,
+  Activity, Zap, Brain, Users, UserPlus, Check, ClipboardList,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { PMFBanner } from "@/components/PMFBanner";
@@ -60,7 +60,7 @@ export default function Home() {
   const [firstName,     setFirstName]     = useState<string | null>(null);
   const [userId,        setUserId]        = useState<string | null>(null);
   const [role,          setRole]          = useState<string>("user");
-  const [acadStats,     setAcadStats]     = useState({ badges: 0 });
+  const [acadStats,     setAcadStats]     = useState({ badges: 0, totalQuizzes: 0 });
   const [weeklyCoach,   setWeeklyCoach]   = useState<WeeklyCoachData | null>(null);
   const [collaborators, setCollaborators] = useState<CollabPreview[]>([]);
 
@@ -94,11 +94,13 @@ export default function Home() {
 
       const progress = await loadProgress(user.id);
       let badges = 0;
+      let totalQuizzes = 0;
       ALL_PATHWAYS.forEach((pathway) => {
         const statuses = computePathwayStatus(pathway, progress);
         badges += statuses.filter((s) => s.passed).length;
+        totalQuizzes += statuses.length;
       });
-      setAcadStats({ badges });
+      setAcadStats({ badges, totalQuizzes });
     }).catch(() => router.replace("/login"));
   }, [router]);
 
@@ -110,7 +112,6 @@ export default function Home() {
     );
   }
 
-  const totalBadges  = ALL_PATHWAYS.length;
   const todayDayNum  = new Date().getDay(); // 0=Dim, 1=Lun…6=Sam
   const todayLabel   = DAY_NAMES[todayDayNum] ?? "";
   const completedCount = (weeklyCoach?.week_progress ?? []).filter((d) => d.completed).length;
@@ -289,7 +290,10 @@ export default function Home() {
           <div className="grid grid-cols-3 grid-rows-2 gap-3">
 
             {/* ── Col 1, lignes 1+2 : Weekly Coach ── */}
-            <div className="row-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-green-300 dark:hover:border-green-700 transition-all duration-150">
+            <div
+              className="row-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-green-300 dark:hover:border-green-700 transition-all duration-150 cursor-pointer"
+              onClick={(e) => { if (!(e.target as Element).closest("a")) router.push("/coach/weekly"); }}
+            >
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 bg-green-50 dark:bg-green-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
                   <Brain size={15} className="text-green-700 dark:text-green-400" />
@@ -452,7 +456,7 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <div className="flex flex-col flex-1 divide-y divide-gray-100 dark:divide-gray-800">
+                  <div className="flex flex-col flex-1 gap-1.5">
                     {collaborators.map((c, i) => {
                       const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
                       const initials = ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
@@ -460,17 +464,14 @@ export default function Home() {
                         <Link
                           key={c.id}
                           href={`/coach/${c.id}`}
-                          className="flex items-center gap-2.5 py-2.5 hover:opacity-75 transition-opacity"
+                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all"
                         >
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
                             {initials}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">
-                              {c.first_name} {c.last_name}
-                            </p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{c.role}</p>
-                          </div>
+                          <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                            {c.first_name} {c.last_name}
+                          </p>
                           <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                         </Link>
                       );
@@ -500,7 +501,7 @@ export default function Home() {
               <div className="flex items-center gap-1.5 mt-auto">
                 <Trophy size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
                 <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-                  {acadStats.badges} / {totalBadges} badges
+                  {acadStats.badges} / {acadStats.totalQuizzes} badges
                 </span>
               </div>
               <p className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
@@ -509,23 +510,30 @@ export default function Home() {
             </Link>
 
             {/* ── Col 3, ligne 2 : Recrutement ── */}
-            <Link
-              href="/recruitment"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150"
-            >
-              <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150">
+              <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 bg-pink-50 dark:bg-pink-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
                   <UserPlus size={15} className="text-pink-700 dark:text-pink-400" />
                 </div>
                 <span className="text-xs font-bold text-gray-900 dark:text-white">Recrutement</span>
               </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-auto mb-2">
-                Fiches de poste, entretiens
-              </p>
-              <p className="text-[11px] font-semibold text-pink-600 dark:text-pink-400">
-                Ouvrir →
-              </p>
-            </Link>
+              <div className="flex flex-col gap-1.5 mt-auto">
+                <Link
+                  href="/recruitment?tab=job-description"
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                >
+                  <ClipboardList size={11} className="flex-shrink-0" />
+                  Fiche de poste
+                </Link>
+                <Link
+                  href="/recruitment?tab=recruiter"
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                >
+                  <UserRoundCheck size={11} className="flex-shrink-0" />
+                  Questions entretien
+                </Link>
+              </div>
+            </div>
 
           </div>
         </section>
