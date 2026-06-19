@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Copy, CheckCheck, Users, Gift, Share2 } from "lucide-react";
 import { Header } from "@/components/Header";
+import { useI18n } from "@/lib/i18n";
 
 const GOAL = 3;
 
@@ -49,6 +50,7 @@ function StepGauge({ count }: { count: number }) {
 }
 
 export default function ReferralPage() {
+  const { t } = useI18n();
   const [data, setData]     = useState<ReferralData | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -77,8 +79,8 @@ export default function ReferralPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Posture — La 3ème main du manager",
-          text: "Je t'invite à essayer Posture : accès gratuit pendant 2 mois pendant la Bêta !",
+          title: t.referral.shareTitle,
+          text: t.referral.shareText,
           url: referralUrl,
         });
       } catch { /* cancelled */ }
@@ -92,28 +94,27 @@ export default function ReferralPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/" currentTool="Parrainage" />
+      <Header backHref="/" currentTool={t.common.referral} />
 
       <main className="flex-1 max-w-xl mx-auto w-full px-5 pt-8 pb-16 space-y-6">
 
         {/* ── Hero ── */}
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 mb-3">
-            Offre Bêta exclusive
+            {t.referral.exclusiveOffer}
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Invitez vos amis managers
+            {t.referral.title}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Partagez votre lien personnel. Pour chaque ami qui rejoint Posture,
-            vous avancez vers <strong className="text-gray-700 dark:text-gray-300">3 mois gratuits</strong> à la fin de la Bêta.
+            {t.referral.subtitle}
           </p>
         </div>
 
         {/* ── Lien de parrainage ── */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            Votre lien personnel
+            {t.referral.personalLink}
           </p>
           {referralUrl ? (
             <>
@@ -128,14 +129,14 @@ export default function ReferralPage() {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   {copied ? <CheckCheck size={15} className="text-emerald-500" /> : <Copy size={15} />}
-                  {copied ? "Lien copié !" : "Copier le lien"}
+                  {copied ? t.referral.copied : t.referral.copyLink}
                 </button>
                 <button
                   onClick={handleShare}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
                   <Share2 size={15} />
-                  Partager
+                  {t.referral.share}
                 </button>
               </div>
             </>
@@ -150,7 +151,7 @@ export default function ReferralPage() {
         }`}>
           <div className="flex items-center justify-between mb-5">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Progression
+              {t.referral.progress}
             </p>
             <span className={`text-sm font-bold tabular-nums ${
               done ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
@@ -165,10 +166,10 @@ export default function ReferralPage() {
 
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             {done
-              ? "🎉 Objectif atteint ! Votre récompense est réservée."
+              ? `🎉 ${t.referral.goalAchieved}`
               : count === 0
-                ? "Partagez votre lien pour commencer"
-                : `Encore ${GOAL - count} invitation${GOAL - count > 1 ? "s" : ""} pour débloquer la récompense`}
+                ? t.referral.startSharing
+                : `${t.referral.moreToUnlock.replace("{n}", String(GOAL - count))}`}
           </p>
         </div>
 
@@ -188,14 +189,12 @@ export default function ReferralPage() {
               <p className={`text-sm font-semibold mb-1 ${
                 done ? "text-white" : "text-gray-900 dark:text-white"
               }`}>
-                3 mois gratuits à la fin de la Bêta
+                {t.referral.freeMonths}
               </p>
               <p className={`text-xs leading-relaxed ${
                 done ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
               }`}>
-                {done
-                  ? "La récompense sera appliquée automatiquement sur votre compte lorsque la Bêta se terminera le 31 août."
-                  : "Invitez 3 amis managers pour débloquer 3 mois d'accès premium offerts quand Posture passera en version payante."}
+                {done ? t.referral.rewardDone : t.referral.rewardPending}
               </p>
             </div>
           </div>
@@ -206,7 +205,7 @@ export default function ReferralPage() {
           <div className="flex items-center gap-2 mb-3">
             <Users size={15} className="text-gray-400" />
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Amis invités
+              {t.referral.friends}
             </h2>
           </div>
 
@@ -219,7 +218,7 @@ export default function ReferralPage() {
           ) : data.invited.length === 0 ? (
             <div className="bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl px-5 py-8 text-center">
               <p className="text-sm text-gray-400 dark:text-gray-500">
-                Personne n&apos;a encore rejoint via votre lien
+                {t.referral.noFriends}
               </p>
             </div>
           ) : (
@@ -234,7 +233,7 @@ export default function ReferralPage() {
                       {inv.first_name}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">
-                      A rejoint le{" "}
+                      {t.referral.joinedOn}{" "}
                       {new Date(inv.created_at).toLocaleDateString("fr-FR", {
                         day: "numeric",
                         month: "long",

@@ -220,22 +220,26 @@ function SkeletonLoader() {
 
 // ─── Recruiter components ─────────────────────────────────────────────────────
 
+// The API always returns themes in French; this map normalizes to fr key
+const THEME_FR_KEY: Record<string, "themesBehavior" | "themesSkills" | "themesCultural" | "themesMotivation"> = {
+  Comportement:   "themesBehavior",
+  Compétences:    "themesSkills",
+  "Fit culturel": "themesCultural",
+  Motivation:     "themesMotivation",
+};
+
 const THEME_COLORS: Record<string, string> = {
-  Comportement:
-    "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
-  Compétences:
-    "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
-  "Fit culturel":
-    "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
-  Motivation:
-    "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
+  themesBehavior: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
+  themesSkills:   "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
+  themesCultural: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
+  themesMotivation:"bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300",
 };
 
 function themeBadgeClass(theme: string): string {
-  return (
-    THEME_COLORS[theme] ??
-    "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-  );
+  const key = THEME_FR_KEY[theme];
+  return key
+    ? (THEME_COLORS[key] ?? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300")
+    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300";
 }
 
 function RecruiterQuestionCard({
@@ -259,7 +263,7 @@ function RecruiterQuestionCard({
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${themeBadgeClass(question.theme)}`}
             >
-              {question.theme}
+              {t.recruitment[THEME_FR_KEY[question.theme] ?? "themesBehavior"] ?? question.theme}
             </span>
           </div>
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug">
@@ -375,7 +379,7 @@ function CandidateQuestionCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-              {question.theme}
+              {THEME_FR_KEY[question.theme] ? (t.recruitment[THEME_FR_KEY[question.theme]!] ?? question.theme) : question.theme}
             </span>
           </div>
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug">

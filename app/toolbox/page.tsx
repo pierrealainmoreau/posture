@@ -204,19 +204,19 @@ const ALL_TAGS: Tag[] = [
   "seminar",
 ];
 
-const TAG_LABELS: Record<Tag, string> = {
-  onboarding:   "Onboarding",
-  meetingStart: "Début de réunion",
-  meetingEnd:   "Fin de réunion",
-  cohesion:     "Cohésion",
-  fun:          "Fun",
-  knowledge:    "Connaissance",
-  seminar:      "Séminaire",
-};
-
 export default function ToolboxPage() {
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
+
+  const TAG_LABELS: Record<Tag, string> = {
+    onboarding:   t.miniJeux.tags.onboarding,
+    meetingStart: t.miniJeux.tags.meetingStart,
+    meetingEnd:   t.miniJeux.tags.meetingEnd,
+    cohesion:     t.miniJeux.tags.cohesion,
+    fun:          t.miniJeux.tags.fun,
+    knowledge:    t.miniJeux.tags.knowledge,
+    seminar:      t.miniJeux.tags.seminar,
+  };
   const [fromParams, setFromParams]     = useState("");
 
   useEffect(() => {
@@ -234,13 +234,13 @@ export default function ToolboxPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/" currentTool="Boite à outils" />
+      <Header backHref="/" currentTool={t.common.toolbox} />
       <TrackUsage toolId="toolbox" />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Boite à outils
+            {t.common.toolbox}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
             {t.miniJeux.subtitle}

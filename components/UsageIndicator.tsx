@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { limitForRole } from "@/lib/supabase/rateLimit";
+import { useI18n } from "@/lib/i18n";
 
 interface UsageData {
   count: number;
@@ -10,6 +11,7 @@ interface UsageData {
 }
 
 export function UsageIndicator() {
+  const { t } = useI18n();
   const [usage, setUsage] = useState<UsageData | null>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function UsageIndicator() {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Utilisation
+            {t.usage.title}
           </span>
           <span className={`text-xs font-semibold tabular-nums ${textColor}`}>
             {count} / {limit}
@@ -67,8 +69,8 @@ export function UsageIndicator() {
       </div>
       <p className={`text-xs flex-shrink-0 ${textColor}`}>
         {pct >= 100
-          ? "Limite atteinte"
-          : `${remaining} restante${remaining > 1 ? "s" : ""}`}
+          ? t.usage.limitReached
+          : `${remaining} ${remaining > 1 ? t.usage.remainingPlural : t.usage.remaining}`}
       </p>
     </div>
   );

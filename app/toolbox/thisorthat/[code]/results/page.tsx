@@ -9,19 +9,10 @@ import { resolveQuestion } from "@/lib/thisorthat/questions";
 import type { CustomQuestion } from "@/lib/thisorthat/questions";
 import { ContinueSessionButton } from "@/components/ContinueSessionButton";
 import type { ThisOrThatRoom, ThisOrThatPlayer, ThisOrThatVote } from "@/lib/thisorthat/types";
+import { useI18n } from "@/lib/i18n";
 
 type RoomData = ThisOrThatRoom & { players: ThisOrThatPlayer[]; votes: ThisOrThatVote[] };
 
-const GAME_LABELS: Record<string, string> = {
-  thisorthat:    "This or That",
-  completephrase: "Continuez la phrase",
-  humeur:        "Humeur du jour",
-  chaine:        "La Chaîne",
-  undercover:    "Undercover",
-  draw:          "Pictionary",
-  code_secret:   "Code Secret",
-  tribu:         "Tribu",
-};
 
 const GAME_JOIN_PATHS: Record<string, string> = {
   thisorthat:    "/toolbox/thisorthat/join",
@@ -106,6 +97,7 @@ function QuestionResult({
 }
 
 export default function ThisOrThatResultsPage() {
+  const { t } = useI18n();
   const { code } = useParams<{ code: string }>();
   const upperCode = (code as string).toUpperCase();
   const router = useRouter();
@@ -117,10 +109,10 @@ export default function ThisOrThatResultsPage() {
   const pollRef                   = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const breadcrumbs = [
-    { href: "/", label: "Accueil" },
-    { href: "/toolbox", label: "Mini-jeux" },
+    { href: "/", label: t.common.home },
+    { href: "/toolbox", label: t.common.miniJeux },
     { href: "/toolbox/thisorthat", label: "This or That" },
-    { label: "Résultats" },
+    { label: t.common.results },
   ];
 
   useEffect(() => {
@@ -183,13 +175,13 @@ export default function ThisOrThatResultsPage() {
   if (loading || !room) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center text-gray-400">
-        <Loader2 size={20} className="animate-spin mr-2" /> Chargement…
+        <Loader2 size={20} className="animate-spin mr-2" /> {t.common.loading}
       </div>
     );
   }
 
   const isHost = room.host_player_id === playerId;
-  const nextGameLabel = nextGame ? (GAME_LABELS[nextGame.type] ?? nextGame.type) : null;
+  const nextGameLabel = nextGame ? (t.thisorthat.gameLabels[nextGame.type as keyof typeof t.thisorthat.gameLabels] ?? nextGame.type) : null;
   const nextGameJoinPath = nextGame ? (GAME_JOIN_PATHS[nextGame.type] ?? null) : null;
 
   return (
@@ -209,7 +201,7 @@ export default function ThisOrThatResultsPage() {
           <div className="mb-6 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 rounded-2xl p-4 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 mb-0.5">
-                {isHost ? "Prochain jeu lancé" : "L'hôte a lancé le prochain jeu"}
+                {isHost ? t.thisorthat.nextGameHost : t.thisorthat.nextGameParticipant}
               </p>
               <p className="text-sm font-bold text-violet-900 dark:text-violet-100">{nextGameLabel}</p>
             </div>
@@ -218,7 +210,7 @@ export default function ThisOrThatResultsPage() {
                 href={`${nextGameJoinPath}?code=${nextGame.code}`}
                 className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
               >
-                Rejoindre
+                {t.icebreaker.join}
                 <ArrowRight size={14} />
               </Link>
             )}
@@ -247,21 +239,21 @@ export default function ThisOrThatResultsPage() {
                 className="flex items-center justify-center gap-2 py-3 bg-sky-500 text-white text-sm font-semibold rounded-xl hover:bg-sky-600 transition-colors"
               >
                 <Plus size={14} />
-                Nouvelle partie
+                {t.common.newGame}
               </Link>
               <Link
                 href={`/toolbox?fromGame=thisorthat&fromCode=${upperCode}`}
                 className="flex items-center justify-center gap-2 py-3 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <RefreshCw size={14} />
-                Autres mini-jeux
+                {t.common.otherGames}
               </Link>
               <Link
                 href="/"
                 className="flex items-center justify-center gap-2 py-3 text-gray-400 dark:text-gray-500 text-sm rounded-xl hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
               >
                 <LogOut size={14} />
-                Quitter
+                {t.common.quit}
               </Link>
             </>
           ) : (
@@ -273,7 +265,7 @@ export default function ThisOrThatResultsPage() {
               className="flex items-center justify-center gap-2 py-3 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <LogOut size={14} />
-              Fermer la session
+              {t.common.closeSession}
             </button>
           )}
         </div>

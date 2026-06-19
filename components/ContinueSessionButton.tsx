@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ChevronRight, ArrowLeft } from "lucide-react";
-
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 type GameType =
   | "retrospective" | "abcde" | "kudo_cards" | "roti"
@@ -36,6 +36,7 @@ type Props = {
 // - Participant : lien "← Retour à la session" (pour rejoindre l'écran d'attente du prochain jeu)
 export function ContinueSessionButton({ gameType, roomCode }: Props) {
   const router = useRouter();
+  const { t } = useI18n();
   const [sessionInfo, setSessionInfo]     = useState<SessionInfo | null>(null);
   const [storedSession, setStoredSession] = useState<StoredSession | null>(null);
   const [loading, setLoading]             = useState(true);
@@ -89,7 +90,7 @@ export function ContinueSessionButton({ gameType, roomCode }: Props) {
         if (!res.ok) {
           const d = await res.json() as { error?: string };
           if (!d.error?.includes("déjà terminée")) {
-            setError(d.error ?? "Erreur lors de la clôture de l'activité.");
+            setError(d.error ?? t.session.errorClose);
             setContinuing(false);
             return;
           }
@@ -98,14 +99,13 @@ export function ContinueSessionButton({ gameType, roomCode }: Props) {
 
       router.push(`/session/${sessionInfo.sessionCode}/host`);
     } catch {
-      setError("Erreur de connexion.");
+      setError(t.session.errorNetwork);
       setContinuing(false);
     }
   }
 
   if (loading || !sessionInfo || !storedSession) return null;
 
-  // Participant non-hôte : simple lien de retour vers la salle d'attente
   if (!storedSession.is_host) {
     return (
       <Link
@@ -113,12 +113,11 @@ export function ContinueSessionButton({ gameType, roomCode }: Props) {
         className="w-full flex items-center justify-center gap-2 py-3 border border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300 text-sm font-medium rounded-xl hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors"
       >
         <ArrowLeft size={15} />
-        Retour à la session
+        {t.session.backToSession}
       </Link>
     );
   }
 
-  // Hôte : bouton de continuation avec clôture de l'activité
   return (
     <div className="flex flex-col gap-2">
       {error && (
@@ -133,7 +132,7 @@ export function ContinueSessionButton({ gameType, roomCode }: Props) {
           ? <Loader2 size={15} className="animate-spin" />
           : <ChevronRight size={15} />
         }
-        {continuing ? "Retour à la session…" : "Continuer la session →"}
+        {continuing ? t.session.continueBtnLoading : t.session.continueBtn}
       </button>
     </div>
   );

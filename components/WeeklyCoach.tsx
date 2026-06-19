@@ -6,14 +6,14 @@ import {
   CalendarDays, Check, ChevronRight, Coffee,
   Heart, Loader2, MessageCircle, Sparkles, Target, UserPlus, Users,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 // ── Need types ────────────────────────────────────────────────────────────────
 
 const NEED_TYPES = [
   {
     id: "cohesion",
-    label: "Cohésion d'équipe",
-    desc: "Mini-jeux, rétrospectives, kudo cards",
+    labelKey: "needCohesion",
     Icon: Users,
     iconBg: "bg-blue-50 dark:bg-blue-950",
     iconColor: "text-blue-700 dark:text-blue-400",
@@ -21,8 +21,7 @@ const NEED_TYPES = [
   },
   {
     id: "performance",
-    label: "Performance collective",
-    desc: "Feedback, OKR, quiz managérial",
+    labelKey: "needPerformance",
     Icon: Target,
     iconBg: "bg-violet-50 dark:bg-violet-950",
     iconColor: "text-violet-700 dark:text-violet-400",
@@ -30,8 +29,7 @@ const NEED_TYPES = [
   },
   {
     id: "wellbeing",
-    label: "Bien-être au travail",
-    desc: "Humeur, icebreakers, kudo cards",
+    labelKey: "needWellbeing",
     Icon: Heart,
     iconBg: "bg-emerald-50 dark:bg-emerald-950",
     iconColor: "text-emerald-700 dark:text-emerald-400",
@@ -39,8 +37,7 @@ const NEED_TYPES = [
   },
   {
     id: "communication",
-    label: "Communication d'équipe",
-    desc: "ABCDE, réunion, icebreakers",
+    labelKey: "needCommunication",
     Icon: MessageCircle,
     iconBg: "bg-amber-50 dark:bg-amber-950",
     iconColor: "text-amber-700 dark:text-amber-400",
@@ -48,8 +45,7 @@ const NEED_TYPES = [
   },
   {
     id: "onboarding",
-    label: "Intégrer un collaborateur",
-    desc: "1:1 Coach, icebreakers, rétrospective",
+    labelKey: "needOnboarding",
     Icon: UserPlus,
     iconBg: "bg-cyan-50 dark:bg-cyan-950",
     iconColor: "text-cyan-700 dark:text-cyan-400",
@@ -66,6 +62,17 @@ const CATEGORY_COLOR: Record<string, string> = {
   "Atelier":        "bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400",
   "Reconnaissance": "bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400",
   "1:1 Coach":      "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400",
+};
+
+const CATEGORY_I18N: Record<string, string> = {
+  "Mini-jeu":       "catMinigame",
+  "Rétrospective":  "catRetrospective",
+  "Feedback":       "catFeedback",
+  "Quiz":           "catQuiz",
+  "Réunion":        "catMeeting",
+  "Atelier":        "catWorkshop",
+  "Reconnaissance": "catRecognition",
+  "1:1 Coach":      "catCoach",
 };
 
 const DAY_LABELS = ["L", "M", "M", "J", "V"];
@@ -90,6 +97,9 @@ interface WeeklyCoachData {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function WeeklyCoach() {
+  const { t } = useI18n();
+  const wc = t.weeklyCoach as Record<string, string>;
+
   const [data, setData] = useState<WeeklyCoachData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null);
@@ -158,7 +168,7 @@ export function WeeklyCoach() {
     );
   }
 
-  // ── Setup (non configuré ou modification) ───────────────────────────────
+  // ── Setup ────────────────────────────────────────────────────────────────
 
   if (setupMode || !data?.configured) {
     return (
@@ -169,7 +179,7 @@ export function WeeklyCoach() {
           </div>
           <div>
             <p className="font-semibold text-gray-900 dark:text-white text-sm">Weekly Coach</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Quel est votre besoin principal ?</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t.weeklyCoach.mainNeed}</p>
           </div>
         </div>
 
@@ -191,7 +201,7 @@ export function WeeklyCoach() {
                   <Icon size={15} className={need.iconColor} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-900 dark:text-white leading-tight">{need.label}</p>
+                  <p className="text-xs font-medium text-gray-900 dark:text-white leading-tight">{wc[need.labelKey]}</p>
                 </div>
                 {isSelected && (
                   <Check size={13} className="text-blue-600 dark:text-blue-400 flex-shrink-0" />
@@ -211,7 +221,7 @@ export function WeeklyCoach() {
           ) : (
             <Sparkles size={13} />
           )}
-          Activer le Weekly Coach
+          {t.weeklyCoach.activate}
         </button>
       </div>
     );
@@ -220,6 +230,7 @@ export function WeeklyCoach() {
   const progress = data.week_progress ?? [];
   const weekDone = progress.filter((p) => p.completed).length;
   const todayJsDay = new Date().getDay(); // 0=Dim, 1=Lun…6=Sam
+  const weekProgressLabel = `${weekDone}${t.weeklyCoach.weekProgress}`;
 
   // ── Modal de confirmation changement de besoin ────────────────────────────
 
@@ -229,23 +240,23 @@ export function WeeklyCoach() {
         <CalendarDays size={20} className="text-amber-600 dark:text-amber-400" />
       </div>
       <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2 text-center">
-        Changer de besoin ?
+        {t.weeklyCoach.changeNeed}
       </h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-5 text-center">
-        Vous avez déjà complété l&apos;action du jour. En changeant de catégorie, cette progression sera réinitialisée.
+        {t.weeklyCoach.changeNeedDesc}
       </p>
       <div className="flex gap-2 w-full">
         <button
           onClick={() => setShowConfirmModal(false)}
           className="flex-1 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          Annuler
+          {t.common.cancel}
         </button>
         <button
           onClick={() => { setShowConfirmModal(false); setSetupMode(true); }}
           className="flex-1 py-2 text-xs font-medium text-white bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors"
         >
-          Continuer
+          {t.weeklyCoach.continue}
         </button>
       </div>
     </div>
@@ -257,13 +268,13 @@ export function WeeklyCoach() {
     return (
       <div className="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
         {confirmModal}
-        <CoachHeader weekDone={weekDone} onEdit={handleEditRequest} />
+        <CoachHeader onEdit={handleEditRequest} weekProgressLabel={weekProgressLabel} editLabel={t.weeklyCoach.edit} />
         <WeekDots progress={progress} todayJsDay={null} />
         <div className="mt-4 flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
           <Coffee size={17} className="text-gray-400 flex-shrink-0" />
           <div>
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">Bon weekend !</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Votre prochaine action commence lundi.</p>
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t.weeklyCoach.weekend}</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{t.weeklyCoach.weekendDesc}</p>
           </div>
         </div>
       </div>
@@ -271,18 +282,19 @@ export function WeeklyCoach() {
   }
 
   const template = data.template;
+  const catLabel = wc[CATEGORY_I18N[template?.category ?? ""] ?? ""] ?? template?.category ?? "";
 
   // ── Active / completed ────────────────────────────────────────────────────
 
   return (
     <div className="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
       {confirmModal}
-      <CoachHeader weekDone={weekDone} onEdit={handleEditRequest} />
+      <CoachHeader onEdit={handleEditRequest} weekProgressLabel={weekProgressLabel} editLabel={t.weeklyCoach.edit} />
       <WeekDots progress={progress} todayJsDay={todayJsDay} />
 
       {!template ? (
         <p className="mt-4 text-[11px] text-gray-400 dark:text-gray-500 text-center py-3">
-          Aucune action configurée pour aujourd&apos;hui.
+          {t.weeklyCoach.noAction}
         </p>
       ) : data.completed ? (
         <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl">
@@ -290,14 +302,14 @@ export function WeeklyCoach() {
             <div className="w-5 h-5 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
               <Check size={11} className="text-white" />
             </div>
-            <p className="text-xs font-semibold text-green-700 dark:text-green-400">Action complétée !</p>
+            <p className="text-xs font-semibold text-green-700 dark:text-green-400">{t.weeklyCoach.completed}</p>
           </div>
           <p className="text-[11px] text-green-600 dark:text-green-500 leading-relaxed pl-7">{template.title}</p>
         </div>
       ) : (
         <div className="mt-4">
           <p className="text-[10px] uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 mb-2">
-            Action du jour
+            {t.weeklyCoach.actionOfDay}
           </p>
           <Link
             href={template.route}
@@ -309,7 +321,7 @@ export function WeeklyCoach() {
                   CATEGORY_COLOR[template.category] ?? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
                 }`}
               >
-                {template.category}
+                {catLabel}
               </span>
               <ChevronRight
                 size={14}
@@ -332,11 +344,13 @@ export function WeeklyCoach() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function CoachHeader({
-  weekDone,
   onEdit,
+  weekProgressLabel,
+  editLabel,
 }: {
-  weekDone: number;
   onEdit: () => void;
+  weekProgressLabel: string;
+  editLabel: string;
 }) {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -346,14 +360,14 @@ function CoachHeader({
         </div>
         <div>
           <p className="font-semibold text-gray-900 dark:text-white text-sm">Weekly Coach</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{weekDone}/5 cette semaine</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{weekProgressLabel}</p>
         </div>
       </div>
       <button
         onClick={onEdit}
         className="text-[10px] text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
       >
-        Modifier
+        {editLabel}
       </button>
     </div>
   );

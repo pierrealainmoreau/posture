@@ -4,20 +4,22 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, MailX } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
-
-const REASONS = [
-  { key: "non_sollicite",           label: "Non sollicité" },
-  { key: "trop_de_communications",  label: "Trop de communications" },
-  { key: "pas_interesse",           label: "Pas intéressé par le contenu" },
-] as const;
+import { useI18n } from "@/lib/i18n";
 
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const u = searchParams.get("u") ?? "";
   const s = searchParams.get("s") ?? "";
+  const { t } = useI18n();
 
   const [sending, setSending]   = useState<string | null>(null);
   const [sentReason, setSentReason] = useState<string | null>(null);
+
+  const reasons = [
+    { key: "non_sollicite",          label: t.unsubscribe.reasonNonSolicited },
+    { key: "trop_de_communications", label: t.unsubscribe.reasonTooMuch },
+    { key: "pas_interesse",          label: t.unsubscribe.reasonNotInterested },
+  ];
 
   async function submitReason(reasonKey: string) {
     if (sending || sentReason) return;
@@ -53,32 +55,32 @@ function UnsubscribeContent() {
         </div>
 
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-          Vous avez bien été désinscrit
+          {t.unsubscribe.title}
         </h1>
 
         <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-7">
-          Vous ne recevrez plus nos newsletters par email.
+          {t.unsubscribe.description}
         </p>
 
         {sentReason ? (
           <p className="text-sm text-gray-600 dark:text-gray-300 flex items-center justify-center gap-2">
             <CheckCircle2 size={16} className="text-green-600 dark:text-green-400" />
-            Merci pour votre retour.
+            {t.unsubscribe.thankYou}
           </p>
         ) : (
           <>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Pouvez-vous nous dire pourquoi vous vous êtes désinscrit ?
+              {t.unsubscribe.reasonPrompt}
             </p>
             <div className="flex flex-col gap-2">
-              {REASONS.map((r) => (
+              {reasons.map((r) => (
                 <button
                   key={r.key}
                   onClick={() => submitReason(r.key)}
                   disabled={!!sending}
                   className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
                 >
-                  {sending === r.key ? "Envoi…" : r.label}
+                  {sending === r.key ? t.unsubscribe.sending : r.label}
                 </button>
               ))}
             </div>

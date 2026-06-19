@@ -8,6 +8,7 @@ import {
   Play, Power, ArrowLeft, RefreshCw, Users, Trophy, ChevronRight,
 } from "lucide-react";
 import { Header } from "@/components/Header";
+import { useI18n } from "@/lib/i18n";
 
 interface RoomAnecdote {
   id: string;
@@ -33,6 +34,7 @@ interface ResultItem {
 }
 
 export default function HostPage() {
+  const { t } = useI18n();
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
 
@@ -123,7 +125,7 @@ export default function HostPage() {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      setError(data.error ?? "Impossible de modifier la session");
+      setError(data.error ?? t.icebreaker.errorModify);
       setTogglingRoom(false);
       return;
     }
@@ -143,7 +145,7 @@ export default function HostPage() {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      setError(data.error ?? "Impossible de changer la phase");
+      setError(data.error ?? t.icebreaker.errorPhase);
       setTogglingPhase(false);
       return;
     }
@@ -168,7 +170,7 @@ export default function HostPage() {
     });
     const data = await res.json();
     setLaunching(false);
-    if (!res.ok) { setError(data.error ?? "Erreur lors du lancement"); return; }
+    if (!res.ok) { setError(data.error ?? t.icebreaker.errorLaunch); return; }
     router.push("/icebreaker");
   }
 
@@ -177,7 +179,7 @@ export default function HostPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
         <Header backHref="/icebreaker" currentTool="Icebreakers — Room" />
         <div className="flex-1 flex items-center justify-center text-gray-400">
-          <Loader2 size={20} className="animate-spin mr-2" /> Chargement…
+          <Loader2 size={20} className="animate-spin mr-2" /> {t.common.loading}
         </div>
       </div>
     );
@@ -189,9 +191,9 @@ export default function HostPage() {
         <Header backHref="/icebreaker" currentTool="Icebreakers — Room" />
         <div className="flex-1 flex items-center justify-center px-4 text-center">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Session introuvable ou accès refusé.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t.icebreaker.sessionNotFoundOrDenied}</p>
             <Link href="/icebreaker" className="text-sm text-cyan-600 dark:text-cyan-400 underline flex items-center gap-1 justify-center">
-              <ArrowLeft size={13} /> Retour aux Icebreakers
+              <ArrowLeft size={13} /> {t.icebreaker.backToIcebreakers}
             </Link>
           </div>
         </div>
@@ -210,11 +212,10 @@ export default function HostPage() {
           <span className="text-lg flex-shrink-0">💡</span>
           <div>
             <p className="text-sm font-medium text-cyan-900 dark:text-cyan-100 mb-0.5">
-              Comment animer cette activité ?
+              {t.icebreaker.howToHost}
             </p>
             <p className="text-sm text-cyan-700 dark:text-cyan-300 leading-relaxed">
-              Invitez vos collègues à partager un fait ou une anecdote sur eux-mêmes que personne ne soupçonnerait.
-              Une fois le tirage lancé, l&apos;équipe devra retrouver à qui appartient chaque anecdote.
+              {t.icebreaker.howToHostDesc}
             </p>
           </div>
         </div>
@@ -232,19 +233,19 @@ export default function HostPage() {
                   : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${room.is_active ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`} />
-                {room.is_active ? "Active" : "Fermée"}
+                {room.is_active ? t.icebreaker.active : t.icebreaker.closed}
               </span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <Users size={13} />
-              {anecdotes.length} soumission{anecdotes.length !== 1 ? "s" : ""} reçue{anecdotes.length !== 1 ? "s" : ""}
+              {anecdotes.length} {anecdotes.length !== 1 ? t.icebreaker.submissionsReceivedPlural : t.icebreaker.submissionsReceived}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Refresh indicator */}
             <button
               onClick={fetchData}
-              title="Actualiser"
+              title={t.icebreaker.refresh}
               className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <RefreshCw size={14} />
@@ -256,7 +257,7 @@ export default function HostPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {copied ? <CheckCheck size={13} className="text-emerald-500" /> : <Copy size={13} />}
-              {copied ? "Copié !" : "Copier le lien"}
+              {copied ? t.common.copied : t.icebreaker.copyLink}
             </button>
 
             {/* Close / reopen */}
@@ -266,7 +267,7 @@ export default function HostPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
               {togglingRoom ? <Loader2 size={13} className="animate-spin" /> : <Power size={13} />}
-              {room.is_active ? "Fermer la session" : "Rouvrir"}
+              {room.is_active ? t.icebreaker.closeSession : t.icebreaker.reopen}
             </button>
           </div>
         </div>
@@ -289,7 +290,7 @@ export default function HostPage() {
         {(room.participants ?? []).length > 0 && (
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1 flex-shrink-0">
-              <Users size={12} /> {room.participants.length} participant{room.participants.length > 1 ? "s" : ""}
+              <Users size={12} /> {room.participants.length} {room.participants.length > 1 ? t.icebreaker.participantCountPlural : t.icebreaker.participantCount}
             </span>
             <div className="flex flex-wrap gap-1.5">
               {room.participants.map((name) => (
@@ -305,7 +306,7 @@ export default function HostPage() {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 mb-6">
           <div className="flex items-center gap-2 text-xs font-medium">
             {(["collecting", "voting", "results"] as const).map((p, i) => {
-              const labels = { collecting: "Collecte", voting: "Vote", results: "Résultats" };
+              const labels = { collecting: t.icebreaker.collectPhase, voting: t.icebreaker.votePhase, results: t.icebreaker.resultsPhase };
               const active = room.phase === p;
               const done   = ["collecting", "voting", "results"].indexOf(room.phase) > i;
               return (
@@ -331,7 +332,7 @@ export default function HostPage() {
           <div className="mb-8">
             {resultsLoading ? (
               <div className="flex items-center justify-center py-10 text-gray-400">
-                <Loader2 size={18} className="animate-spin mr-2" /> Chargement des résultats…
+                <Loader2 size={18} className="animate-spin mr-2" /> {t.icebreaker.loadingResults}
               </div>
             ) : (
               <div className="space-y-3">
@@ -365,7 +366,7 @@ export default function HostPage() {
                       </div>
                     )}
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                      {item.correct_count} / {item.votes.length} bonne{item.correct_count !== 1 ? "s" : ""} réponse{item.correct_count !== 1 ? "s" : ""}
+                      {item.correct_count} / {item.votes.length} {item.correct_count !== 1 ? t.icebreaker.correctAnswers : t.icebreaker.correctAnswer}
                     </p>
                   </div>
                 ))}
@@ -382,13 +383,13 @@ export default function HostPage() {
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                  En attente
+                  {t.icebreaker.pending}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">{pending.length}</span>
               </div>
               {pending.length === 0 ? (
                 <p className="px-4 py-6 text-xs text-center text-gray-400 dark:text-gray-500">
-                  Aucune soumission en attente
+                  {t.icebreaker.noPending}
                 </p>
               ) : (
                 <ul className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -401,7 +402,7 @@ export default function HostPage() {
                           <button
                             onClick={() => setApproved(a.id, true)}
                             disabled={busy}
-                            title="Approuver"
+                            title={t.icebreaker.approve}
                             className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors disabled:opacity-40"
                           >
                             {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
@@ -409,7 +410,7 @@ export default function HostPage() {
                           <button
                             onClick={() => deleteAnecdote(a.id)}
                             disabled={busy}
-                            title="Supprimer"
+                            title={t.common.delete}
                             className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40"
                           >
                             <Trash2 size={13} />
@@ -426,13 +427,13 @@ export default function HostPage() {
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Approuvées
+                  {t.icebreaker.approved}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">{approved.length}</span>
               </div>
               {approved.length === 0 ? (
                 <p className="px-4 py-6 text-xs text-center text-gray-400 dark:text-gray-500">
-                  Approuvez des anecdotes pour les inclure dans le tirage
+                  {t.icebreaker.noApproved}
                 </p>
               ) : (
                 <ul className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -446,7 +447,7 @@ export default function HostPage() {
                           <button
                             onClick={() => setApproved(a.id, false)}
                             disabled={busy}
-                            title="Retirer l'approbation"
+                            title={t.icebreaker.withdraw}
                             className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors disabled:opacity-40"
                           >
                             {busy ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
@@ -454,7 +455,7 @@ export default function HostPage() {
                           <button
                             onClick={() => deleteAnecdote(a.id)}
                             disabled={busy}
-                            title="Supprimer"
+                            title={t.common.delete}
                             className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40"
                           >
                             <Trash2 size={13} />
@@ -472,7 +473,7 @@ export default function HostPage() {
         {/* ── Actions ──────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Actualisé à {lastRefresh.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            {t.icebreaker.updatedAt} {lastRefresh.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </p>
           <div className="flex items-center gap-2">
             {/* Collecting → start vote */}
@@ -480,11 +481,11 @@ export default function HostPage() {
               <button
                 onClick={() => setPhase("voting")}
                 disabled={approved.length === 0 || togglingPhase}
-                title={approved.length === 0 ? "Approuvez au moins une anecdote" : undefined}
+                title={approved.length === 0 ? t.icebreaker.approveHint : undefined}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 {togglingPhase ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
-                Lancer le vote ({approved.length})
+                {t.icebreaker.launchVote} ({approved.length})
               </button>
             )}
             {/* Voting → reveal results */}
@@ -495,7 +496,7 @@ export default function HostPage() {
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 {togglingPhase ? <Loader2 size={15} className="animate-spin" /> : <Trophy size={15} />}
-                Révéler les résultats
+                {t.icebreaker.revealResults}
               </button>
             )}
           </div>

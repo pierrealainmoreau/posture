@@ -13,6 +13,7 @@ import { Header } from "@/components/Header";
 import { PMFBanner } from "@/components/PMFBanner";
 import { SearchBar } from "@/components/SearchBar";
 import { WeeklyCoach } from "@/components/WeeklyCoach";
+import { useI18n } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import { loadProgress } from "@/lib/academie/storage";
 import { computePathwayStatus } from "@/lib/academie/progress";
@@ -45,6 +46,7 @@ const AVATAR_COLORS = [
 
 export default function Home() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [firstName,     setFirstName]     = useState<string | null>(null);
   const [userId,        setUserId]        = useState<string | null>(null);
@@ -104,7 +106,7 @@ export default function Home() {
         {/* ── Greeting ──────────────────────────────────────────────── */}
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Bonjour, {firstName}
+            {t.home.greeting}, {firstName}
           </h1>
           <Link
             href="/profile"
@@ -112,7 +114,7 @@ export default function Home() {
           >
             <Eye size={18} className="flex-shrink-0" />
             <span className="overflow-hidden max-w-0 group-hover:max-w-[9rem] opacity-0 group-hover:opacity-100 text-xs font-medium whitespace-nowrap transition-all duration-300 ease-out group-hover:pl-1.5">
-              Voir mon profil
+              {t.home.viewProfile}
             </span>
           </Link>
           {role === "premium" || role === "admin" ? (
@@ -122,7 +124,7 @@ export default function Home() {
           ) : (
             <Link
               href="/premium"
-              title="Passer au Premium"
+              title={t.home.upgradePremium}
               className="p-1.5 rounded-lg text-gray-300 dark:text-gray-700 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950 transition-colors"
             >
               <Crown size={18} />
@@ -134,14 +136,14 @@ export default function Home() {
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-gray-400 dark:text-gray-500 mb-2">
             <Sparkles size={9} className="inline mr-1 text-blue-500" />
-            Assistant IA
+            {t.home.aiAssistant}
           </p>
           <SearchBar />
         </div>
 
         {/* ── Section 1 : Avant la réunion ──────────────────────────── */}
         <section>
-          <SectionLabel>Avant la réunion</SectionLabel>
+          <SectionLabel>{t.home.sectionBefore}</SectionLabel>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <Link
@@ -152,7 +154,7 @@ export default function Home() {
                 <CalendarDays size={17} className="text-blue-700 dark:text-blue-400" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
-                Préparer une réunion
+                {t.home.prepareMeeting}
               </p>
             </Link>
 
@@ -164,7 +166,7 @@ export default function Home() {
                 <Quote size={17} className="text-violet-700 dark:text-violet-400" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
-                Générer un feedback
+                {t.home.generateFeedback}
               </p>
             </Link>
 
@@ -176,7 +178,7 @@ export default function Home() {
                 <UserRoundCheck size={17} className="text-blue-700 dark:text-blue-400" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
-                Préparer mon 1:1
+                {t.home.prepareOneOnOne}
               </p>
             </Link>
 
@@ -188,7 +190,7 @@ export default function Home() {
                 <Target size={17} className="text-pink-700 dark:text-pink-400" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
-                Suivre les OKRs
+                {t.home.trackOKRs}
               </p>
             </Link>
           </div>
@@ -196,7 +198,7 @@ export default function Home() {
 
         {/* ── Section 2 : En réunion ────────────────────────────────── */}
         <section>
-          <SectionLabel>En réunion</SectionLabel>
+          <SectionLabel>{t.home.sectionDuring}</SectionLabel>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link
@@ -256,14 +258,14 @@ export default function Home() {
               <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
                 <ChevronRight size={20} className="text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 leading-tight">Tous</p>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 leading-tight">{t.home.allTools}</p>
             </Link>
           </div>
         </section>
 
         {/* ── Section 3 : Entre les réunions ────────────────────────── */}
         <section>
-          <SectionLabel>Entre les réunions</SectionLabel>
+          <SectionLabel>{t.home.sectionBetween}</SectionLabel>
 
           <div className="grid grid-cols-3 grid-rows-2 gap-3">
 
@@ -282,7 +284,7 @@ export default function Home() {
                   <Users size={15} className="text-blue-700 dark:text-blue-400" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">Mon équipe</span>
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.myTeam}</span>
                   {collaborators.length > 0 && (
                     <p className="text-[10px] text-gray-400 dark:text-gray-500">
                       {collaborators.length} collaborateur{collaborators.length > 1 ? "s" : ""}
@@ -294,13 +296,13 @@ export default function Home() {
               {collaborators.length === 0 ? (
                 <>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
-                    Ajoutez vos collaborateurs pour accéder à leurs fiches rapidement.
+                    {t.home.teamEmpty}
                   </p>
                   <Link
                     href="/coach"
                     className="mt-auto text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                   >
-                    Ajouter un membre →
+                    {t.home.addMember}
                   </Link>
                 </>
               ) : (
@@ -330,7 +332,7 @@ export default function Home() {
                     href="/coach"
                     className="mt-3 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                   >
-                    Voir l&apos;équipe →
+                    {t.home.viewTeam}
                   </Link>
                 </>
               )}
@@ -354,7 +356,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                {acadStats.badges === 0 ? "Commencer →" : "Continuer →"}
+                {acadStats.badges === 0 ? t.home.quizStart : t.home.quizContinue}
               </p>
             </Link>
 
@@ -364,7 +366,7 @@ export default function Home() {
                 <div className="w-8 h-8 bg-pink-50 dark:bg-pink-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
                   <UserPlus size={15} className="text-pink-700 dark:text-pink-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">Recrutement</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
               </div>
               <div className="flex flex-col gap-1.5 mt-auto">
                 <Link
@@ -372,14 +374,14 @@ export default function Home() {
                   className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
                 >
                   <ClipboardList size={11} className="flex-shrink-0" />
-                  Fiche de poste
+                  {t.home.jobDescription}
                 </Link>
                 <Link
                   href="/recruitment?tab=recruiter"
                   className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
                 >
                   <UserRoundCheck size={11} className="flex-shrink-0" />
-                  Questions entretien
+                  {t.home.interviewQuestions}
                 </Link>
               </div>
             </div>
