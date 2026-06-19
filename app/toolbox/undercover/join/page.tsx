@@ -5,15 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/Header";
 import { AVATAR_COLORS } from "@/lib/undercover/types";
+import { useI18n } from "@/lib/i18n";
 
-const breadcrumbs = [
-  { href: "/", label: "Accueil" },
-  { href: "/toolbox", label: "Mini-jeux" },
-  { href: "/toolbox/undercover", label: "Undercover" },
-  { label: "Rejoindre" },
-];
+// breadcrumbs built inside component to access translations
+function buildBreadcrumbs(t: ReturnType<typeof useI18n>["t"]) {
+  return [
+    { href: "/", label: t.common.home },
+    { href: "/toolbox", label: t.common.miniJeux },
+    { href: "/toolbox/undercover", label: "Undercover" },
+    { label: t.icebreaker.join },
+  ];
+}
 
 function JoinForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -45,15 +50,15 @@ function JoinForm() {
       const data = await res.json() as { playerId?: string; playerSecret?: string; error?: string };
 
       if (!res.ok) {
-        if (res.status === 404) setError("Code invalide. Vérifiez le code partagé par l'animateur.");
-        else if (res.status === 409) setError(data.error ?? "La partie a déjà commencé.");
-        else setError(data.error ?? "Erreur lors de la connexion.");
+        if (res.status === 404) setError(t.gameSetup.errorInvalidCode);
+        else if (res.status === 409) setError(data.error ?? t.gameSetup.errorAlreadyStarted);
+        else setError(data.error ?? t.gameSetup.errorConnection);
         setJoining(false);
         return;
       }
 
       if (!data.playerId) {
-        setError("Erreur lors de la création du joueur.");
+        setError(t.gameSetup.playerCreateError);
         setJoining(false);
         return;
       }
@@ -65,17 +70,17 @@ function JoinForm() {
 
       router.push(`/toolbox/undercover/${upperCode}/lobby`);
     } catch {
-      setError("Une erreur est survenue.");
+      setError(t.common.error);
       setJoining(false);
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header breadcrumbs={breadcrumbs} guestMode />
+      <Header breadcrumbs={buildBreadcrumbs(t)} guestMode />
       <main className="flex-1 max-w-sm mx-auto w-full px-6 py-10">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-          Rejoindre une partie
+          {t.common.joinGame}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -83,7 +88,7 @@ function JoinForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Code de la partie
+                {t.gameSetup.sessionCode}
               </label>
               <input
                 type="text"
@@ -91,7 +96,7 @@ function JoinForm() {
                 autoFocus
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
-                placeholder="ABC123"
+                placeholder={t.gameSetup.codePlaceholder}
                 maxLength={6}
                 className="w-full px-3 py-2.5 text-sm font-mono tracking-widest uppercase rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -99,14 +104,14 @@ function JoinForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Votre pseudo
+                {t.gameSetup.pseudo}
               </label>
               <input
                 type="text"
                 required
                 value={pseudo}
                 onChange={(e) => setPseudo(e.target.value)}
-                placeholder="Pierre, Marie…"
+                placeholder={t.gameSetup.pseudoPlaceholder}
                 maxLength={20}
                 className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -114,7 +119,7 @@ function JoinForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Couleur d&apos;avatar
+                {t.gameSetup.avatarColor}
               </label>
               <div className="flex gap-2 flex-wrap">
                 {AVATAR_COLORS.map((color) => (
@@ -147,7 +152,7 @@ function JoinForm() {
             className="w-full py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
           >
             {joining && <Loader2 size={15} className="animate-spin" />}
-            {joining ? "Connexion…" : "Rejoindre →"}
+            {joining ? t.gameSetup.connecting : t.gameSetup.joinBtn}
           </button>
         </form>
       </main>

@@ -7,6 +7,7 @@ import type { IcebreakerCategory, IcebreakerQuestion } from "@/lib/types";
 import { ICEBREAKER_CATEGORY_LABELS } from "@/lib/types";
 import { pickIcebreaker } from "@/lib/icebreakers/picker";
 import { ICEBREAKER_QUESTIONS } from "@/lib/icebreakers/questions";
+import { useI18n } from "@/lib/i18n";
 import {
   loadAnecdotes,
   addAnecdote as dbAddAnecdote,
@@ -47,12 +48,6 @@ const PILL_CLS: Record<IcebreakerCategory, string> = {
   anecdotes:   "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
 };
 
-const TIPS = [
-  "Répondez vous-même en premier pour donner le ton.",
-  "Donnez la parole dans un ordre aléatoire, pas autour de la table.",
-  "Personne n'est obligé de répondre — le « passe » est toujours ok.",
-  "Pas de débat : on écoute et on enchaîne.",
-];
 
 const WHEEL_COLORS = [
   "#2563EB", "#DB2777", "#EA580C", "#7C3AED",
@@ -74,7 +69,15 @@ function slicePath(cx: number, cy: number, r: number, startDeg: number, endDeg: 
 const SPIN_DURATION = 4200;
 const CX = 80, CY = 80, R = 70, TEXT_R = 48;
 
-function SpinWheel({ allParticipants }: { allParticipants: string[] }) {
+function SpinWheel({ allParticipants, labelRestart, labelSpinning, labelSpin, labelAddParticipants, labelAddMore, labelStarts }: {
+  allParticipants: string[];
+  labelRestart: string;
+  labelSpinning: string;
+  labelSpin: string;
+  labelAddParticipants: string;
+  labelAddMore: string;
+  labelStarts: string;
+}) {
   const [rotation, setRotation]   = useState(0);
   const [spinning, setSpinning]   = useState(false);
   const [winner, setWinner]       = useState<string | null>(null);
@@ -175,19 +178,19 @@ function SpinWheel({ allParticipants }: { allParticipants: string[] }) {
       {allDone ? (
         <button onClick={() => { setDrawn([]); setWinner(null); }}
           className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-          <RotateCcw size={12} /> Recommencer
+          <RotateCcw size={12} /> {labelRestart}
         </button>
       ) : (
         <button onClick={spin} disabled={spinning || allParticipants.length < 2}
           className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity">
           <RefreshCw size={13} className={spinning ? "animate-spin" : ""} />
-          {spinning ? "Ça tourne…" : "Lancer"}
+          {spinning ? labelSpinning : labelSpin}
         </button>
       )}
 
       {allParticipants.length < 2 && !allDone && (
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          {allParticipants.length === 0 ? "Ajoutez des participants" : "Ajoutez au moins 2 participants"}
+          {allParticipants.length === 0 ? labelAddParticipants : labelAddMore}
         </p>
       )}
 
@@ -195,7 +198,7 @@ function SpinWheel({ allParticipants }: { allParticipants: string[] }) {
       {winner && !spinning && (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-white text-sm font-semibold"
           style={{ backgroundColor: winnerColor }}>
-          {winner} <span className="opacity-75 font-normal">commence !</span>
+          {winner} <span className="opacity-75 font-normal">{labelStarts}</span>
         </div>
       )}
     </div>
@@ -204,10 +207,11 @@ function SpinWheel({ allParticipants }: { allParticipants: string[] }) {
 
 // ── Card ───────────────────────────────────────────────────────────────────
 
-function QuestionCard({ displayedCategory, animState, question }: {
+function QuestionCard({ displayedCategory, animState, question, timerLabel }: {
   displayedCategory: IcebreakerCategory;
   animState: AnimState;
   question: IcebreakerQuestion | null;
+  timerLabel: string;
 }) {
   const isFlipped = animState === "flipping" || animState === "revealed";
   const bgColor = CARD_BG[displayedCategory];
@@ -245,7 +249,7 @@ function QuestionCard({ displayedCategory, animState, question }: {
             <p className="font-serif text-[1rem] leading-relaxed text-gray-900 dark:text-white text-center">{question?.question}</p>
           </div>
           <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-            <Clock size={11} /><span>~30 sec. par personne</span>
+            <Clock size={11} /><span>{timerLabel}</span>
           </div>
         </div>
       </div>
@@ -256,6 +260,15 @@ function QuestionCard({ displayedCategory, animState, question }: {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function IcebreakerV2Page() {
+  const { t } = useI18n();
+
+  const TIPS = [
+    t.icebreaker.tips.answer,
+    t.icebreaker.tips.order,
+    t.icebreaker.tips.pass,
+    t.icebreaker.tips.noDebate,
+  ];
+
   // Card state
   const [animState, setAnimState]                   = useState<AnimState>("idle");
   const [selectedCategories, setSelectedCategories] = useState<Set<IcebreakerCategory>>(new Set());
@@ -374,8 +387,8 @@ export default function IcebreakerV2Page() {
 
           {/* Heading */}
           <div className={`text-center transition-opacity duration-300 ${isRevealed ? "opacity-30 pointer-events-none select-none" : ""}`}>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-0.5">Tirez une carte</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Une question, 5 minutes, toute l&apos;équipe partage</p>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-0.5">{t.icebreaker.drawerCard}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t.icebreaker.subtitle}</p>
           </div>
 
           {/* Pills */}
@@ -383,7 +396,7 @@ export default function IcebreakerV2Page() {
             <div className="flex flex-wrap justify-center gap-1.5">
               <button onClick={() => setSelectedCategories(new Set())} disabled={isActive} data-active={selectedCategories.size === 0}
                 className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors disabled:opacity-40 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 data-[active=true]:bg-gray-200 dark:data-[active=true]:bg-gray-700 data-[active=true]:border-gray-400">
-                Toutes
+                {t.icebreaker.all}
               </button>
               {CATEGORY_ORDER.filter((c) => c !== "anecdotes").map((cat) => (
                 <button key={cat} onClick={() => toggleCategory(cat)} disabled={isActive} data-active={selectedCategories.has(cat)}
@@ -394,7 +407,7 @@ export default function IcebreakerV2Page() {
               <span className="self-center w-px h-4 bg-gray-200 dark:bg-gray-700" />
               <button onClick={() => anecdotesSelectable && toggleCategory("anecdotes")} disabled={isActive || !anecdotesSelectable}
                 data-active={selectedCategories.has("anecdotes")}
-                title={anecdotesSelectable ? undefined : "Ajoutez d'abord une anecdote via le +"}
+                title={anecdotesSelectable ? undefined : t.icebreaker.addFirst}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors disabled:opacity-40 ${PILL_CLS["anecdotes"]} data-[active=true]:ring-2 data-[active=true]:ring-offset-1 data-[active=true]:ring-current`}>
                 {ICEBREAKER_CATEGORY_LABELS["anecdotes"]}
                 {sessionAnecdotes.length > 0 && <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold">{sessionAnecdotes.length}</span>}
@@ -414,7 +427,7 @@ export default function IcebreakerV2Page() {
             {anecdotePanelOpen && sessionAnecdotes.length > 0 && (
               <div className="w-full max-w-xs bg-white dark:bg-gray-900 border border-emerald-100 dark:border-emerald-900 rounded-xl overflow-hidden">
                 <div className="px-4 py-2 border-b border-emerald-50 dark:border-emerald-900/60 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Anecdotes</span>
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">{t.icebreaker.anecdotesTab}</span>
                   <button onClick={() => setAnecdotePanelOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={13} /></button>
                 </div>
                 <ul className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -445,7 +458,7 @@ export default function IcebreakerV2Page() {
               <div className="flex items-center gap-2 w-full max-w-xs">
                 <input ref={inputRef} value={anecdoteDraft} onChange={(e) => setAnecdoteDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submitAnecdote(); if (e.key === "Escape") { setAddingAnecdote(false); setAnecdoteDraft(""); } }}
-                  placeholder="Votre question ou anecdote…"
+                  placeholder={t.icebreaker.anecdotePlaceholder}
                   className="flex-1 text-sm px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
                 <button onClick={submitAnecdote} className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700"><Check size={13} /></button>
                 <button onClick={() => { setAddingAnecdote(false); setAnecdoteDraft(""); }} className="w-7 h-7 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800"><X size={13} /></button>
@@ -459,7 +472,7 @@ export default function IcebreakerV2Page() {
             <div className="absolute inset-0 rounded-3xl bg-gray-300 dark:bg-gray-700 transition-transform duration-500" style={{ transform: "rotate(-5deg) translateY(6px)", zIndex: 0 }} />
             <div className="absolute inset-0 rounded-3xl bg-gray-200 dark:bg-gray-800 transition-transform duration-500" style={{ transform: "rotate(-2.5deg) translateY(3px)", zIndex: 1 }} />
             <div className="relative" style={{ zIndex: 2 }}>
-              <QuestionCard displayedCategory={displayedCategory} animState={animState} question={question} />
+              <QuestionCard displayedCategory={displayedCategory} animState={animState} question={question} timerLabel={t.icebreaker.timerLabel} />
             </div>
           </div>
 
@@ -468,11 +481,11 @@ export default function IcebreakerV2Page() {
             <div className="flex gap-3">
               <button onClick={() => { clearTimers(); setAnimState("idle"); setQuestion(null); }}
                 className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                Rejouer
+                {t.icebreaker.replayCard}
               </button>
               <button onClick={skipCard} disabled={animState === "unflipping"}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
-                <Shuffle size={13} />Passer
+                <Shuffle size={13} />{t.icebreaker.skip}
               </button>
             </div>
           ) : (
@@ -480,9 +493,9 @@ export default function IcebreakerV2Page() {
               <button onClick={() => drawCard()} disabled={isActive}
                 className="inline-flex items-center gap-2 px-7 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">
                 <Shuffle size={14} className={isActive ? "animate-spin" : ""} />
-                {isActive ? "La carte se choisit…" : "Tirer une carte"}
+                {isActive ? t.icebreaker.drawing : t.icebreaker.draw}
               </button>
-              <p className="text-xs text-gray-400 dark:text-gray-500">{totalInPool} questions · hors ligne</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{totalInPool} {t.icebreaker.stats}</p>
             </div>
           )}
         </div>
@@ -494,11 +507,11 @@ export default function IcebreakerV2Page() {
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
               <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Participants
+                {t.icebreaker.participants}
                 {participants.length > 0 && <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-bold">{participants.length}</span>}
               </h2>
               {participants.length > 0 && (
-                <button onClick={() => setParticipants([])} className="text-xs text-gray-400 hover:text-red-500 transition-colors">Effacer</button>
+                <button onClick={() => setParticipants([])} className="text-xs text-gray-400 hover:text-red-500 transition-colors">{t.icebreaker.clearName}</button>
               )}
             </div>
             <div className="px-4 py-3 flex flex-col gap-2.5">
@@ -506,7 +519,7 @@ export default function IcebreakerV2Page() {
                 <input ref={participantInputRef} value={participantDraft}
                   onChange={(e) => setParticipantDraft(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") addParticipant(); }}
-                  placeholder="Prénom…"
+                  placeholder={t.icebreaker.firstNamePlaceholder}
                   className="flex-1 text-sm px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500" />
                 <button onClick={addParticipant} disabled={!participantDraft.trim()}
                   className="w-8 h-8 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center hover:opacity-80 disabled:opacity-30 transition-opacity">
@@ -533,10 +546,18 @@ export default function IcebreakerV2Page() {
           {/* Wheel */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
             <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Qui commence ?</h2>
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t.icebreaker.whoStarts}</h2>
             </div>
             <div className="px-4 py-3 flex justify-center">
-              <SpinWheel allParticipants={participants} />
+              <SpinWheel
+                allParticipants={participants}
+                labelRestart={t.common.restart}
+                labelSpinning={t.icebreaker.spinning}
+                labelSpin={t.icebreaker.spin}
+                labelAddParticipants={t.icebreaker.addParticipants}
+                labelAddMore={t.icebreaker.addMoreParticipants}
+                labelStarts={t.icebreaker.startsLabel}
+              />
             </div>
           </div>
 
@@ -544,7 +565,7 @@ export default function IcebreakerV2Page() {
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
             <button onClick={() => setTipsOpen((v) => !v)}
               className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              Conseils pour bien animer
+              {t.icebreaker.tips.title}
               {tipsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
             {tipsOpen && (

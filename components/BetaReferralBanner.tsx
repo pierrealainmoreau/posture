@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Share2 } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 const BETA_END = new Date(2026, 7, 31, 23, 59, 59).getTime();
 
@@ -18,6 +19,7 @@ function getRemaining() {
 
 export function BetaReferralBanner() {
   const [time, setTime] = useState(getRemaining);
+  const { t } = useI18n();
 
   useEffect(() => {
     const id = setInterval(() => setTime(getRemaining()), 1000);
@@ -28,18 +30,18 @@ export function BetaReferralBanner() {
     <div className="bg-blue-600 text-white">
       <div className="max-w-5xl mx-auto px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium">
-          Invitez des managers et profitez de 3 mois gratuits lors du lancement de l&apos;outil
+          {t.betaReferral.invite}
         </p>
         <div className="flex items-center gap-3 flex-shrink-0">
           <span className="text-xs font-mono tabular-nums text-blue-100">
-            Fin de la Bêta dans {time.days}j {time.hours}h {time.minutes}m {time.seconds}s
+            {t.betaReferral.betaEnd} {time.days}j {time.hours}h {time.minutes}m {time.seconds}s
           </span>
           <Link
             href="/referral"
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <Share2 size={13} />
-            Partager
+            {t.betaReferral.share}
           </Link>
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
   Users, CheckCheck, Trophy, ChevronRight,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { useI18n } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ interface ResultItem {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function RoomParticipantPage() {
+  const { t } = useI18n();
   const { code } = useParams<{ code: string }>();
   const upperCode = (code as string).toUpperCase();
 
@@ -161,7 +163,7 @@ export default function RoomParticipantPage() {
 
     const failed = res.find((r) => !r.ok);
     setSubmitting(false);
-    if (failed) { setSubmitError(failed.error ?? "Erreur lors de l'envoi"); return; }
+    if (failed) { setSubmitError(failed.error ?? t.icebreaker.errorSend); return; }
 
     setSubmitted((prev) => [
       ...prev,
@@ -174,7 +176,7 @@ export default function RoomParticipantPage() {
     e.preventDefault();
     if (!participantName || votesSubmitting) return;
     const allVoted = votingAnecdotes.every((a) => votes[a.id]);
-    if (!allVoted) { setVoteError("Veuillez voter pour toutes les anecdotes."); return; }
+    if (!allVoted) { setVoteError(t.icebreaker.voteForAll); return; }
     setVotesSubmitting(true);
     setVoteError(null);
 
@@ -190,7 +192,7 @@ export default function RoomParticipantPage() {
     });
     const data = await r.json();
     setVotesSubmitting(false);
-    if (!r.ok) { setVoteError(data.error ?? "Erreur lors de l'envoi"); return; }
+    if (!r.ok) { setVoteError(data.error ?? t.icebreaker.errorSend); return; }
     setVotesSubmitted(true);
   }
 
@@ -208,9 +210,9 @@ export default function RoomParticipantPage() {
   function PhaseStepper() {
     const current = room?.phase ?? "collecting";
     const phases = [
-      { key: "collecting", label: "Collecte" },
-      { key: "voting",     label: "Vote" },
-      { key: "results",    label: "Résultats" },
+      { key: "collecting", label: t.icebreaker.collectPhase },
+      { key: "voting",     label: t.icebreaker.votePhase },
+      { key: "results",    label: t.icebreaker.resultsPhase },
     ] as const;
     const currentIdx = phases.findIndex((p) => p.key === current);
     return (
@@ -250,8 +252,8 @@ export default function RoomParticipantPage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-4 text-center">
         <XCircle size={36} className="text-red-400 mb-4" />
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Session introuvable</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Ce lien est invalide ou a expiré.</p>
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t.icebreaker.sessionNotFound}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t.icebreaker.invalidLink}</p>
       </div>
     );
   }
@@ -270,11 +272,11 @@ export default function RoomParticipantPage() {
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                 {room.creator_name
                   ? <><span className="text-cyan-600 dark:text-cyan-400">{room.creator_name}</span> vous invite</>
-                  : "Rejoindre la session"
+                  : t.icebreaker.joinSession
                 }
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Comment vous appelez-vous ?
+                {t.icebreaker.joinPrompt}
               </p>
               <form onSubmit={handleSaveName} className="space-y-3">
                 <input
@@ -283,7 +285,7 @@ export default function RoomParticipantPage() {
                   required
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="Marie, Pierre…"
+                  placeholder={t.icebreaker.namePlaceholder}
                   className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <button
@@ -292,7 +294,7 @@ export default function RoomParticipantPage() {
                   className="w-full py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                 >
                   {savingName && <Loader2 size={15} className="animate-spin" />}
-                  Rejoindre
+                  {t.icebreaker.join}
                 </button>
               </form>
             </div>
@@ -321,13 +323,13 @@ export default function RoomParticipantPage() {
             {/* Score card */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 text-center">
               <Trophy size={28} className="text-amber-400 mx-auto mb-3" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Résultats</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{t.icebreaker.resultsPhase}</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Vous avez trouvé{" "}
+                {t.icebreaker.youFound}{" "}
                 <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                   {myCorrectCount} / {results.length}
                 </span>{" "}
-                bonne{myCorrectCount !== 1 ? "s" : ""} réponse{myCorrectCount !== 1 ? "s" : ""}
+                {myCorrectCount !== 1 ? t.icebreaker.correctAnswers : t.icebreaker.correctAnswer}
               </p>
             </div>
 
@@ -352,12 +354,12 @@ export default function RoomParticipantPage() {
                   </p>
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">Soumis par</p>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">{t.icebreaker.submittedBy}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.submitted_by}</p>
                     </div>
                     {myVote && (
                       <div className="text-right">
-                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">Votre réponse</p>
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">{t.icebreaker.yourAnswer}</p>
                         <div className="flex items-center gap-1.5 justify-end">
                           {correct
                             ? <CheckCircle2 size={13} className="text-emerald-500" />
@@ -376,7 +378,7 @@ export default function RoomParticipantPage() {
                   </div>
                   {item.correct_count > 0 && (
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
-                      {item.correct_count} personne{item.correct_count > 1 ? "s ont" : " a"} trouvé
+                      {item.correct_count} {item.correct_count > 1 ? t.icebreaker.foundPlural : t.icebreaker.foundSingular}
                     </p>
                   )}
                 </div>
@@ -401,10 +403,10 @@ export default function RoomParticipantPage() {
 
             <div className="mb-6">
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                À qui appartient chaque anecdote ?
+                {t.icebreaker.guessTitle}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Pour chaque anecdote, choisissez la personne qui, selon vous, l&apos;a écrite.
+                {t.icebreaker.guessSubtitle}
               </p>
             </div>
 
@@ -412,15 +414,15 @@ export default function RoomParticipantPage() {
               <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-8 text-center">
                 <CheckCheck size={28} className="text-emerald-500 mx-auto mb-3" />
                 <p className="text-base font-semibold text-emerald-800 dark:text-emerald-200 mb-1">
-                  Votes envoyés !
+                  {t.icebreaker.votesSent}
                 </p>
                 <p className="text-sm text-emerald-700 dark:text-emerald-300">
-                  En attente des résultats…
+                  {t.icebreaker.waitingResults}
                 </p>
               </div>
             ) : votingAnecdotes.length === 0 ? (
               <div className="flex items-center justify-center py-10 text-gray-400">
-                <Loader2 size={18} className="animate-spin mr-2" /> Chargement…
+                <Loader2 size={18} className="animate-spin mr-2" /> {t.common.loading}
               </div>
             ) : (
               <form onSubmit={handleSubmitVotes} className="space-y-4">
@@ -430,7 +432,7 @@ export default function RoomParticipantPage() {
                     className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5"
                   >
                     <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                      Anecdote {idx + 1}
+                      {t.icebreaker.anecdoteLabel} {idx + 1}
                     </p>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
                       « {anecdote.question} »
@@ -464,7 +466,7 @@ export default function RoomParticipantPage() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                 >
                   {votesSubmitting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                  {votesSubmitting ? "Envoi…" : "Envoyer mes votes"}
+                  {votesSubmitting ? t.common.submitting : t.icebreaker.sendVotes}
                 </button>
               </form>
             )}
@@ -489,7 +491,7 @@ export default function RoomParticipantPage() {
               : "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${isClosed ? "bg-gray-400" : "bg-emerald-500 animate-pulse"}`} />
-            {isClosed ? "Session fermée" : "Session active"}
+            {isClosed ? t.icebreaker.sessionClosedLabel : t.icebreaker.sessionActiveLabel}
           </span>
         </div>
       } />
@@ -513,16 +515,15 @@ export default function RoomParticipantPage() {
                 <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 leading-snug">
                   {room.creator_name
                     ? <><span className="text-cyan-600 dark:text-cyan-400">{room.creator_name}</span> vous invite à partager une anecdote</>
-                    : "Partagez une anecdote avec votre équipe"
+                    : t.icebreaker.shareAnecdote
                   }
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Partagez un fait ou une anecdote sur vous-même que vos collègues ne soupçonneraient pas.
-                  L&apos;équipe devra ensuite deviner à qui appartient chaque anecdote !
+                  {t.icebreaker.shareDesc}
                 </p>
                 {room.approved_count > 0 && (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-3 font-medium">
-                    ✓ {room.approved_count} anecdote{room.approved_count > 1 ? "s" : ""} déjà reçue{room.approved_count > 1 ? "s" : ""}
+                    ✓ {room.approved_count} {t.icebreaker.receivedCount}
                   </p>
                 )}
               </div>
@@ -533,7 +534,7 @@ export default function RoomParticipantPage() {
           {submitted.length > 0 && (
             <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4">
               <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                Envoyées ({submitted.length})
+                {t.icebreaker.submitted} ({submitted.length})
               </p>
               <ul className="space-y-1.5">
                 {submitted.map((s) => (
@@ -546,7 +547,7 @@ export default function RoomParticipantPage() {
               {room.phase === "collecting" && !isClosed && (
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                   <Loader2 size={11} className="animate-spin" />
-                  En attente que l&apos;hôte lance la phase de vote…
+                  {t.icebreaker.waitingVote}
                 </p>
               )}
             </div>
@@ -557,13 +558,13 @@ export default function RoomParticipantPage() {
             {isClosed ? (
               <div className="flex flex-col items-center gap-2 py-4 text-center">
                 <XCircle size={28} className="text-gray-400" />
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">La session est fermée</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">L&apos;hôte a fermé les soumissions.</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t.icebreaker.closedTitle}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t.icebreaker.closedByHost}</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Vos anecdotes
+                  {t.icebreaker.yourAnecdotes}
                 </label>
 
                 {drafts.map((draft, idx) => (
@@ -575,7 +576,7 @@ export default function RoomParticipantPage() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as unknown as React.FormEvent); }
                       }}
-                      placeholder={idx === 0 ? "J'ai appris à jouer de la guitare à 40 ans…" : "Une autre anecdote…"}
+                      placeholder={idx === 0 ? t.icebreaker.anecdoteMainPlaceholder : t.icebreaker.anotherAnecdote}
                       rows={2}
                       className="flex-1 px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                     />
@@ -597,7 +598,7 @@ export default function RoomParticipantPage() {
                   className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
                   <Plus size={13} />
-                  Ajouter une anecdote
+                  {t.icebreaker.addAnecdote}
                 </button>
 
                 {submitError && (
@@ -610,16 +611,16 @@ export default function RoomParticipantPage() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                 >
                   {submitting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                  {submitting ? "Envoi…" : submitted.length > 0 ? "Envoyer d'autres anecdotes" : "Envoyer"}
+                  {submitting ? t.common.submitting : submitted.length > 0 ? t.icebreaker.sendMore : t.common.send}
                 </button>
               </form>
             )}
           </div>
 
           <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-5">
-            Vos réponses sont anonymes.{" "}
+            {t.icebreaker.anonymous}{" "}
             <Link href="/" className="underline underline-offset-2 hover:text-gray-600 dark:hover:text-gray-300">
-              En savoir plus sur Posture
+              {t.icebreaker.learnMore}
             </Link>
           </p>
         </div>

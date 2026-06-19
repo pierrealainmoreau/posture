@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bot, Check, Loader2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   game: string;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function DemoBotsButton({ game, code, playerId, playerSecret }: Props) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +28,13 @@ export function DemoBotsButton({ game, code, playerId, playerSecret }: Props) {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Erreur");
+        setError(data.error ?? t.common.error);
       } else {
         setAdded(true);
         setTimeout(() => setAdded(false), 3000);
       }
     } catch {
-      setError("Erreur réseau");
+      setError(t.demoBot.errorNetwork);
     } finally {
       setLoading(false);
     }
@@ -52,11 +54,7 @@ export function DemoBotsButton({ game, code, playerId, playerSecret }: Props) {
         ) : (
           <Bot size={14} />
         )}
-        {loading
-          ? "Ajout en cours…"
-          : added
-          ? "3 participants fictifs ajoutés !"
-          : "Ajouter 3 participants fictifs"}
+        {loading ? t.demoBot.adding : added ? t.demoBot.added : t.demoBot.add}
       </button>
       {error && <p className="text-xs text-red-500 dark:text-red-400 text-center">{error}</p>}
     </div>
