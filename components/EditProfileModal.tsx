@@ -244,7 +244,7 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
           {/* ── Coach interest ── */}
           <div>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-              Ce qui m'intéresse le plus
+              Ce qui m&apos;intéresse le plus
             </p>
             <div className="flex flex-col gap-2">
               {NEED_TYPES.map((need) => {
