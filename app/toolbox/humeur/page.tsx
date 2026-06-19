@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   SmilePlus, Plus, Hash, ChevronRight, Clock, Users,
-  CheckCircle2, Loader2, Zap,
+  CheckCircle2, Loader2, Zap, Trash2, X,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
@@ -14,8 +14,11 @@ interface RoomRow extends HumeurRoom {
   player_count: number;
 }
 
-function RoomCard({ room }: { room: RoomRow }) {
+function RoomCard({ room, onDelete }: { room: RoomRow; onDelete: (id: string) => void }) {
   const { t, locale } = useI18n();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const date = new Date(room.created_at).toLocaleDateString(locale, {
     day: "2-digit", month: "short", year: "numeric",
   });
@@ -24,12 +27,21 @@ function RoomCard({ room }: { room: RoomRow }) {
     ? `/toolbox/humeur/${room.code}/lobby`
     : `/toolbox/humeur/${room.code}/results`;
 
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/humeur/room?code=${room.code}`, { method: "DELETE" });
+      if (res.ok) onDelete(room.id);
+      else setDeleting(false);
+    } catch { setDeleting(false); }
+  }
+
   return (
-    <Link
-      href={linkPath}
-      className="group flex items-center justify-between bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-5 py-4 hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm transition-all"
-    >
-      <div className="flex items-center gap-4">
+    <div className="group flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm transition-all">
+      <Link href={linkPath} className="flex-1 flex items-center gap-4 px-5 py-4 min-w-0">
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
           isActive ? "bg-rose-50 dark:bg-rose-950" : "bg-gray-100 dark:bg-gray-800"
         }`}>
@@ -38,7 +50,7 @@ function RoomCard({ room }: { room: RoomRow }) {
             : <CheckCircle2 size={16} className="text-gray-400 dark:text-gray-500" />
           }
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-bold tracking-widest font-mono text-sm text-gray-900 dark:text-white">
               {room.code}
@@ -52,9 +64,24 @@ function RoomCard({ room }: { room: RoomRow }) {
             {room.player_count} {room.player_count !== 1 ? t.common.players : t.common.player}
           </p>
         </div>
+      </Link>
+      <div className="flex items-center gap-1 pr-3 flex-shrink-0">
+        {confirmDelete ? (
+          <>
+            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmDelete(false); }} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <X size={13} />
+            </button>
+            <button onClick={handleDelete} disabled={deleting} className="p-1.5 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-40">
+              {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+            </button>
+          </>
+        ) : (
+          <button onClick={handleDelete} className="p-1.5 rounded-lg text-gray-300 dark:text-gray-700 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+            <Trash2 size={13} />
+          </button>
+        )}
       </div>
-      <ChevronRight size={15} className="text-gray-300 dark:text-gray-600 group-hover:text-rose-500 transition-colors flex-shrink-0" />
-    </Link>
+    </div>
   );
 }
 
@@ -77,6 +104,10 @@ export default function HumeurPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  function handleDelete(id: string) {
+    setRooms((prev) => prev.filter((r) => r.id !== id));
+  }
 
   const active   = rooms.filter((r) => r.status !== "finished");
   const archived = rooms.filter((r) => r.status === "finished");
@@ -156,7 +187,7 @@ export default function HumeurPage() {
                   {t.common.inProgress} ({active.length})
                 </h2>
                 <div className="space-y-2">
-                  {active.map((r) => <RoomCard key={r.id} room={r} />)}
+                  {active.map((r) => <RoomCard key={r.id} room={r} onDelete={handleDelete} />)}
                 </div>
               </section>
             )}
@@ -166,7 +197,7 @@ export default function HumeurPage() {
                   {t.common.finished} ({archived.length})
                 </h2>
                 <div className="space-y-2">
-                  {archived.map((r) => <RoomCard key={r.id} room={r} />)}
+                  {archived.map((r) => <RoomCard key={r.id} room={r} onDelete={handleDelete} />)}
                 </div>
               </section>
             )}

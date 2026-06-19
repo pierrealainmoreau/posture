@@ -123,3 +123,27 @@ export async function POST(req: NextRequest) {
     { status: 500 }
   );
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+    const code = new URL(req.url).searchParams.get("code")?.toUpperCase();
+    if (!code) return NextResponse.json({ error: "Code manquant" }, { status: 400 });
+
+    const admin = createAdminSupabaseClient();
+    const { error } = await admin
+      .from("draw_rooms")
+      .delete()
+      .eq("code", code)
+      .eq("creator_user_id", user.id);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[DELETE /api/draw/room]", err);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

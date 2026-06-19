@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Loader2, Crown, Plus, CheckCircle2,
-  LogOut, AlertCircle, Play, Link2, X, Check, UserCircle2,
+  LogOut, AlertCircle, Play, Link2, X, Check, UserCircle2, Trash2,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { QRShare } from "@/components/QRShare";
@@ -115,6 +115,9 @@ export default function SessionHostPage() {
   const [ending, setEnding]               = useState(false);
   const [endError, setEndError]           = useState<string | null>(null);
   const [notHost, setNotHost]             = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+  const [deleteError, setDeleteError]     = useState<string | null>(null);
 
   const [collaborators, setCollaborators]         = useState<Collaborator[] | null>(null);
   const [loadingCollaborators, setLoadingCollaborators] = useState(false);
@@ -302,6 +305,29 @@ export default function SessionHostPage() {
     if (pollRef.current) clearInterval(pollRef.current);
 
     router.push(GAME_LOBBY_URL[result.gameType](result.roomCode));
+  }
+
+  async function deleteSession() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/sessions/${upperCode}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantId, playerSecret }),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { error?: string };
+        setDeleteError(d.error ?? "Erreur lors de la suppression.");
+        setDeleting(false);
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEY(upperCode));
+      router.push("/");
+    } catch {
+      setDeleteError("Erreur de connexion.");
+      setDeleting(false);
+    }
   }
 
   async function endSession() {
@@ -520,6 +546,40 @@ export default function SessionHostPage() {
               </p>
             </div>
           )}
+
+          {/* Supprimer la session */}
+          <div className="pt-1 space-y-2">
+            {deleteError && (
+              <p className="text-xs text-red-500 text-center">{deleteError}</p>
+            )}
+            {confirmDelete ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setConfirmDelete(false); setDeleteError(null); }}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={deleteSession}
+                  disabled={deleting}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-40"
+                >
+                  {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  {deleting ? "Suppression…" : "Confirmer"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-red-500 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+              >
+                <Trash2 size={14} />
+                Supprimer la session
+              </button>
+            )}
+          </div>
 
           {/* Actions hôte */}
           {!isFinished && (

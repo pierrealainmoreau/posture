@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   UserCheck,
   Briefcase,
@@ -625,9 +626,23 @@ function HistoryPanel({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function RecruitmentPage() {
+function RecruitmentPageInner() {
   const { t } = useI18n();
-  const [mode, setMode] = useState<RecruitmentMode>("recruiter");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialTab = searchParams.get("tab");
+  const [mode, setMode] = useState<RecruitmentMode>(
+    initialTab === "recruiter" || initialTab === "candidate" || initialTab === "job-description"
+      ? initialTab
+      : "recruiter"
+  );
+
+  function changeMode(m: RecruitmentMode) {
+    setMode(m);
+    setResult(null);
+    setError(null);
+    router.replace(`/recruitment?tab=${m}`, { scroll: false });
+  }
 
   const [recruiterForm, setRecruiterForm] = useState<RecruiterFormState>({
     jobTitle: "",
@@ -677,6 +692,7 @@ export default function RecruitmentPage() {
 
   function loadEntry(entry: RecruitmentHistoryEntry) {
     setMode(entry.mode);
+    router.replace(`/recruitment?tab=${entry.mode}`, { scroll: false });
     if (entry.recruiterForm) setRecruiterForm(entry.recruiterForm);
     if (entry.candidateForm) setCandidateForm(entry.candidateForm);
     if (entry.jobDescriptionForm) setJobDescriptionForm(entry.jobDescriptionForm);
@@ -943,14 +959,14 @@ export default function RecruitmentPage() {
       <Header backHref="/" currentTool={t.recruitment.title} />
       <TrackUsage toolId="recruitment" />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
         <UsageIndicator />
         {/* Mode selector */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {/* 1 — Job description */}
           <button
             type="button"
-            onClick={() => { setMode("job-description"); setResult(null); setError(null); }}
+            onClick={() => changeMode("job-description")}
             className={`flex items-start gap-4 p-5 rounded-xl border-2 text-left transition-all ${
               mode === "job-description"
                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
@@ -973,7 +989,7 @@ export default function RecruitmentPage() {
           {/* 2 — Recruiter */}
           <button
             type="button"
-            onClick={() => { setMode("recruiter"); setResult(null); setError(null); }}
+            onClick={() => changeMode("recruiter")}
             className={`flex items-start gap-4 p-5 rounded-xl border-2 text-left transition-all ${
               mode === "recruiter"
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
@@ -996,7 +1012,7 @@ export default function RecruitmentPage() {
           {/* 3 — Candidate */}
           <button
             type="button"
-            onClick={() => { setMode("candidate"); setResult(null); setError(null); }}
+            onClick={() => changeMode("candidate")}
             className={`flex items-start gap-4 p-5 rounded-xl border-2 text-left transition-all ${
               mode === "candidate"
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
@@ -1618,5 +1634,13 @@ export default function RecruitmentPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function RecruitmentPage() {
+  return (
+    <Suspense>
+      <RecruitmentPageInner />
+    </Suspense>
   );
 }

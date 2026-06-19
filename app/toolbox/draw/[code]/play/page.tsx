@@ -722,7 +722,7 @@ export default function DrawPlayPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       <Header breadcrumbs={isHost ? breadcrumbs : undefined} guestMode={!isHost} />
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-3 py-3 flex flex-col md:flex-row gap-3">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-3 py-3 flex flex-col md:flex-row gap-3">
 
         {/* Left: Players */}
         <div className="w-full md:w-48 flex-shrink-0">
