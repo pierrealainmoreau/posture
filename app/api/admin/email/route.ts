@@ -95,10 +95,19 @@ export async function POST(req: NextRequest) {
     if (target === "premium") withOptInColumn = withOptInColumn.in("role", ["premium", "admin"]);
     else if (target === "specific" && userIds.length) withOptInColumn = withOptInColumn.in("id", userIds);
 
-    const [profilesRes, { data: { users: authUsers } }] = await Promise.all([
-      withOptInColumn,
-      admin.auth.admin.listUsers({ perPage: 1000 }),
-    ]);
+    const profilesRes = await withOptInColumn;
+    const authUsers: Array<{ id: string; email_confirmed_at?: string | null }> = [];
+    {
+      let page = 1;
+      const perPage = 1000;
+      for (;;) {
+        const { data } = await admin.auth.admin.listUsers({ page, perPage });
+        const users = data?.users ?? [];
+        authUsers.push(...users);
+        if (users.length < perPage) break;
+        page++;
+      }
+    }
 
     let profiles: { id: string; first_name: string | null; email: string | null; newsletter_opt_in?: boolean }[] | null = profilesRes.data;
     let profilesErr = profilesRes.error;
@@ -116,7 +125,7 @@ export async function POST(req: NextRequest) {
     if (profilesErr) return NextResponse.json({ error: profilesErr.message }, { status: 500 });
 
     const confirmedIds = new Set(
-      (authUsers ?? []).filter((u) => u.email_confirmed_at).map((u) => u.id),
+      authUsers.filter((u) => u.email_confirmed_at).map((u) => u.id),
     );
 
     const targets = (profiles ?? []).filter((p) => {

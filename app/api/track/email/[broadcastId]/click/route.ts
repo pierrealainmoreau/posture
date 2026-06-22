@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
-import { verifyTrackingToken } from "@/lib/email";
+import { verifyTrackingToken, verifyClickUrl } from "@/lib/email";
 
 export async function GET(
   req: NextRequest,
@@ -9,12 +9,16 @@ export async function GET(
   const rawUrl = req.nextUrl.searchParams.get("url") ?? "";
   const userId = req.nextUrl.searchParams.get("u") ?? "";
   const sig = req.nextUrl.searchParams.get("s") ?? "";
+  const urlSig = req.nextUrl.searchParams.get("us") ?? "";
 
-  // Validate — only allow http/https redirects
+  // Validate — only allow signed http/https redirects
   let destination = "https://posture.pamoreau.xyz";
   try {
     const parsed = new URL(rawUrl);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+    if (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      verifyClickUrl(params.broadcastId, rawUrl, urlSig)
+    ) {
       destination = rawUrl;
     }
   } catch { /* invalid URL */ }

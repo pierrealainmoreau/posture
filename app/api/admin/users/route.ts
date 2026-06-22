@@ -173,9 +173,18 @@ export async function DELETE(req: NextRequest) {
   if (userId === authed.user.id) return NextResponse.json({ error: "Vous ne pouvez pas supprimer votre propre compte." }, { status: 400 });
 
   const admin = createAdminSupabaseClient();
-  await admin.from("usage").delete().eq("user_id", userId);
-  await admin.from("profiles").delete().eq("id", userId);
-  await admin.auth.admin.deleteUser(userId);
+  try {
+    const { error: usageErr } = await admin.from("usage").delete().eq("user_id", userId);
+    if (usageErr) throw new Error(`Erreur suppression usage : ${usageErr.message}`);
+
+    const { error: profileErr } = await admin.from("profiles").delete().eq("id", userId);
+    if (profileErr) throw new Error(`Erreur suppression profil : ${profileErr.message}`);
+
+    const { error: authErr } = await admin.auth.admin.deleteUser(userId);
+    if (authErr) throw new Error(`Erreur suppression auth : ${authErr.message}`);
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Erreur suppression" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

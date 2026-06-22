@@ -3,11 +3,16 @@ import { createHmac } from "crypto";
 
 const FROM = "L'équipe Posture <no-reply@posture.pamoreau.xyz>";
 
+function getHmacSecret(): string {
+  const s = process.env.EMAIL_HMAC_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!s) throw new Error("EMAIL_HMAC_SECRET manquant — à définir en variable d'environnement");
+  return s;
+}
+
 // ─── Lien de désinscription (signé, sans authentification requise) ────────────
 
 function signUserId(userId: string): string {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  return createHmac("sha256", secret).update(userId).digest("hex").slice(0, 32);
+  return createHmac("sha256", getHmacSecret()).update(userId).digest("hex").slice(0, 32);
 }
 
 export function buildUnsubscribeUrl(userId: string, appUrl: string): string {
@@ -21,12 +26,20 @@ export function verifyUnsubscribeSignature(userId: string, signature: string): b
 // ─── Tracking par destinataire (signé, identifie le user dans le pixel/clic) ──
 
 function signTrackingToken(broadcastId: string, userId: string): string {
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  return createHmac("sha256", secret).update(`track:${broadcastId}:${userId}`).digest("hex").slice(0, 32);
+  return createHmac("sha256", getHmacSecret()).update(`track:${broadcastId}:${userId}`).digest("hex").slice(0, 32);
 }
 
 export function verifyTrackingToken(broadcastId: string, userId: string, signature: string): boolean {
   return signTrackingToken(broadcastId, userId) === signature;
+}
+
+function signClickUrl(broadcastId: string, url: string): string {
+  return createHmac("sha256", getHmacSecret()).update(`click-url:${broadcastId}:${url}`).digest("hex").slice(0, 16);
+}
+
+export function verifyClickUrl(broadcastId: string, url: string, sig: string): boolean {
+  if (!sig) return false;
+  return signClickUrl(broadcastId, url) === sig;
 }
 
 // ─── Types broadcast ──────────────────────────────────────────────────────────
@@ -74,7 +87,7 @@ function renderBlocks(blocks: EmailBlock[], tracking?: TrackingConfig): string {
       const label = escHtml(b.label || "En savoir plus");
       const rawUrl = b.url || "https://posture.pamoreau.xyz";
       const href = tracking
-        ? escHtml(`${tracking.appUrl}/api/track/email/${tracking.broadcastId}/click?u=${encodeURIComponent(tracking.userId)}&s=${tracking.signature}&url=${encodeURIComponent(rawUrl)}`)
+        ? escHtml(`${tracking.appUrl}/api/track/email/${tracking.broadcastId}/click?u=${encodeURIComponent(tracking.userId)}&s=${tracking.signature}&url=${encodeURIComponent(rawUrl)}&us=${signClickUrl(tracking.broadcastId, rawUrl)}`)
         : escHtml(rawUrl);
       return `<div style="margin:0 0 24px;"><a href="${href}" style="display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:10px;">${label}</a></div>`;
     }

@@ -549,10 +549,11 @@ export default function DrawPlayPage() {
     // Persist to DB (fire and forget)
     fetch(`/api/draw/room/${upperCode}/strokes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Player-Secret": playerSecret },
       body: JSON.stringify({
         strokeData: stroke,
         roundNumber: room?.current_round,
+        playerId,
       }),
     }).catch(() => undefined);
 

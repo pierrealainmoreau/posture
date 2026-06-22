@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { verifyPlayerSecret } from "@/lib/supabase/playerAuth";
 import { getAnthropicClient, MODEL_ID } from "@/lib/anthropic";
+import { checkRateLimit, recordUsage } from "@/lib/supabase/rateLimit";
 import { WORD_BANK } from "@/lib/emoji-only/types";
 
 export const dynamic = "force-dynamic";
@@ -54,9 +55,13 @@ export async function POST(
     const isValid = await verifyPlayerSecret(admin, "emoji_only_players", playerId, playerSecret);
     if (!isValid) return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
 
+    if (emojiSequence && emojiSequence.length > 200) {
+      return NextResponse.json({ error: "Séquence d'emojis trop longue" }, { status: 400 });
+    }
+
     const { data: room } = await admin
       .from("emoji_only_rooms")
-      .select("id, status, current_round, current_encoder_player_id, category")
+      .select("id, status, current_round, current_encoder_player_id, category, creator_user_id")
       .eq("code", params.code.toUpperCase())
       .single();
 
@@ -75,6 +80,16 @@ export async function POST(
 
     if (!round) return NextResponse.json({ error: "Round introuvable" }, { status: 404 });
 
+    if (room.creator_user_id) {
+      const { allowed, count, limit } = await checkRateLimit(room.creator_user_id, admin);
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "Limite de requêtes atteinte", details: `Vous avez utilisé ${count}/${limit} requêtes disponibles.` },
+          { status: 429 },
+        );
+      }
+    }
+
     // Mark as generating
     await admin.from("emoji_only_rooms").update({ status: "generating" }).eq("id", room.id);
 
@@ -92,6 +107,10 @@ export async function POST(
       status: "guessing",
       phase_started_at: new Date().toISOString(),
     }).eq("id", room.id);
+
+    if (room.creator_user_id) {
+      await recordUsage(room.creator_user_id, "emoji_only", admin);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
