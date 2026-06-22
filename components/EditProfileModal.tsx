@@ -77,6 +77,7 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
   const [coachInterest, setCoachInterest] = useState<string | null>(initialData.coach_interest);
   const [newsletterOptIn, setNewsletterOptIn] = useState(initialData.newsletter_opt_in);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -90,6 +91,7 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
 
   async function handleSave() {
     setSaving(true);
+    setSaveError(null);
     try {
       let finalAvatarUrl = initialData.avatar_url;
 
@@ -101,15 +103,18 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
           .from("avatars")
           .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
 
-        if (!uploadError) {
-          const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-          finalAvatarUrl = data.publicUrl + `?t=${Date.now()}`;
+        if (uploadError) {
+          setSaveError(`Erreur upload photo : ${uploadError.message}`);
+          return;
         }
+
+        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+        finalAvatarUrl = data.publicUrl + `?t=${Date.now()}`;
       }
 
       const cleanLinkedin = linkedin.trim() || null;
 
-      await fetch("/api/profile/update", {
+      const res = await fetch("/api/profile/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,14 +125,20 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
         }),
       });
 
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setSaveError(body.error ?? `Erreur serveur (${res.status})`);
+        return;
+      }
+
       onSaved({
         avatar_url: finalAvatarUrl,
         linkedin_url: cleanLinkedin,
         coach_interest: coachInterest,
         newsletter_opt_in: newsletterOptIn,
       });
-    } catch {
-      // silent — modal remains open so user can retry
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Erreur inconnue");
     } finally {
       setSaving(false);
     }
@@ -279,7 +290,12 @@ export function EditProfileModal({ userId, firstName, initialData, onClose, onSa
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 space-y-3">
+          {saveError && (
+            <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              {saveError}
+            </p>
+          )}
           <button
             onClick={handleSave}
             disabled={saving}
