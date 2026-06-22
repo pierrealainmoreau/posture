@@ -7,6 +7,7 @@ export interface BuildRecruiterPromptParams {
   seniority: SeniorityLevel;
   postType: PostType;
   keySkills: string;
+  companyValues?: string;
   context?: string;
 }
 
@@ -42,20 +43,39 @@ export function buildRecruiterSystemPrompt({
   seniority,
   postType,
   keySkills,
+  companyValues,
   context,
 }: BuildRecruiterPromptParams): string {
-  return `Tu es expert RH. Génère un guide d'entretien en JSON, en français. Sois concis (max 20 mots par champ texte).
+  const valuesLine = companyValues?.trim()
+    ? `Valeurs de l'entreprise : ${companyValues.trim().slice(0, 200)}`
+    : "";
+  const contextLine = context?.trim()
+    ? `Contexte : ${context.trim().slice(0, 200)}`
+    : "";
+  const valueInstruction = companyValues?.trim()
+    ? `- 2 questions valeurs d'entreprise (category "company_value") : évaluer l'alignement avec "${companyValues.trim().slice(0, 100)}"`
+    : `- 2 questions motivation/fit (category "company_value") : motivation pour le poste et fit culturel`;
 
-POSTE : ${jobTitle} | ${SENIORITY_DESC[seniority]} | ${POST_TYPE_DESC[postType]} | Compétence clé : ${keySkills}
-${context?.trim() ? `Contexte : ${context.trim().slice(0, 200)}` : ""}
+  return `Tu es expert RH. Génère une grille d'évaluation d'entretien en JSON, en français. Sois concis (max 25 mots par champ texte).
 
-GÉNÈRE EXACTEMENT 3 QUESTIONS :
-- 1 comportementale STAR (theme "Comportement") : commencer par "Racontez-moi" ou "Décrivez"
-- 1 compétences (theme "Compétences") : évaluer ${keySkills}
-- 1 motivation/fit (theme "Motivation" ou "Fit culturel")
+POSTE : ${jobTitle} | ${SENIORITY_DESC[seniority]} | ${POST_TYPE_DESC[postType]}
+Compétences attendues : ${keySkills}
+${valuesLine}
+${contextLine}
+
+GÉNÈRE EXACTEMENT 8 QUESTIONS réparties ainsi :
+- 3 questions hard skills (category "hard_skill") : compétences techniques liées à "${keySkills}"
+- 3 questions soft skills (category "soft_skill") : comportement STAR, collaboration, communication
+${valueInstruction}
+
+Pour chaque question :
+- skill_evaluated : nom court de la compétence évaluée (ex: "SQL avancé", "Communication")
+- question : question ouverte, commence par "Racontez-moi", "Décrivez" ou "Comment"
+- criteria : signaux positifs attendus dans la réponse (max 20 mots)
+- follow_up : une relance pour approfondir (max 15 mots)
 
 Retourne UNIQUEMENT ce JSON valide (pas de texte avant ni après, pas de \`\`\`json) :
-{"preparation_tips":["conseil court 1","conseil court 2"],"questions":[{"question":"Question ouverte","theme":"Comportement","objective":"Ce que révèle la question","follow_up":["Une relance"],"green_flags":["Signal positif"],"red_flags":["Signal d'alerte"]}],"bias_warnings":[],"closing_tips":"Conseil de clôture court"}`.trim();
+{"preparation_tips":["conseil 1","conseil 2"],"questions":[{"category":"hard_skill","skill_evaluated":"Compétence","question":"Question ouverte","criteria":"Signaux positifs attendus","follow_up":"Une relance"}],"bias_warnings":[],"closing_tips":"Conseil de clôture court"}`.trim();
 }
 
 export function buildCandidateSystemPrompt({

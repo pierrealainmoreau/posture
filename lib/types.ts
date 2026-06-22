@@ -116,6 +116,7 @@ export interface RecruiterRequest {
   seniority: SeniorityLevel;
   postType: PostType;
   keySkills: string;
+  companyValues?: string;
   context?: string;
 }
 
@@ -131,6 +132,24 @@ export interface RecruiterQuestion {
 export interface RecruiterResponse {
   preparation_tips: string[];
   questions: RecruiterQuestion[];
+  bias_warnings: string[];
+  closing_tips: string;
+}
+
+// — Grille d'évaluation (nouveau format recruteur) —
+export type EvaluationCategory = "hard_skill" | "soft_skill" | "company_value";
+
+export interface EvaluationQuestion {
+  category: EvaluationCategory;
+  skill_evaluated: string;
+  question: string;
+  criteria: string;
+  follow_up: string;
+}
+
+export interface EvaluationGridResponse {
+  preparation_tips: string[];
+  questions: EvaluationQuestion[];
   bias_warnings: string[];
   closing_tips: string;
 }

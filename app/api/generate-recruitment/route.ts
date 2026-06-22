@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { checkRateLimit, recordUsage } from "@/lib/supabase/rateLimit";
 import type { RecruitmentRequest, SeniorityLevel, PostType, CandidatePriority } from "@/lib/types";
 
-const MAX_TOKENS = 1500;
+const MAX_TOKENS = 2500;
 const VALID_SENIORITY: SeniorityLevel[] = ["1-3", "4-5", "6-8", "8-10", "10+"];
 const VALID_POST_TYPE: PostType[] = ["execution", "strategie", "mixte"];
 const VALID_PRIORITY: CandidatePriority[] = ["career", "balance", "benefits"];
@@ -79,6 +79,7 @@ function validate(body: unknown): RecruitmentRequest | { error: string } {
       seniority: b.seniority as SeniorityLevel,
       postType: b.postType as PostType,
       keySkills: (b.keySkills as string).trim(),
+      companyValues: typeof b.companyValues === "string" ? b.companyValues.trim() || undefined : undefined,
       context: typeof b.context === "string" ? b.context.trim() || undefined : undefined,
     };
   }
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
       seniority: validated.seniority,
       postType: validated.postType,
       keySkills: validated.keySkills,
+      companyValues: validated.companyValues,
       context: validated.context,
     });
   } else {
