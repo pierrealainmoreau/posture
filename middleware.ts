@@ -61,13 +61,22 @@ export async function middleware(request: NextRequest) {
   const isCoachManualPage =
     pathSegments[1] === "coach" && pathSegments[2] === "manual" && pathSegments[3] !== undefined;
 
+  // Toolbox mini-jeux participant pages are public — no account needed to join a session.
+  // Hub (/toolbox/{game}) and create (/toolbox/{game}/create) remain protected (host only).
+  // Public: /toolbox/{game}/join  and  /toolbox/{game}/{code}/**  (lobby, play, results…)
+  const isToolboxParticipantPage =
+    pathSegments[1] === "toolbox" &&
+    pathSegments[2] !== undefined &&
+    (pathSegments[3] === "join" || pathSegments[4] !== undefined);
+
   const isPublicRoomPage =
     isIcebreakerParticipantPage ||
     isMiniJeuxPage ||
     isBoussoleGuestPage ||
     isRetrospectivePage ||
     isReunionMakerGuestPage ||
-    isCoachManualPage;
+    isCoachManualPage ||
+    isToolboxParticipantPage;
 
   // Pages qui redirigent les utilisateurs déjà connectés vers /
   const isAuthOnlyPage =
