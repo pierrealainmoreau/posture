@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare, Zap, Star, Gift, Layers, Activity, Smile } from "lucide-react";
+import { Scale, BookOpen, Shuffle, ChevronRight, PenLine, Users, Compass, Clock, SmilePlus, Link2, EyeOff, Lock, SplitSquareHorizontal, MessageSquare, Zap, Star, Gift, Layers, Activity, Smile, BarChart2 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { TrackUsage } from "@/components/TrackUsage";
 import { useI18n } from "@/lib/i18n";
@@ -200,6 +200,15 @@ const GAMES_STATIC: GameBase[] = [
     available: true,
     tags:      ["fun", "cohesion", "seminar"],
     duration:  "7 min",
+  },
+  {
+    key:       "estimationexpress",
+    href:      "/toolbox/estimation-express",
+    icon:      <BarChart2 size={22} className="text-violet-600 dark:text-violet-400" />,
+    iconBg:    "bg-violet-50 dark:bg-violet-950",
+    available: true,
+    tags:      ["fun", "knowledge", "seminar"],
+    duration:  "5-10 min",
   },
 ];
 
