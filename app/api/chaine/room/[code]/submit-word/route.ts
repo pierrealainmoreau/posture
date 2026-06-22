@@ -68,17 +68,23 @@ export async function POST(
     }),
   ]);
 
-  if (wordErr) return NextResponse.json({ error: wordErr.message }, { status: 500 });
+  if (wordErr) {
+    if ((wordErr as { code?: string }).code === "23505") return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ error: wordErr.message }, { status: 500 });
+  }
 
-  const { error: updateErr } = await admin
+  const { data: updated, error: updateErr } = await admin
     .from("chaine_rooms")
     .update({
       current_turn_index: nextTurnIndex,
       turn_started_at: isLastTurn ? null : now,
       status: isLastTurn ? "voting" : "playing",
     })
-    .eq("id", room.id);
+    .eq("id", room.id)
+    .eq("current_turn_index", turnIndex)
+    .select("id");
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  if (!updated || updated.length === 0) return NextResponse.json({ ok: true, skipped: true });
   return NextResponse.json({ ok: true, finished: isLastTurn });
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase/server";
 import { getAnthropicClient, MODEL_ID } from "@/lib/anthropic";
 import { checkRateLimit, recordUsage } from "@/lib/supabase/rateLimit";
 import type { AbcdePosture } from "@/lib/abcde/types";
@@ -28,6 +28,14 @@ export async function POST(
     .single();
 
   if (!room) return NextResponse.json({ error: "Session introuvable" }, { status: 404 });
+
+  const supabase = createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (room.creator_user_id && room.creator_user_id !== user.id) {
+    return NextResponse.json({ error: "Réservé à l'animateur" }, { status: 403 });
+  }
+
   if (room.host_player_id !== playerId) return NextResponse.json({ error: "Réservé à l'animateur" }, { status: 403 });
   if (!["step_e", "synthesis"].includes(room.status)) {
     return NextResponse.json({ error: "Synthèse disponible après l'étape E" }, { status: 409 });

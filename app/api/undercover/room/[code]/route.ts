@@ -67,9 +67,12 @@ export async function GET(
     secret_word: gameOver ? p.secret_word : null,
   }));
 
+  const { civil_word, undercover_word, ...roomPublic } = room;
+
   return NextResponse.json(
     {
-      ...room,
+      ...roomPublic,
+      ...(gameOver ? { civil_word, undercover_word } : {}),
       my_role: myRole,
       my_word: myWord,
       players: sanitizedPlayers,

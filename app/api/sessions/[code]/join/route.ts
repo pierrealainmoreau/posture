@@ -21,6 +21,9 @@ export async function POST(
     if (!pseudo?.trim()) {
       return NextResponse.json({ error: "Pseudo manquant" }, { status: 400 });
     }
+    if (pseudo.trim().length > 32) {
+      return NextResponse.json({ error: "Pseudo trop long (32 caractères maximum)" }, { status: 400 });
+    }
 
     const { data: session, error: sessionErr } = await admin
       .from("sessions")
@@ -41,6 +44,15 @@ export async function POST(
 
     if (session.status === "finished") {
       return NextResponse.json({ error: "Cette session est terminée" }, { status: 410 });
+    }
+
+    const { count: participantCount } = await admin
+      .from("session_participants")
+      .select("*", { count: "exact", head: true })
+      .eq("session_id", session.id);
+
+    if ((participantCount ?? 0) >= 200) {
+      return NextResponse.json({ error: "Session pleine (200 participants maximum)" }, { status: 409 });
     }
 
     const playerSecret = generatePlayerSecret();

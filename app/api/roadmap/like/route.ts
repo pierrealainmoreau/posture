@@ -20,7 +20,11 @@ export async function POST(req: NextRequest) {
     if (existing) {
       await supabase.from("roadmap_likes").delete().eq("id", existing.id);
     } else {
-      await supabase.from("roadmap_likes").insert({ item_id, user_id: user.id });
+      const { error: insertErr } = await supabase.from("roadmap_likes")
+        .insert({ item_id, user_id: user.id });
+      if (insertErr && insertErr.code !== "23505") {
+        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+      }
     }
 
     const { count } = await supabase
