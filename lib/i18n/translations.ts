@@ -352,6 +352,7 @@ const fr = {
       thisorthat: "Vote instantané : chaque question affiche deux options professionnelles, tout le monde choisit en même temps, résultats révélés en direct.",
       completephrase: "Un starter, des complétions anonymes, un mur de post-its révélé en direct. Parfait pour créer de l'ouverture en équipe.",
       healthRadar: "Bilan d'équipe sur 9 critères : engagement, communication, clarté des rôles… Votes anonymes, résultats révélés en direct.",
+      emojionly: "Encodez un mot secret en emojis (5 max), les autres devinent parmi 4 choix. Course à la vitesse — le plus rapide gagne plus de points.",
     },
     labels: {
       humeur: "Humeur du jour",
@@ -371,6 +372,7 @@ const fr = {
       thisorthat: "This or That",
       completephrase: "Continuez la phrase",
       healthRadar: "Health Radar",
+      emojionly: "Emoji Only",
     },
   },
   anecdotes: {
@@ -1884,6 +1886,7 @@ const en: Translations = {
       thisorthat: "Instant vote: each question shows two professional options, everyone picks at once, results revealed live.",
       completephrase: "A starter phrase, anonymous completions, a post-it wall revealed live. Perfect for opening up team conversations.",
       healthRadar: "Team health check on 9 criteria: engagement, communication, clarity of roles… Anonymous votes, results revealed live.",
+      emojionly: "Encode a secret word with emojis (max 5), others guess from 4 choices. Speed race — fastest correct answer scores more points.",
     },
     labels: {
       humeur: "Daily Mood",
@@ -1903,6 +1906,7 @@ const en: Translations = {
       thisorthat: "This or That",
       completephrase: "Complete the sentence",
       healthRadar: "Health Radar",
+      emojionly: "Emoji Only",
     },
   },
   anecdotes: {
@@ -3410,6 +3414,7 @@ const es: Translations = {
       thisorthat: "Voto instantáneo: cada pregunta muestra dos opciones profesionales, todos eligen a la vez, resultados revelados en directo.",
       completephrase: "Una frase inicial, completaciones anónimas, un muro de post-its revelado en directo. Perfecto para abrir conversaciones en equipo.",
       healthRadar: "Control de salud del equipo en 9 criterios: compromiso, comunicación, claridad de roles… Votos anónimos, resultados revelados en directo.",
+      emojionly: "Codifica una palabra secreta con emojis (máx 5), los demás adivinan entre 4 opciones. Carrera de velocidad — el más rápido gana más puntos.",
     },
     labels: {
       humeur: "Humor del día",
@@ -3429,6 +3434,7 @@ const es: Translations = {
       thisorthat: "This or That",
       completephrase: "Completa la frase",
       healthRadar: "Health Radar",
+      emojionly: "Emoji Only",
     },
   },
   anecdotes: {
