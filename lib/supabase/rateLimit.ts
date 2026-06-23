@@ -8,7 +8,7 @@ export const REQUEST_LIMIT = DEFAULT_REQUEST_LIMIT;
 export type Tool =
   | "feedback" | "interview" | "recruitment" | "job-description" | "teams" | "reunion-maker"
   | "icebreaker" | "chaine" | "humeur" | "boussole" | "tribu" | "draw" | "tvml"
-  | "okr" | "abcde" | "search" | "emoji_only";
+  | "okr" | "abcde" | "search" | "emoji_only" | "synthese";
 
 export function limitForRole(role: string | null | undefined): number {
   if (role === "admin") return ADMIN_REQUEST_LIMIT;

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 export const MODEL_ID = "claude-sonnet-4-6";
 export const MAX_TOKENS_FEEDBACK = 1500;
 export const MAX_TOKENS_COACH = 2000;
+export const MAX_TOKENS_SYNTHESE = 2500;
 
 let _client: Anthropic | null = null;
 

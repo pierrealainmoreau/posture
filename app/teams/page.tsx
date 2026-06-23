@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Users, Plus, Loader2, ChevronRight, Crown, Lock, Check,
-  BookOpen, Sparkles, Calendar, Target,
+  BookOpen, Sparkles, Calendar, Target, FileText,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { createClient } from "@/lib/supabase/client";
@@ -377,6 +377,7 @@ export default function CoachPage() {
 
         {/* Collaborator cards */}
         {collaborators.length > 0 && (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {collaborators.map((c) => {
               const prog = progress[c.id];
@@ -466,6 +467,28 @@ export default function CoachPage() {
               );
             })}
           </div>
+
+          {/* CTA Synthèse managériale */}
+          <div className="mt-6 flex items-center justify-between gap-4 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 flex-shrink-0 rounded-lg bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
+                <FileText size={15} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Synthèse managériale</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 truncate">
+                  Générer une note à remonter à ta hiérarchie
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/synthese"
+              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-700 text-white rounded-lg hover:bg-emerald-800 transition-colors"
+            >
+              <Sparkles size={12} /> Générer
+            </Link>
+          </div>
+          </>
         )}
 
         {/* Premium upsell */}
