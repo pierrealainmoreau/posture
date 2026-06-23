@@ -7,10 +7,12 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
+    const now = new Date().toISOString();
     const { data, error } = await supabase
       .from("notifications")
       .select("id, title, body, type, href, is_read, created_at")
       .eq("user_id", user.id)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("created_at", { ascending: false })
       .limit(50);
 

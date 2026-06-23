@@ -397,7 +397,15 @@ function AdminPageInner() {
     id: string; title: string; body: string | null; type: string;
     href: string | null; trigger_event: string | null; is_active: boolean; created_at: string;
   }
+  interface NotifBroadcast {
+    id: string; title: string; body: string | null; type: string;
+    href: string | null; target: string; sent_count: number;
+    expires_at: string; created_at: string;
+  }
   const [notifTemplates, setNotifTemplates]         = useState<NotifTemplate[]>([]);
+  const [notifBroadcasts, setNotifBroadcasts]       = useState<NotifBroadcast[]>([]);
+  const [notifBroadcastsLoading, setNotifBroadcastsLoading] = useState(false);
+  const [notifBroadcastActionId, setNotifBroadcastActionId] = useState<string | null>(null);
   const [notifLoading, setNotifLoading]             = useState(false);
   const [notifError, setNotifError]                 = useState<string | null>(null);
   const [notifSending, setNotifSending]             = useState(false);
@@ -555,6 +563,38 @@ function AdminPageInner() {
     }
   }
 
+  async function fetchNotifBroadcasts() {
+    setNotifBroadcastsLoading(true);
+    try {
+      const res = await fetch("/api/admin/notifications");
+      if (!res.ok) throw new Error((await res.json()).error ?? "Erreur");
+      const d = await res.json();
+      setNotifBroadcasts(d.broadcasts ?? []);
+    } catch (e: unknown) {
+      setNotifError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setNotifBroadcastsLoading(false);
+    }
+  }
+
+  async function deleteBroadcast(id: string) {
+    if (!confirm("Supprimer ce broadcast ? Les notifications seront retirées de toutes les boîtes de réception.")) return;
+    setNotifBroadcastActionId(id);
+    try {
+      const res = await fetch("/api/admin/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ broadcastId: id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Erreur");
+      setNotifBroadcasts((prev) => prev.filter((b) => b.id !== id));
+    } catch (e: unknown) {
+      setNotifError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setNotifBroadcastActionId(null);
+    }
+  }
+
   async function sendOneShot() {
     if (!notifForm.title.trim()) return;
     if (notifForm.target === "specific" && notifUserIds.length === 0) {
@@ -582,6 +622,7 @@ function AdminPageInner() {
       setNotifForm({ title: "", body: "", type: "info", href: "", target: "all" });
       setNotifUserIds([]);
       setNotifUserSearch("");
+      fetchNotifBroadcasts();
     } catch (e: unknown) {
       setNotifError(e instanceof Error ? e.message : "Erreur");
     } finally {
@@ -965,13 +1006,15 @@ function AdminPageInner() {
     router.replace(`/admin?tab=${t}`, { scroll: false });
     if (t === "minijeux" && !minijeuxData && !minijeuxLoading) fetchMinijeux();
     if (t === "notifications" && notifTemplates.length === 0 && !notifLoading) fetchNotifTemplates();
+    if (t === "notifications" && notifBroadcasts.length === 0 && !notifBroadcastsLoading) fetchNotifBroadcasts();
     if (t === "email" && emailHistory.length === 0 && !emailHistoryLoading) fetchEmailHistory();
     if (t === "referrals" && referrals.length === 0 && !referralsLoading) fetchReferrals();
   }
 
   function refreshOverview() { fetchUsers(); fetchAnalytics(); }
-  const refreshForTab = { overview: refreshOverview, users: fetchUsers, suggestions: fetchSuggestions, premium: fetchPremiumRequests, minijeux: fetchMinijeux, pmf: fetchPmf, roadmap: fetchRoadmap, notifications: fetchNotifTemplates, email: fetchEmailHistory, referrals: fetchReferrals } satisfies Record<Tab, () => void>;
-  const loadingForTab = { overview: usersLoading || analyticsLoading, users: usersLoading, suggestions: suggestionsLoading, premium: premiumLoading, minijeux: minijeuxLoading, pmf: pmfLoading, roadmap: roadmapLoading, notifications: notifLoading, email: emailHistoryLoading, referrals: referralsLoading } satisfies Record<Tab, boolean>;
+  function refreshNotifications() { fetchNotifTemplates(); fetchNotifBroadcasts(); }
+  const refreshForTab = { overview: refreshOverview, users: fetchUsers, suggestions: fetchSuggestions, premium: fetchPremiumRequests, minijeux: fetchMinijeux, pmf: fetchPmf, roadmap: fetchRoadmap, notifications: refreshNotifications, email: fetchEmailHistory, referrals: fetchReferrals } satisfies Record<Tab, () => void>;
+  const loadingForTab = { overview: usersLoading || analyticsLoading, users: usersLoading, suggestions: suggestionsLoading, premium: premiumLoading, minijeux: minijeuxLoading, pmf: pmfLoading, roadmap: roadmapLoading, notifications: notifLoading || notifBroadcastsLoading, email: emailHistoryLoading, referrals: referralsLoading } satisfies Record<Tab, boolean>;
 
   async function setRole(user: UserRow, newRole: UserRow["role"]) {
     if (newRole === user.role) return;
@@ -2342,6 +2385,86 @@ function AdminPageInner() {
                   {notifSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                   Envoyer maintenant
                 </button>
+              </div>
+            </div>
+
+            {/* ── Historique des envois one-shot ── */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                <History size={15} className="text-gray-500 dark:text-gray-400" />
+                <h2 className="font-semibold text-gray-900 dark:text-white text-sm">Historique des envois</h2>
+                {notifBroadcasts.length > 0 && (
+                  <span className="ml-auto text-xs text-gray-400">{notifBroadcasts.length} envoi(s)</span>
+                )}
+              </div>
+              <div>
+                {notifBroadcastsLoading ? (
+                  <div className="flex items-center justify-center py-10 text-gray-400">
+                    <Loader2 size={16} className="animate-spin mr-2" /> Chargement…
+                  </div>
+                ) : notifBroadcasts.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-gray-400 dark:text-gray-500">
+                    Aucun envoi one-shot pour l&apos;instant.
+                  </div>
+                ) : (
+                  notifBroadcasts.map((bc) => {
+                    const now = new Date();
+                    const expiresAt = new Date(bc.expires_at);
+                    const isExpired = expiresAt <= now;
+                    const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    const typeIcons: Record<string, React.ReactNode> = {
+                      info:        <Info size={13} className="text-blue-500" />,
+                      success:     <CheckCircle2 size={13} className="text-green-500" />,
+                      warning:     <AlertTriangle size={13} className="text-amber-500" />,
+                      new_feature: <Sparkles size={13} className="text-purple-500" />,
+                    };
+                    const targetLabels: Record<string, string> = {
+                      all:      "Tous",
+                      premium:  "Premium",
+                      admin:    "Admins",
+                      specific: "Sélection",
+                    };
+                    return (
+                      <div key={bc.id} className="flex items-start gap-4 px-6 py-4 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                        <div className="w-6 h-6 rounded-md bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {typeIcons[bc.type] ?? typeIcons.info}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{bc.title}</p>
+                          {bc.body && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{bc.body}</p>}
+                          <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                              <Users size={9} /> {targetLabels[bc.target] ?? bc.target} · {bc.sent_count} dest.
+                            </span>
+                            {isExpired ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700">
+                                Expiré
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                Actif · expire dans {daysLeft}j
+                              </span>
+                            )}
+                            <span className="text-[10px] text-gray-400 dark:text-gray-600">
+                              {new Date(bc.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => deleteBroadcast(bc.id)}
+                          disabled={notifBroadcastActionId === bc.id}
+                          title="Supprimer ce broadcast"
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 transition-colors disabled:opacity-40 flex-shrink-0 mt-0.5"
+                        >
+                          {notifBroadcastActionId === bc.id
+                            ? <Loader2 size={13} className="animate-spin" />
+                            : <Trash2 size={13} />
+                          }
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
