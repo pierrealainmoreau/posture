@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Check,
-  ChevronDown,
-  ChevronUp,
+  Clock,
   Copy,
   FileText,
+  History,
   Loader2,
   RefreshCw,
   Sparkles,
+  Trash2,
   Users,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/Header";
@@ -24,12 +26,17 @@ import type { SyntheseDestinataire, SyntheseType } from "@/lib/prompts/synthese-
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const TYPE_OPTIONS: { value: SyntheseType; label: string; description: string }[] = [
-  { value: "resultats",  label: "Résultats",         description: "Avancement OKR et réussites" },
-  { value: "ressources", label: "Demande",            description: "Budget, recrutement, arbitrage" },
-  { value: "blocage",    label: "Alerte / Blocage",   description: "Escalade, risque à signaler" },
-  { value: "rh",         label: "Situation RH",       description: "Tension, départ, sous-perf." },
-  { value: "general",    label: "Point d'étape",      description: "Vue d'ensemble équilibrée" },
+  { value: "resultats",  label: "Résultats",        description: "Avancement OKR et réussites" },
+  { value: "ressources", label: "Demande",           description: "Budget, recrutement, arbitrage" },
+  { value: "blocage",    label: "Alerte / Blocage",  description: "Escalade, risque à signaler" },
+  { value: "rh",         label: "Situation RH",      description: "Tension, départ, sous-perf." },
+  { value: "general",    label: "Point d'étape",     description: "Vue d'ensemble équilibrée" },
 ];
+
+const TYPE_LABELS: Record<SyntheseType, string> = {
+  resultats: "Résultats", ressources: "Demande", blocage: "Alerte",
+  rh: "RH", general: "Point d'étape",
+};
 
 const DESTINATAIRE_OPTIONS: { value: SyntheseDestinataire; label: string; sublabel: string }[] = [
   { value: "n1",    label: "N+1",   sublabel: "Direct, opérationnel" },
@@ -51,6 +58,41 @@ const PERIOD_LABELS: Record<string, string> = {
   onboarding: "Intégration", development: "Progression", retention: "Fidélisation",
 };
 
+// ── History ────────────────────────────────────────────────────────────────
+
+interface SyntheseHistoryEntry {
+  id: string;
+  createdAt: number;
+  collaboratorIds: string[];
+  collaboratorNames: string[];
+  type: SyntheseType;
+  destinataire: SyntheseDestinataire;
+  context: string;
+  result: { note: string; warnings: string[] };
+}
+
+const HISTORY_KEY = "posture_synthese_history";
+const HISTORY_MAX = 20;
+
+function loadHistory(): SyntheseHistoryEntry[] {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]"); }
+  catch { return []; }
+}
+
+function persistHistory(entries: SyntheseHistoryEntry[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+}
+
+function relativeDate(ts: number): string {
+  const diff = Date.now() - ts;
+  const rtf = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
+  if (diff < 60_000) return rtf.format(0, "second");
+  if (diff < 3_600_000) return rtf.format(-Math.floor(diff / 60_000), "minute");
+  if (diff < 86_400_000) return rtf.format(-Math.floor(diff / 3_600_000), "hour");
+  if (diff < 172_800_000) return rtf.format(-1, "day");
+  return new Date(ts).toLocaleDateString("fr", { day: "2-digit", month: "short" });
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function SynthesePage() {
@@ -63,12 +105,16 @@ export default function SynthesePage() {
   const [type, setType] = useState<SyntheseType>("resultats");
   const [destinataire, setDestinataire] = useState<SyntheseDestinataire>("n1");
   const [context, setContext] = useState("");
-  const [contextOpen, setContextOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ note: string; warnings: string[] } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const [history, setHistory] = useState<SyntheseHistoryEntry[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  useEffect(() => { setHistory(loadHistory()); }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -83,7 +129,6 @@ export default function SynthesePage() {
 
       const collabs = (data as Collaborator[]) ?? [];
       setCollaborators(collabs);
-      // Auto-select all by default
       setSelectedIds(new Set(collabs.map((c) => c.id)));
       setLoadingCollabs(false);
     }).catch(() => router.replace("/login"));
@@ -105,6 +150,47 @@ export default function SynthesePage() {
     }
   }
 
+  function saveToHistory(res: { note: string; warnings: string[] }) {
+    const names = collaborators
+      .filter((c) => selectedIds.has(c.id))
+      .map((c) => `${c.first_name} ${c.last_name}`);
+    const entry: SyntheseHistoryEntry = {
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      collaboratorIds: Array.from(selectedIds),
+      collaboratorNames: names,
+      type,
+      destinataire,
+      context,
+      result: res,
+    };
+    const updated = [entry, ...history].slice(0, HISTORY_MAX);
+    setHistory(updated);
+    persistHistory(updated);
+  }
+
+  function loadEntry(entry: SyntheseHistoryEntry) {
+    setSelectedIds(new Set(entry.collaboratorIds));
+    setType(entry.type);
+    setDestinataire(entry.destinataire);
+    setContext(entry.context);
+    setResult(entry.result);
+    setError(null);
+    setHistoryOpen(false);
+  }
+
+  function deleteEntry(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const updated = history.filter((h) => h.id !== id);
+    setHistory(updated);
+    persistHistory(updated);
+  }
+
+  function clearHistory() {
+    setHistory([]);
+    persistHistory([]);
+  }
+
   async function generate() {
     if (selectedIds.size === 0) {
       setError("Sélectionne au moins un collaborateur.");
@@ -113,6 +199,7 @@ export default function SynthesePage() {
     setError(null);
     setLoading(true);
     setResult(null);
+    setHistoryOpen(false);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 40000);
@@ -135,7 +222,9 @@ export default function SynthesePage() {
         setError(data.details || data.error || "Une erreur est survenue.");
         return;
       }
-      setResult(data as { note: string; warnings: string[] });
+      const r = data as { note: string; warnings: string[] };
+      setResult(r);
+      saveToHistory(r);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") {
         setError("La génération a pris trop de temps. Réessaie avec moins de collaborateurs.");
@@ -219,14 +308,12 @@ export default function SynthesePage() {
                             : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 opacity-60 hover:opacity-80",
                         )}
                       >
-                        {/* Avatar */}
                         <div className={cn(
                           "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
                           SENIORITY_COLORS[c.seniority] ?? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
                         )}>
                           {initials(c)}
                         </div>
-
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                             {c.first_name} {c.last_name}
@@ -235,7 +322,6 @@ export default function SynthesePage() {
                             {c.role} · {SENIORITY_LABELS[c.seniority] ?? c.seniority} · {PERIOD_LABELS[c.period] ?? c.period}
                           </p>
                         </div>
-
                         <div className={cn(
                           "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border transition-colors",
                           selected
@@ -302,27 +388,19 @@ export default function SynthesePage() {
               </div>
             </div>
 
-            {/* Contexte supplémentaire (collapsible) */}
+            {/* Contexte */}
             <div>
-              <button
-                onClick={() => setContextOpen((v) => !v)}
-                className="flex w-full items-center justify-between text-[13px] font-medium text-gray-700 dark:text-gray-300"
-              >
-                <span>Contexte supplémentaire <span className="text-gray-400 dark:text-gray-500 font-normal">(optionnel)</span></span>
-                {contextOpen
-                  ? <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  : <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                }
-              </button>
-              {contextOpen && (
-                <textarea
-                  value={context}
-                  onChange={(e) => setContext(e.target.value)}
-                  maxLength={1000}
-                  placeholder="Évènements récents, décision à prendre, éléments non visibles dans les données…"
-                  className="mt-2 min-h-[100px] w-full resize-y rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-sm text-gray-900 dark:text-gray-100 leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                />
-              )}
+              <label className="mb-2 block text-[13px] font-medium text-gray-700 dark:text-gray-300">
+                Contexte <span className="text-gray-400 dark:text-gray-500 font-normal">(optionnel)</span>
+              </label>
+              <textarea
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                maxLength={1000}
+                placeholder="Évènements récents, décision à prendre, éléments non visibles dans les données…"
+                className="min-h-[90px] w-full resize-y rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-sm text-gray-900 dark:text-gray-100 leading-relaxed placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              />
+              <p className="mt-1 text-right text-xs text-gray-400 dark:text-gray-500">{context.length} / 1000</p>
             </div>
 
             {/* CTA */}
@@ -345,35 +423,148 @@ export default function SynthesePage() {
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-900 dark:text-gray-100">
-                Note de synthèse
+                {historyOpen ? "Historique" : "Note de synthèse"}
               </h2>
-              {result && !loading && (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={generate}
-                    disabled={loading}
-                    title="Regénérer"
-                    className="rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1.5 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={copyNote}
-                    className="flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1.5 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    {copied ? "Copié !" : "Copier"}
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setHistoryOpen((v) => !v)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors",
+                    historyOpen
+                      ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                      : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800",
+                  )}
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Historique
+                  {history.length > 0 && (
+                    <span className="tabular-nums">{history.length}</span>
+                  )}
+                </button>
+
+                {!historyOpen && result && (
+                  <>
+                    <button
+                      onClick={generate}
+                      disabled={loading}
+                      title="Regénérer"
+                      className="rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1.5 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={copyNote}
+                      className="flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-2.5 py-1.5 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copied ? "Copié !" : "Copier"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
-            {!result && !loading && <EmptyState />}
-            {loading && <LoadingState />}
-            {result && <NoteCard result={result} />}
+            {historyOpen ? (
+              <HistoryPanel
+                history={history}
+                onLoad={loadEntry}
+                onDelete={deleteEntry}
+                onClear={clearHistory}
+              />
+            ) : (
+              <>
+                {!result && !loading && <EmptyState />}
+                {loading && <LoadingState />}
+                {result && <NoteCard result={result} />}
+              </>
+            )}
           </section>
         </div>
       </main>
+    </div>
+  );
+}
+
+// ── History panel ──────────────────────────────────────────────────────────
+
+function HistoryPanel({
+  history,
+  onLoad,
+  onDelete,
+  onClear,
+}: {
+  history: SyntheseHistoryEntry[];
+  onLoad: (e: SyntheseHistoryEntry) => void;
+  onDelete: (id: string, ev: React.MouseEvent) => void;
+  onClear: () => void;
+}) {
+  if (history.length === 0) {
+    return (
+      <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 p-8 text-center">
+        <Clock className="mb-3 h-6 w-6 text-gray-400 dark:text-gray-500" />
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Aucun historique</p>
+        <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
+          Les notes générées apparaîtront ici.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[13px] text-gray-500 dark:text-gray-400">
+          {history.length} note{history.length > 1 ? "s" : ""} générée{history.length > 1 ? "s" : ""}
+        </p>
+        <button
+          onClick={onClear}
+          className="flex items-center gap-1 text-[12px] text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+        >
+          <Trash2 className="h-3 w-3" />
+          Tout effacer
+        </button>
+      </div>
+
+      <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+        {history.map((entry) => (
+          <div
+            key={entry.id}
+            onClick={() => onLoad(entry)}
+            className="group relative cursor-pointer rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 transition-colors hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20"
+          >
+            <button
+              onClick={(e) => onDelete(entry.id, e)}
+              className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-all"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+
+            <p className="mb-1.5 text-[11px] text-gray-400 dark:text-gray-500">
+              {relativeDate(entry.createdAt)}
+            </p>
+
+            <p className="mb-2.5 text-[13px] font-medium text-gray-900 dark:text-gray-100 pr-5 line-clamp-1">
+              {entry.collaboratorNames.length > 2
+                ? `${entry.collaboratorNames.slice(0, 2).join(", ")} +${entry.collaboratorNames.length - 2}`
+                : entry.collaboratorNames.join(", ")}
+            </p>
+
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center rounded border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+                {TYPE_LABELS[entry.type]}
+              </span>
+              <span className="inline-flex items-center rounded border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[11px] text-gray-600 dark:text-gray-400">
+                → {entry.destinataire.toUpperCase()}
+              </span>
+              {entry.context && (
+                <span className="inline-flex items-center rounded border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[11px] text-gray-500 dark:text-gray-500 italic line-clamp-1 max-w-[160px]">
+                  {entry.context.slice(0, 40)}{entry.context.length > 40 ? "…" : ""}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
