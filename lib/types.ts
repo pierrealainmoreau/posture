@@ -386,6 +386,7 @@ export interface Collaborator {
   period: CollaboratorPeriod;
   relationship_started_at: string;
   current_ops_topics: string | null;
+  avatar_url: string | null;
   is_premium: boolean;
   created_at: string;
   updated_at: string;

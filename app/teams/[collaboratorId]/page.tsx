@@ -7,7 +7,7 @@ import {
   Loader2, Check, Lock, Trash2, AlertTriangle,
   RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp,
   TrendingUp, X, Download, Target, Plus, Building2, BookUser, Copy, Link2,
-  CalendarDays, Smile, Star,
+  CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { createClient } from "@/lib/supabase/client";
@@ -260,6 +260,9 @@ function CollaboratorPageContent() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [deletingCollaborator, setDeletingCollaborator] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [planStep, setPlanStep] = useState<0 | 1 | 2 | 3 | 4>(0);
@@ -493,6 +496,25 @@ function CollaboratorPageContent() {
       .single<Collaborator>();
     setSavingProfile(false);
     if (data) { setCollaborator(data); setProfileDraft(data); setProfileSaved(true); setTimeout(() => setProfileSaved(false), 2000); }
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!collaborator) return;
+    setUploadingAvatar(true);
+    setAvatarError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/teams/avatar/${collaboratorId}`, { method: "POST", body: fd });
+    const json = await res.json() as { url?: string; error?: string };
+    setUploadingAvatar(false);
+    if (!res.ok || !json.url) { setAvatarError(json.error ?? "Erreur upload"); return; }
+    setCollaborator((c) => c ? { ...c, avatar_url: json.url! } : c);
+  }
+
+  async function removeAvatar() {
+    if (!collaborator) return;
+    await fetch(`/api/teams/avatar/${collaboratorId}`, { method: "DELETE" });
+    setCollaborator((c) => c ? { ...c, avatar_url: null } : c);
   }
 
   async function deleteCollaborator() {
@@ -773,7 +795,7 @@ function CollaboratorPageContent() {
 
   const TABS: { id: Tab; label: string; badge?: string; count?: number }[] = [
     { id: "overview",  label: t.coach.tabOverview },
-    { id: "plan",      label: t.coach.tabPlan, badge: plan ? "Actif" : undefined },
+    { id: "plan",      label: t.coach.tabPlan },
     { id: "sessions",  label: t.coach.tabSessions, count: sessions.length > 0 ? sessions.length : undefined },
     { id: "career",    label: t.coach.tabCareer, badge: allSkills.length > 0 ? `${skillsAtTarget}/${allSkills.length}` : undefined },
     { id: "okr",       label: t.coach.tabOkr },
@@ -799,8 +821,11 @@ function CollaboratorPageContent() {
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-6 py-5 mb-4">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-700 dark:text-blue-300 text-sm font-semibold">{initials(collaborator)}</span>
+            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {collaborator.avatar_url
+                ? <img src={collaborator.avatar_url} alt="" className="w-full h-full object-cover" />
+                : <span className="text-blue-700 dark:text-blue-300 text-sm font-semibold">{initials(collaborator)}</span>
+              }
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1013,18 +1038,19 @@ function CollaboratorPageContent() {
 
         {/* ─── Paramètres : navigation interne ────────────────────── */}
         {tab === "settings" && (
-          <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             {([
-              { id: "profile"  as SettingsSubTab, label: t.coach.tabSettingsProfile },
-              { id: "manual"   as SettingsSubTab, label: t.coach.tabSettingsManual },
-              { id: "ateliers" as SettingsSubTab, label: t.coach.tabSettingsAteliers },
-            ]).map(({ id, label }) => (
+              { id: "profile"  as SettingsSubTab, label: t.coach.tabSettingsProfile,  icon: UserRound },
+              { id: "manual"   as SettingsSubTab, label: t.coach.tabSettingsManual,   icon: BookOpen },
+              { id: "ateliers" as SettingsSubTab, label: t.coach.tabSettingsAteliers, icon: LayoutGrid },
+            ]).map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setSettingsSubTab(id)}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+                className={`flex flex-col items-center gap-2 py-4 px-3 rounded-xl border text-sm font-medium transition-all ${
                   settingsSubTab === id
-                    ? "border-blue-600 text-blue-700 dark:text-blue-400"
-                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                    : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700"
                 }`}>
+                <Icon size={18} />
                 {label}
               </button>
             ))}
@@ -1034,6 +1060,38 @@ function CollaboratorPageContent() {
         {/* ─── Profil ──────────────────────────────────────────────── */}
         {tab === "settings" && settingsSubTab === "profile" && (
           <div className="space-y-5">
+
+            {/* Photo de profil */}
+            <div className="flex items-center gap-4">
+              <div className="relative w-16 h-16 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {collaborator.avatar_url
+                  ? <img src={collaborator.avatar_url} alt="" className="w-full h-full object-cover" />
+                  : <span className="text-blue-700 dark:text-blue-300 text-lg font-semibold">{initials(collaborator)}</span>
+                }
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
+                    <Loader2 size={16} className="animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }} />
+                <button onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50">
+                  <Camera size={13} /> {collaborator.avatar_url ? "Changer la photo" : "Ajouter une photo"}
+                </button>
+                {collaborator.avatar_url && (
+                  <button onClick={removeAvatar}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                    <X size={13} /> Supprimer
+                  </button>
+                )}
+                {avatarError && <p className="text-xs text-red-500">{avatarError}</p>}
+                <p className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG ou WebP · max 2 Mo</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t.coach.firstName}</label>
