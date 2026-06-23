@@ -60,12 +60,23 @@ export async function POST(
     return NextResponse.json({ error: "Limite de requêtes atteinte" }, { status: 429 });
   }
 
+  // Fetch company OKR first (needed to correctly query collaborator_okrs)
+  const { data: companyOkr } = await supabase
+    .from("company_okrs")
+    .select("id")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+
   // Fetch all data in parallel
   const [collabRes, planRes, sessionsRes, okrRes] = await Promise.all([
     supabase.from("collaborators").select("*").eq("id", params.collaboratorId).eq("user_id", user.id).single<Collaborator>(),
     supabase.from("managerial_plans").select("*").eq("collaborator_id", params.collaboratorId).maybeSingle<ManagerialPlan>(),
     supabase.from("weekly_sessions").select("*").eq("collaborator_id", params.collaboratorId).order("week_number", { ascending: true }),
-    supabase.from("collaborator_okrs").select("*").eq("collaborator_id", params.collaboratorId).maybeSingle<CollaboratorOkr>(),
+    companyOkr
+      ? supabase.from("collaborator_okrs").select("*").eq("collaborator_id", params.collaboratorId).eq("company_okr_id", companyOkr.id).maybeSingle<CollaboratorOkr>()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (collabRes.error || !collabRes.data) {
