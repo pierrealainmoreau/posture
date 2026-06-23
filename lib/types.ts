@@ -398,6 +398,7 @@ export interface DevelopmentAxis {
 }
 
 export type ExpertiseLevel = "débutant" | "intermédiaire" | "avancé" | "expert";
+export const LEVELS = ["débutant", "intermédiaire", "avancé", "expert"] as const;
 
 export interface CareerSkill {
   skill: string;
@@ -494,6 +495,19 @@ export interface CollaboratorManual {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ── Suggestions IA hebdomadaires ─────────────────────────────────────────
+
+export interface CollaboratorSuggestions {
+  id: string;
+  collaborator_id: string;
+  user_id: string;
+  session_suggestion: string;
+  career_suggestion: string;
+  okr_suggestion: string;
+  generated_at: string;
+  created_at: string;
 }
 
 // ── Coach labels & config ─────────────────────────────────────────────────

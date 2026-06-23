@@ -14,13 +14,14 @@ import { createClient } from "@/lib/supabase/client";
 import type {
   Collaborator, CoachSeniority, CollaboratorPeriod,
   ManagerialPlan, WeeklySession, ExpertiseLevel, CareerSkill, CareerPath,
-  CompanyOkr, CollaboratorOkr, KeyResult, CollaboratorManual,
+  CompanyOkr, CollaboratorOkr, KeyResult, CollaboratorManual, CollaboratorSuggestions,
 } from "@/lib/types";
 import { MANUAL_SECTIONS } from "@/lib/manual-questions";
-import { COACH_CONFIG } from "@/lib/types";
+import { COACH_CONFIG, LEVELS } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 
-type Tab = "profile" | "plan" | "career" | "sessions" | "okr" | "manual" | "ateliers";
+type Tab = "overview" | "plan" | "career" | "sessions" | "okr" | "settings";
+type SettingsSubTab = "profile" | "manual" | "ateliers";
 
 type AtelierActivity = {
   gameType: string;
@@ -73,7 +74,6 @@ function progressColor(pct: number) {
   return           { bar: "bg-red-400",   text: "text-red-500 dark:text-red-400",    thumb: "#ef4444" };
 }
 
-const LEVELS: ExpertiseLevel[] = ["débutant", "intermédiaire", "avancé", "expert"];
 const DOT_FILL = ["bg-gray-400", "bg-blue-400", "bg-violet-500", "bg-amber-500"];
 const LEVEL_TEXT_COLOR = ["text-gray-500", "text-blue-500", "text-violet-500", "text-amber-500"];
 
@@ -246,7 +246,7 @@ function CollaboratorPageContent() {
   const searchParams = useSearchParams();
 
   const collaboratorId = params.collaboratorId;
-  const initialTab = (searchParams.get("tab") as Tab | null) ?? "plan";
+  const initialTab = (searchParams.get("tab") as Tab | null) ?? "overview";
   const isNew = searchParams.get("new") === "true";
 
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -294,6 +294,12 @@ function CollaboratorPageContent() {
   const [ateliers, setAteliers]               = useState<AtelierSession[] | null>(null);
   const [ateliersLoading, setAteliersLoading] = useState(false);
 
+  const [suggestions, setSuggestions]           = useState<CollaboratorSuggestions | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+
+  const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("profile");
+
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
   const [inlineFollowUpsOpen, setInlineFollowUpsOpen] = useState(false);
   const [inlineNotes, setInlineNotes] = useState("");
@@ -310,13 +316,14 @@ function CollaboratorPageContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.replace("/login"); return; }
 
-    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes] = await Promise.all([
+    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes] = await Promise.all([
       supabase.from("collaborators").select("*").eq("id", collaboratorId).eq("user_id", user.id).single<Collaborator>(),
       supabase.from("managerial_plans").select("*").eq("collaborator_id", collaboratorId).maybeSingle<ManagerialPlan>(),
       supabase.from("weekly_sessions").select("*").eq("collaborator_id", collaboratorId).order("week_number", { ascending: true }),
       fetch("/api/coach/okr/company"),
       fetch(`/api/coach/okr/collaborator?collaborator_id=${collaboratorId}`),
       fetch(`/api/coach/manual/${collaboratorId}`),
+      fetch(`/api/coach/suggestions/${collaboratorId}`),
     ]);
 
     if (collabRes.error || !collabRes.data) { setNotFound(true); setLoading(false); return; }
@@ -342,21 +349,40 @@ function CollaboratorPageContent() {
     setManual(manualData);
     setManualDraft(manualData?.answers ?? {});
 
+    const suggestionsData: CollaboratorSuggestions | null = suggestionsRes.ok ? await suggestionsRes.json() : null;
+    setSuggestions(suggestionsData);
+
     setLoading(false);
     if (isNew && !fetchedPlan) navigateToTab("plan");
   }, [collaboratorId, router, isNew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  async function generateSuggestions() {
+    setSuggestionsLoading(true);
+    setSuggestionsError(null);
+    try {
+      const res = await fetch(`/api/coach/suggestions/${collaboratorId}`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? t.common.error);
+      setSuggestions(data as CollaboratorSuggestions);
+    } catch (e) {
+      setSuggestionsError(e instanceof Error ? e.message : t.common.error);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }
+
   useEffect(() => {
-    if (tab !== "ateliers" || ateliers !== null || ateliersLoading) return;
+    const isAteliersTab = tab === "settings" && settingsSubTab === "ateliers";
+    if (!isAteliersTab || ateliers !== null || ateliersLoading) return;
     setAteliersLoading(true);
     fetch(`/api/coach/collaborator-activities/${collaboratorId}`, { cache: "no-store" })
       .then((r) => r.ok ? r.json() : { sessions: [] })
       .then((d: { sessions: AtelierSession[] }) => setAteliers(d.sessions ?? []))
       .finally(() => setAteliersLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, ateliers, ateliersLoading, collaboratorId]);
+  }, [tab, settingsSubTab, ateliers, ateliersLoading, collaboratorId]);
 
   function navigateToTab(newTab: Tab) {
     setTab(newTab);
@@ -745,58 +771,268 @@ function CollaboratorPageContent() {
     return ci >= ti;
   }).length;
 
-  const TABS: { id: Tab; label: string }[] = [
-    { id: "profile",  label: t.coach.tabProfile },
-    { id: "manual",   label: t.coach.tabManual },
-    { id: "plan",     label: t.coach.tabPlan },
-    { id: "career",   label: `${t.coach.tabCareer}${allSkills.length > 0 ? ` (${skillsAtTarget}/${allSkills.length})` : ""}` },
-    { id: "sessions", label: `${t.coach.tabSessions} (${sessions.length})` },
-    { id: "okr",      label: t.coach.tabOkr },
-    { id: "ateliers", label: "Ateliers" },
+  const TABS: { id: Tab; label: string; badge?: string; count?: number }[] = [
+    { id: "overview",  label: t.coach.tabOverview },
+    { id: "plan",      label: t.coach.tabPlan, badge: plan ? "Actif" : undefined },
+    { id: "sessions",  label: t.coach.tabSessions, count: sessions.length > 0 ? sessions.length : undefined },
+    { id: "career",    label: t.coach.tabCareer, badge: allSkills.length > 0 ? `${skillsAtTarget}/${allSkills.length}` : undefined },
+    { id: "okr",       label: t.coach.tabOkr },
+    { id: "settings",  label: t.coach.tabSettings },
   ];
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  const tenureMonths = collaborator.relationship_started_at
+    ? Math.floor((Date.now() - new Date(collaborator.relationship_started_at).getTime()) / (1000 * 60 * 60 * 24 * 30))
+    : null;
+
+  const okrAvg = collabOkr?.key_results.length
+    ? Math.round(collabOkr.key_results.reduce((sum, kr) => sum + (parseFloat(kr.current ?? "0") || 0), 0) / collabOkr.key_results.length)
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       <Header backHref="/coach" currentTool="1:1 Coach" />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-6">
 
-        {/* Collaborator header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-            <span className="text-blue-700 dark:text-blue-300 text-sm font-semibold">{initials(collaborator)}</span>
+        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-6 py-5 mb-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+              <span className="text-blue-700 dark:text-blue-300 text-sm font-semibold">{initials(collaborator)}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {collaborator.first_name} {collaborator.last_name}
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {collaborator.role} · {t.coach.seniorityLabels[collaborator.seniority]}
+                </span>
+                {collaborator.period && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    {t.coach.periodLabels[collaborator.period]}
+                  </span>
+                )}
+              </div>
+            </div>
+            {tenureMonths !== null && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                <CalendarDays size={13} />
+                {tenureMonths} mois
+              </div>
+            )}
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {collaborator.first_name} {collaborator.last_name}
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {collaborator.role} · {t.coach.seniorityLabels[collaborator.seniority]}
-              {collaborator.period && (
-                <> · <span className="text-blue-500 dark:text-blue-400">{t.coach.periodLabels[collaborator.period]}</span></>
-              )}
-            </p>
+
+          {/* 4 stat blocks */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <Sparkles size={11} /> Plan
+              </div>
+              <div className={`text-sm font-semibold ${plan ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
+                {plan ? "Actif" : "—"}
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <MessageSquare size={11} /> Sessions
+              </div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {sessions.length > 0 ? (
+                  <>{sessions.length} <span className="font-normal text-gray-400 dark:text-gray-500">/ 8</span></>
+                ) : "—"}
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <TrendingUp size={11} /> Compétences
+              </div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {allSkills.length > 0 ? (
+                  <>{skillsAtTarget} <span className="font-normal text-gray-400 dark:text-gray-500">/ {allSkills.length}</span></>
+                ) : "—"}
+              </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <Target size={11} /> OKR
+              </div>
+              <div className={`text-sm font-semibold ${okrAvg !== null ? (okrAvg >= 70 ? "text-green-600 dark:text-green-400" : okrAvg >= 40 ? "text-amber-500 dark:text-amber-400" : "text-red-500 dark:text-red-400") : "text-gray-400 dark:text-gray-500"}`}>
+                {okrAvg !== null ? `${okrAvg}%` : "—"}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-7 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
-          {TABS.map(({ id, label }) => (
+        {/* ── Tabs ─────────────────────────────────────────────────────── */}
+        <div className="flex gap-0 mb-6 border-b border-gray-200 dark:border-gray-800 overflow-x-auto">
+          {TABS.map(({ id, label, badge, count }) => (
             <button key={id} onClick={() => navigateToTab(id)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
                 tab === id
                   ? "border-blue-600 text-blue-700 dark:text-blue-400"
                   : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}>
               {label}
+              {badge && (
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  badge === "Actif"
+                    ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                }`}>
+                  {badge}
+                </span>
+              )}
+              {count !== undefined && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  {count}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
-        {/* ─── Profile ─────────────────────────────────────────────── */}
-        {tab === "profile" && (
+        {/* ─── Vue d'ensemble ──────────────────────────────────────── */}
+        {tab === "overview" && (
+          <div className="space-y-4">
+
+            {/* Generate / refresh button */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{t.coach.suggestionsTitle}</p>
+                {suggestions && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {t.coach.suggestionsGeneratedOn} {new Date(suggestions.generated_at).toLocaleDateString(undefined, { day: "2-digit", month: "long" })}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={generateSuggestions}
+                disabled={suggestionsLoading || !plan}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                {suggestionsLoading ? <Loader2 size={13} className="animate-spin" /> : suggestions ? <RefreshCw size={13} /> : <Sparkles size={13} />}
+                {suggestionsLoading ? t.coach.suggestionsGenerating : suggestions ? t.coach.suggestionsRefresh : t.coach.suggestionsGenerate}
+              </button>
+            </div>
+
+            {suggestionsError && (
+              <div className="px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+                <AlertTriangle size={14} className="flex-shrink-0" /> {suggestionsError}
+              </div>
+            )}
+
+            {!plan && !suggestionsLoading && (
+              <div className="px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+                <AlertTriangle size={14} className="flex-shrink-0" />
+                {t.coach.suggestionsNoPlan}{" "}
+                <button onClick={() => navigateToTab("plan")} className="underline font-medium">{t.coach.tabPlan}</button>
+              </div>
+            )}
+
+            {suggestionsLoading && (
+              <div className="flex items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                <Loader2 size={20} className="animate-spin mr-2" /> {t.coach.suggestionsGenerating}
+              </div>
+            )}
+
+            {!suggestionsLoading && suggestions && (
+              <>
+                {/* Session suggestion */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare size={15} className="text-blue-500 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.coach.suggestionSessionTitle}</span>
+                    <span className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                      <Sparkles size={10} /> IA
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-l-2 border-blue-200 dark:border-blue-800 pl-3">
+                    {suggestions.session_suggestion}
+                  </p>
+                  <button onClick={() => navigateToTab("sessions")}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    Voir les sessions <TrendingUp size={11} />
+                  </button>
+                </div>
+
+                {/* Career suggestion */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp size={15} className="text-blue-500 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.coach.suggestionCareerTitle}</span>
+                    <span className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                      <Sparkles size={10} /> IA
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-l-2 border-blue-200 dark:border-blue-800 pl-3">
+                    {suggestions.career_suggestion}
+                  </p>
+                  <button onClick={() => navigateToTab("career")}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    Voir la feuille de route <TrendingUp size={11} />
+                  </button>
+                </div>
+
+                {/* OKR suggestion */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target size={15} className="text-blue-500 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.coach.suggestionOkrTitle}</span>
+                    <span className="ml-auto flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                      <Sparkles size={10} /> IA
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-l-2 border-blue-200 dark:border-blue-800 pl-3">
+                    {suggestions.okr_suggestion}
+                  </p>
+                  <button onClick={() => navigateToTab("okr")}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    Voir les OKR <Target size={11} />
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center">{t.coach.suggestionsHint}</p>
+              </>
+            )}
+
+            {!suggestionsLoading && !suggestions && plan && (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={28} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+                  {t.coach.suggestionsHint}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Paramètres : navigation interne ────────────────────── */}
+        {tab === "settings" && (
+          <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
+            {([
+              { id: "profile"  as SettingsSubTab, label: t.coach.tabSettingsProfile },
+              { id: "manual"   as SettingsSubTab, label: t.coach.tabSettingsManual },
+              { id: "ateliers" as SettingsSubTab, label: t.coach.tabSettingsAteliers },
+            ]).map(({ id, label }) => (
+              <button key={id} onClick={() => setSettingsSubTab(id)}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
+                  settingsSubTab === id
+                    ? "border-blue-600 text-blue-700 dark:text-blue-400"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ─── Profil ──────────────────────────────────────────────── */}
+        {tab === "settings" && settingsSubTab === "profile" && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -1280,8 +1516,8 @@ function CollaboratorPageContent() {
           </div>
         )}
 
-        {/* ─── Manuel d'utilisation ────────────────────────────────── */}
-        {tab === "manual" && (
+        {/* ─── Manuel ──────────────────────────────────────────────── */}
+        {tab === "settings" && settingsSubTab === "manual" && (
           <div className="space-y-4">
 
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl px-5 py-4">
@@ -1639,10 +1875,9 @@ function CollaboratorPageContent() {
           </div>
         )}
 
-        {/* ─── Ateliers collectifs ─────────────────────────────────── */}
-        {tab === "ateliers" && (
+        {/* ─── Ateliers (dans Paramètres) ──────────────────────────── */}
+        {tab === "settings" && settingsSubTab === "ateliers" && (
           <div className="space-y-5">
-
             {ateliersLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400">
                 <Loader2 size={20} className="animate-spin mr-2" /> Chargement…
@@ -1667,13 +1902,8 @@ function CollaboratorPageContent() {
                     {[...new Set(ateliers.map((s) => s.participantPseudo))].join(", ")}
                   </span>
                 </p>
-
                 {ateliers.map((session) => (
-                  <div
-                    key={session.sessionId}
-                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
-                  >
-                    {/* En-tête session */}
+                  <div key={session.sessionId} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
                     <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -1681,22 +1911,13 @@ function CollaboratorPageContent() {
                         </p>
                         <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                           <CalendarDays size={11} />
-                          {new Date(session.sessionDate).toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
+                          {new Date(session.sessionDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                           <span className="mx-1">·</span>
-                          pseudo :{" "}
-                          <span className="font-medium text-gray-600 dark:text-gray-400">
-                            {session.participantPseudo}
-                          </span>
+                          pseudo : <span className="font-medium text-gray-600 dark:text-gray-400">{session.participantPseudo}</span>
                         </p>
                       </div>
                       <span className="text-xs font-semibold text-gray-400 font-mono">{session.sessionCode}</span>
                     </div>
-
-                    {/* Activités de la session */}
                     {session.activities.length === 0 ? (
                       <p className="px-5 py-3 text-xs text-gray-400 italic">Aucune activité terminée.</p>
                     ) : (
@@ -1704,30 +1925,19 @@ function CollaboratorPageContent() {
                         {session.activities.map((activity, i) => (
                           <li key={i} className="px-5 py-3 flex items-center gap-4">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                {activity.gameLabel}
-                              </p>
+                              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{activity.gameLabel}</p>
                               <p className="text-xs text-gray-400 mt-0.5">
-                                {new Date(activity.startedAt).toLocaleDateString("fr-FR", {
-                                  day: "numeric",
-                                  month: "short",
-                                })}
+                                {new Date(activity.startedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                               </p>
                             </div>
-
-                            {/* Résultat spécifique au jeu */}
                             {activity.result?.type === "mood" && (
                               <div className="flex-shrink-0 text-right">
                                 {activity.result.moodLabel ? (
                                   <div className="flex items-center gap-1.5">
                                     <Smile size={14} className="text-violet-400" />
                                     <div>
-                                      <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">
-                                        {activity.result.moodLabel}
-                                      </p>
-                                      {activity.result.moodSublabel && (
-                                        <p className="text-[10px] text-gray-400">{activity.result.moodSublabel}</p>
-                                      )}
+                                      <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">{activity.result.moodLabel}</p>
+                                      {activity.result.moodSublabel && <p className="text-[10px] text-gray-400">{activity.result.moodSublabel}</p>}
                                     </div>
                                   </div>
                                 ) : (
@@ -1735,30 +1945,17 @@ function CollaboratorPageContent() {
                                 )}
                               </div>
                             )}
-
                             {activity.result?.type === "roti" && (
                               <div className="flex-shrink-0 flex items-center gap-1">
                                 {activity.result.vote !== null ? (
-                                  Array.from({ length: 5 }, (_, i) => (
-                                    <Star
-                                      key={i}
-                                      size={13}
-                                      className={
-                                        i < (activity.result as { type: "roti"; vote: number | null }).vote!
-                                          ? "text-amber-400 fill-amber-400"
-                                          : "text-gray-200 dark:text-gray-700"
-                                      }
-                                    />
+                                  Array.from({ length: 5 }, (_, j) => (
+                                    <Star key={j} size={13}
+                                      className={j < (activity.result as { type: "roti"; vote: number | null }).vote! ? "text-amber-400 fill-amber-400" : "text-gray-200 dark:text-gray-700"} />
                                   ))
-                                ) : (
-                                  <span className="text-xs text-gray-400 italic">pas de vote</span>
-                                )}
+                                ) : <span className="text-xs text-gray-400 italic">pas de vote</span>}
                               </div>
                             )}
-
-                            {activity.result?.type === "participated" && (
-                              <span className="flex-shrink-0 text-xs text-gray-400">a participé</span>
-                            )}
+                            {activity.result?.type === "participated" && <span className="flex-shrink-0 text-xs text-gray-400">a participé</span>}
                           </li>
                         ))}
                       </ul>
