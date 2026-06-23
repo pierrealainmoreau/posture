@@ -106,7 +106,7 @@ export function LinkParticipantsModal({ sessionType, roomCode, participants, onC
             <div className="text-center py-8">
               <Users size={28} className="text-gray-300 mx-auto mb-3" />
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aucun membre dans votre équipe</p>
-              <a href="/coach" className="text-xs text-green-600 dark:text-green-400 underline">
+              <a href="/teams" className="text-xs text-green-600 dark:text-green-400 underline">
                 Ajouter des membres →
               </a>
             </div>

@@ -171,7 +171,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/coach"
+              href="/teams"
               className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-9 h-9 bg-blue-100 dark:bg-blue-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
@@ -183,7 +183,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/coach/okr"
+              href="/teams/okr"
               className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150"
             >
               <div className="w-9 h-9 bg-pink-100 dark:bg-pink-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
@@ -272,7 +272,7 @@ export default function Home() {
             {/* ── Col 1, lignes 1+2 : Weekly Coach ── */}
             <div
               className="row-span-2 cursor-pointer"
-              onClick={(e) => { if (!(e.target as Element).closest("a, button")) router.push("/coach/weekly"); }}
+              onClick={(e) => { if (!(e.target as Element).closest("a, button")) router.push("/teams/weekly"); }}
             >
               <WeeklyCoach />
             </div>
@@ -299,7 +299,7 @@ export default function Home() {
                     {t.home.teamEmpty}
                   </p>
                   <Link
-                    href="/coach"
+                    href="/teams"
                     className="mt-auto text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                   >
                     {t.home.addMember}
@@ -314,7 +314,7 @@ export default function Home() {
                       return (
                         <Link
                           key={c.id}
-                          href={`/coach/${c.id}`}
+                          href={`/teams/${c.id}`}
                           className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all"
                         >
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
@@ -329,7 +329,7 @@ export default function Home() {
                     })}
                   </div>
                   <Link
-                    href="/coach"
+                    href="/teams"
                     className="mt-3 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                   >
                     {t.home.viewTeam}

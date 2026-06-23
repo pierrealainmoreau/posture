@@ -320,10 +320,10 @@ function CollaboratorPageContent() {
       supabase.from("collaborators").select("*").eq("id", collaboratorId).eq("user_id", user.id).single<Collaborator>(),
       supabase.from("managerial_plans").select("*").eq("collaborator_id", collaboratorId).maybeSingle<ManagerialPlan>(),
       supabase.from("weekly_sessions").select("*").eq("collaborator_id", collaboratorId).order("week_number", { ascending: true }),
-      fetch("/api/coach/okr/company"),
-      fetch(`/api/coach/okr/collaborator?collaborator_id=${collaboratorId}`),
-      fetch(`/api/coach/manual/${collaboratorId}`),
-      fetch(`/api/coach/suggestions/${collaboratorId}`),
+      fetch("/api/teams/okr/company"),
+      fetch(`/api/teams/okr/collaborator?collaborator_id=${collaboratorId}`),
+      fetch(`/api/teams/manual/${collaboratorId}`),
+      fetch(`/api/teams/suggestions/${collaboratorId}`),
     ]);
 
     if (collabRes.error || !collabRes.data) { setNotFound(true); setLoading(false); return; }
@@ -362,7 +362,7 @@ function CollaboratorPageContent() {
     setSuggestionsLoading(true);
     setSuggestionsError(null);
     try {
-      const res = await fetch(`/api/coach/suggestions/${collaboratorId}`, { method: "POST" });
+      const res = await fetch(`/api/teams/suggestions/${collaboratorId}`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.common.error);
       setSuggestions(data as CollaboratorSuggestions);
@@ -377,7 +377,7 @@ function CollaboratorPageContent() {
     const isAteliersTab = tab === "settings" && settingsSubTab === "ateliers";
     if (!isAteliersTab || ateliers !== null || ateliersLoading) return;
     setAteliersLoading(true);
-    fetch(`/api/coach/collaborator-activities/${collaboratorId}`, { cache: "no-store" })
+    fetch(`/api/teams/collaborator-activities/${collaboratorId}`, { cache: "no-store" })
       .then((r) => r.ok ? r.json() : { sessions: [] })
       .then((d: { sessions: AtelierSession[] }) => setAteliers(d.sessions ?? []))
       .finally(() => setAteliersLoading(false));
@@ -386,13 +386,13 @@ function CollaboratorPageContent() {
 
   function navigateToTab(newTab: Tab) {
     setTab(newTab);
-    router.replace(`/coach/${collaboratorId}?tab=${newTab}`, { scroll: false });
+    router.replace(`/teams/${collaboratorId}?tab=${newTab}`, { scroll: false });
   }
 
   async function createManual() {
     setCreatingManual(true);
     try {
-      const res = await fetch(`/api/coach/manual/${collaboratorId}`, { method: "POST" });
+      const res = await fetch(`/api/teams/manual/${collaboratorId}`, { method: "POST" });
       if (!res.ok) throw new Error(t.common.error);
       const data: CollaboratorManual = await res.json();
       setManual(data);
@@ -407,7 +407,7 @@ function CollaboratorPageContent() {
     if (!currentManual) {
       setCreatingManual(true);
       try {
-        const res = await fetch(`/api/coach/manual/${collaboratorId}`, { method: "POST" });
+        const res = await fetch(`/api/teams/manual/${collaboratorId}`, { method: "POST" });
         if (!res.ok) throw new Error(t.common.error);
         currentManual = await res.json() as CollaboratorManual;
         setManual(currentManual);
@@ -422,7 +422,7 @@ function CollaboratorPageContent() {
     setManualSaving(true);
     setManualSaveError(null);
     try {
-      const res = await fetch(`/api/coach/manual/${collaboratorId}`, {
+      const res = await fetch(`/api/teams/manual/${collaboratorId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers: manualDraft }),
@@ -442,7 +442,7 @@ function CollaboratorPageContent() {
   }
 
   function manualLink(token: string) {
-    return `${window.location.origin}/coach/manual/${token}`;
+    return `${window.location.origin}/teams/manual/${token}`;
   }
 
   async function copyManualLink(token: string) {
@@ -500,7 +500,7 @@ function CollaboratorPageContent() {
     setDeletingCollaborator(true);
     const supabase = createClient();
     await supabase.from("collaborators").delete().eq("id", collaboratorId);
-    router.push("/coach");
+    router.push("/teams");
   }
 
   // ── Plan ─────────────────────────────────────────────────────────────────
@@ -512,7 +512,7 @@ function CollaboratorPageContent() {
     setPlanError(null);
 
     const post = async (step: number, extra?: Record<string, unknown>) => {
-      const res = await fetch("/api/coach/generate-plan", {
+      const res = await fetch("/api/teams/generate-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collaborator_id: collaboratorId, step, ...extra }),
@@ -564,7 +564,7 @@ function CollaboratorPageContent() {
     setOkrError(null);
     setOkrSaved(false);
     try {
-      const res = await fetch("/api/coach/okr/generate-collaborator", {
+      const res = await fetch("/api/teams/okr/generate-collaborator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collaborator_id: collaboratorId }),
@@ -589,7 +589,7 @@ function CollaboratorPageContent() {
     setOkrError(null);
     setOkrSaved(false);
     try {
-      const res = await fetch("/api/coach/okr/collaborator", {
+      const res = await fetch("/api/teams/okr/collaborator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collaborator_id: collaboratorId, objective: okrForm.objective, key_results: okrForm.key_results }),
@@ -632,7 +632,7 @@ function CollaboratorPageContent() {
     setGeneratingWeek(weekNumber);
     setConfirmingWeek(null);
     setSessionError(null);
-    const res = await fetch("/api/coach/generate-session", {
+    const res = await fetch("/api/teams/generate-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ collaborator_id: collaboratorId, week_number: weekNumber }),
@@ -695,7 +695,7 @@ function CollaboratorPageContent() {
   async function regenerateSession(weekNumber: number) {
     if (!confirm(`${t.coach.regenerateBtn} ?`)) return;
     setRegenerating(true);
-    const res = await fetch("/api/coach/generate-session", {
+    const res = await fetch("/api/teams/generate-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ collaborator_id: collaboratorId, week_number: weekNumber }),
@@ -743,7 +743,7 @@ function CollaboratorPageContent() {
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/coach" currentTool="1:1 Coach" />
+      <Header backHref="/teams" currentTool="Mon équipe" />
       <div className="flex-1 flex items-center justify-center text-gray-400">
         <Loader2 size={20} className="animate-spin mr-2" /> {t.common.loading}
       </div>
@@ -752,9 +752,9 @@ function CollaboratorPageContent() {
 
   if (notFound || !collaborator) return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/coach" currentTool="1:1 Coach" />
+      <Header backHref="/teams" currentTool="Mon équipe" />
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">{t.coach.collaboratorNotFound} <Link href="/coach" className="underline">{t.common.back}</Link></p>
+        <p className="text-gray-500">{t.coach.collaboratorNotFound} <Link href="/teams" className="underline">{t.common.back}</Link></p>
       </div>
     </div>
   );
@@ -792,7 +792,7 @@ function CollaboratorPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <Header backHref="/coach" currentTool="1:1 Coach" />
+      <Header backHref="/teams" currentTool="Mon équipe" />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-6">
 
@@ -1396,7 +1396,7 @@ function CollaboratorPageContent() {
               <div className="px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
                 <AlertTriangle size={14} />
                 {t.coach.noCompanyOkrWarning}{" "}
-                <Link href="/coach/okr" className="underline font-medium">{t.coach.defineCompanyOkrLink}</Link>
+                <Link href="/teams/okr" className="underline font-medium">{t.coach.defineCompanyOkrLink}</Link>
               </div>
             )}
 

@@ -168,6 +168,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Erreur de sauvegarde", details: upsertError?.message }, { status: 500 });
   }
 
-  await recordUsage(user.id, "coach", supabase);
+  await recordUsage(user.id, "teams", supabase);
   return NextResponse.json(session);
 }

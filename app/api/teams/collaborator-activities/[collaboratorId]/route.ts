@@ -35,7 +35,7 @@ const GAME_ROOM_TABLE: Record<string, string> = {
   tribu:         "tribu_rooms",
 };
 
-// GET /api/coach/collaborator-activities/[collaboratorId]
+// GET /api/teams/collaborator-activities/[collaboratorId]
 // Retourne l'historique des ateliers liés à ce collaborateur, deux chemins :
 // Chemin A : session_participant_collaborator_links → session_participants → sessions → session_activities
 // Chemin B : session_participant_links → rooms directes (humeur, roti, etc.)
@@ -71,7 +71,7 @@ export async function GET(
 
     return NextResponse.json({ sessions: all });
   } catch (err) {
-    console.error("[GET /api/coach/collaborator-activities/[collaboratorId]]", err);
+    console.error("[GET /api/teams/collaborator-activities/[collaboratorId]]", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

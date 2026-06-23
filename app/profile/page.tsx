@@ -225,7 +225,7 @@ export default function ProfilePage() {
       stat: { count: mgc, label: mgc !== 1 ? t.profile.gamePlural : t.profile.gameSingular, used: mgc > 0 } },
     { id: "academie",      shortLabel: t.academie.title,          href: "/academie",       icon: GraduationCap, color: "amber"  as const,
       stat: { count: academiePassedCount, limit: academieTotal, label: academiePassedCount !== 1 ? t.profile.quizPlural : t.profile.quizSingular, used: academiePassedCount > 0 } },
-    { id: "coach",         shortLabel: t.coach.title,             href: "/coach",          icon: UserRoundCheck,color: "rose"   as const,
+    { id: "teams",         shortLabel: t.coach.title,             href: "/teams",          icon: UserRoundCheck,color: "rose"   as const,
       stat: { count: cc, limit: stats?.collaborators_limit, label: cc !== 1 ? t.profile.collaboratorPlural : t.profile.collaboratorSingular, used: cc > 0 } },
   ];
 

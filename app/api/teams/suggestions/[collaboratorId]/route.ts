@@ -164,7 +164,7 @@ Réponds uniquement en JSON, sans commentaire :
     );
   }
 
-  await recordUsage(user.id, "coach", supabase);
+  await recordUsage(user.id, "teams", supabase);
 
   const { data, error } = await supabase
     .from("collaborator_suggestions")

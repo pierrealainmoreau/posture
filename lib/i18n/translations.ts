@@ -165,7 +165,7 @@ const fr = {
     jobDescription: "Fiche de poste",
     interviewQuestions: "Questions entretien",
     coach: {
-      title: "1:1 Coach",
+      title: "Mon équipe",
       noCollaborator: "Aucun collaborateur",
       collaboratorSingular: "collaborateur",
       collaboratorPlural: "collaborateurs",
@@ -720,7 +720,7 @@ const fr = {
   },
   // ── Outils ───────────────────────────────────────────────────
   coach: {
-    title: "1:1 Coach",
+    title: "Mon équipe",
     subtitle: "Plans managériaux · Sessions 1:1 · Carrière",
     newCollaborator: "Nouveau collaborateur",
     firstName: "Prénom",
@@ -1525,7 +1525,7 @@ const fr = {
     catMeeting: "Réunion",
     catWorkshop: "Atelier",
     catRecognition: "Reconnaissance",
-    catCoach: "1:1 Coach",
+    catCoach: "Mon équipe",
   },
   thisorthat: {
     gameLabels: {
@@ -1718,7 +1718,7 @@ const en: Translations = {
     jobDescription: "Job description",
     interviewQuestions: "Interview questions",
     coach: {
-      title: "1:1 Coach",
+      title: "My Team",
       noCollaborator: "No team members",
       collaboratorSingular: "team member",
       collaboratorPlural: "team members",
@@ -2266,7 +2266,7 @@ const en: Translations = {
     updatedAt: "Updated at",
   },
   coach: {
-    title: "1:1 Coach",
+    title: "My Team",
     subtitle: "Management plans · 1:1 sessions · Career",
     newCollaborator: "New team member",
     firstName: "First name",
@@ -3072,7 +3072,7 @@ const en: Translations = {
     catMeeting: "Meeting",
     catWorkshop: "Workshop",
     catRecognition: "Recognition",
-    catCoach: "1:1 Coach",
+    catCoach: "My Team",
   },
   thisorthat: {
     gameLabels: {
@@ -3263,7 +3263,7 @@ const es: Translations = {
     jobDescription: "Oferta de trabajo",
     interviewQuestions: "Preguntas de entrevista",
     coach: {
-      title: "1:1 Coach",
+      title: "Mi equipo",
       noCollaborator: "Sin colaboradores",
       collaboratorSingular: "colaborador",
       collaboratorPlural: "colaboradores",
@@ -3811,7 +3811,7 @@ const es: Translations = {
     updatedAt: "Actualizado a las",
   },
   coach: {
-    title: "1:1 Coach",
+    title: "Mi equipo",
     subtitle: "Planes de gestión · Sesiones 1:1 · Carrera",
     newCollaborator: "Nuevo colaborador",
     firstName: "Nombre",
@@ -4617,7 +4617,7 @@ const es: Translations = {
     catMeeting: "Reunión",
     catWorkshop: "Taller",
     catRecognition: "Reconocimiento",
-    catCoach: "1:1 Coach",
+    catCoach: "Mi equipo",
   },
   thisorthat: {
     gameLabels: {

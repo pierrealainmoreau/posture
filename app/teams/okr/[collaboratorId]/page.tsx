@@ -9,7 +9,7 @@ function RedirectContent() {
   const params = useParams<{ collaboratorId: string }>();
 
   useEffect(() => {
-    router.replace(`/coach/${params.collaboratorId}?tab=okr`);
+    router.replace(`/teams/${params.collaboratorId}?tab=okr`);
   }, [params.collaboratorId, router]);
 
   return (

@@ -122,7 +122,7 @@ function FillManualContent() {
   const [alreadyFilled, setAlreadyFilled] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/coach/manual/fill/${params.token}`)
+    fetch(`/api/teams/manual/fill/${params.token}`)
       .then(async (res) => {
         if (res.status === 404) { setNotFound(true); setLoading(false); return; }
         if (!res.ok) { setError(t.common.error); setLoading(false); return; }
@@ -144,7 +144,7 @@ function FillManualContent() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/coach/manual/fill/${params.token}`, {
+      const res = await fetch(`/api/teams/manual/fill/${params.token}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),

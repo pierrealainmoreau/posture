@@ -81,7 +81,7 @@ function OkrPageContent() {
 
       const [collabsRes, okrRes] = await Promise.all([
         supabase.from("collaborators").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
-        fetch("/api/coach/okr/company"),
+        fetch("/api/teams/okr/company"),
       ]);
 
       const collabs = (collabsRes.data as Collaborator[]) ?? [];
@@ -91,7 +91,7 @@ function OkrPageContent() {
       setCompanyOkr(okrData);
 
       if (okrData) {
-        const res = await fetch(`/api/coach/okr/collaborator?company_okr_id=${okrData.id}`);
+        const res = await fetch(`/api/teams/okr/collaborator?company_okr_id=${okrData.id}`);
         if (res.ok) {
           const rows = (await res.json()) as CollaboratorOkr[];
           const map: Record<string, CollaboratorOkr> = {};
@@ -139,7 +139,7 @@ function OkrPageContent() {
     setAssistError(null);
     setCritique(null);
     try {
-      const res = await fetch("/api/coach/okr/assist", {
+      const res = await fetch("/api/teams/okr/assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ step, period: form.period, current_objective: form.objective, current_key_results: form.key_results }),
@@ -171,7 +171,7 @@ function OkrPageContent() {
     setSaving(true);
     setSaveError(null);
     try {
-      const res = await fetch("/api/coach/okr/company", {
+      const res = await fetch("/api/teams/okr/company", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ period: form.period, objective: form.objective, key_results: form.key_results }),
@@ -181,7 +181,7 @@ function OkrPageContent() {
       setCompanyOkr(data as CompanyOkr);
       setEditing(false);
       setCritique(null);
-      const collabRes = await fetch(`/api/coach/okr/collaborator?company_okr_id=${(data as CompanyOkr).id}`);
+      const collabRes = await fetch(`/api/teams/okr/collaborator?company_okr_id=${(data as CompanyOkr).id}`);
       if (collabRes.ok) {
         const rows = (await collabRes.json()) as CollaboratorOkr[];
         const map: Record<string, CollaboratorOkr> = {};
@@ -199,7 +199,7 @@ function OkrPageContent() {
     setGenerating(collaboratorId);
     setGenError(null);
     try {
-      const res = await fetch("/api/coach/okr/generate-collaborator", {
+      const res = await fetch("/api/teams/okr/generate-collaborator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collaborator_id: collaboratorId }),
@@ -217,7 +217,7 @@ function OkrPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <Header backHref="/coach" currentTool="1:1 Coach" />
+        <Header backHref="/teams" currentTool="Mon équipe" />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 size={20} className="animate-spin text-gray-400" />
         </div>
@@ -454,7 +454,7 @@ function OkrPageContent() {
               {collaborators.length === 0 && (
                 <div className="text-center py-12 text-sm text-gray-400 dark:text-gray-500">
                   {t.coach.noCollaborators}{" "}
-                  <Link href="/coach" className="underline hover:text-gray-600 dark:hover:text-gray-300">
+                  <Link href="/teams" className="underline hover:text-gray-600 dark:hover:text-gray-300">
                     {t.coach.noCollabsLink}
                   </Link>
                 </div>
@@ -497,7 +497,7 @@ function OkrPageContent() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {okr ? (
-                          <Link href={`/coach/okr/${c.id}`}
+                          <Link href={`/teams/okr/${c.id}`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             {t.coach.viewModifyBtn} <ChevronRight size={11} />
                           </Link>
@@ -509,7 +509,7 @@ function OkrPageContent() {
                               {isGenerating ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
                               {isGenerating ? t.coach.generatingOkr : t.coach.generateOkrWithAi}
                             </button>
-                            <Link href={`/coach/okr/${c.id}`}
+                            <Link href={`/teams/okr/${c.id}`}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                               <Pencil size={11} /> {t.coach.writeOkrBtn}
                             </Link>

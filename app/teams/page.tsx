@@ -387,7 +387,7 @@ export default function CoachPage() {
               return (
                 <Link
                   key={c.id}
-                  href={`/coach/${c.id}`}
+                  href={`/teams/${c.id}`}
                   className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm transition-all block"
                 >
                   {/* Member header */}

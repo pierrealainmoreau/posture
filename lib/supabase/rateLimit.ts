@@ -6,7 +6,7 @@ export const ADMIN_REQUEST_LIMIT = 50;
 export const DEFAULT_REQUEST_LIMIT = USER_REQUEST_LIMIT;
 export const REQUEST_LIMIT = DEFAULT_REQUEST_LIMIT;
 export type Tool =
-  | "feedback" | "interview" | "recruitment" | "job-description" | "coach" | "reunion-maker"
+  | "feedback" | "interview" | "recruitment" | "job-description" | "teams" | "reunion-maker"
   | "icebreaker" | "chaine" | "humeur" | "boussole" | "tribu" | "draw" | "tvml"
   | "okr" | "abcde" | "search" | "emoji_only";
 

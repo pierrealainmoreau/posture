@@ -59,7 +59,7 @@ export async function middleware(request: NextRequest) {
 
   // Coach manual evaluation pages are public — the token is the access credential.
   const isCoachManualPage =
-    pathSegments[1] === "coach" && pathSegments[2] === "manual" && pathSegments[3] !== undefined;
+    pathSegments[1] === "teams" && pathSegments[2] === "manual" && pathSegments[3] !== undefined;
 
   // Toolbox mini-jeux participant pages are public — no account needed to join a session.
   // Hub (/toolbox/{game}) and create (/toolbox/{game}/create) remain protected (host only).

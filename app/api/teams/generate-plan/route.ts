@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Erreur de sauvegarde", details: insertError?.message }, { status: 500 });
       }
 
-      await recordUsage(user.id, "coach", supabase);
+      await recordUsage(user.id, "teams", supabase);
       return NextResponse.json(plan);
     }
 

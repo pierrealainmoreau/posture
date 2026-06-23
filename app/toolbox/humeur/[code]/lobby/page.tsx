@@ -364,7 +364,7 @@ export default function HumeurLobbyPage() {
               ) : collaborators.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
                   Aucun collaborateur enregistré.<br />
-                  <a href="/coach" className="text-rose-500 hover:underline text-xs">
+                  <a href="/teams" className="text-rose-500 hover:underline text-xs">
                     Ajouter un collaborateur
                   </a>
                 </p>

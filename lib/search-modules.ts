@@ -16,7 +16,7 @@ export const MODULES = [
   { id: "reunion-preparer", name: "Préparer une réunion",  description: "Générez un ordre du jour structuré pour votre prochaine réunion grâce à l'IA.",           href: "/reunion-maker/preparer",    emoji: "📋" },
   { id: "feedback",         name: "Feedback structuré",    description: "Rédigez un feedback constructif, positif ou correctif grâce à l'IA.",                     href: "/feedback",                  emoji: "💬" },
   { id: "recruitment",      name: "Recrutement",           description: "Générez des fiches de poste et des questions d'entretien grâce à l'IA.",                  href: "/recruitment",               emoji: "👥" },
-  { id: "coach",            name: "Coach 1:1",             description: "Suivez vos collaborateurs, planifiez vos entretiens individuels et gérez leurs objectifs.", href: "/coach",                    emoji: "🤝" },
-  { id: "okr",              name: "OKR",                   description: "Définissez et suivez les objectifs et résultats clés de votre équipe.",                    href: "/coach/okr",                 emoji: "🎯" },
+  { id: "teams",            name: "Mon équipe",             description: "Suivez vos collaborateurs, planifiez vos entretiens individuels et gérez leurs objectifs.", href: "/teams",                    emoji: "🤝" },
+  { id: "okr",              name: "OKR",                   description: "Définissez et suivez les objectifs et résultats clés de votre équipe.",                    href: "/teams/okr",                 emoji: "🎯" },
   { id: "academie",         name: "Académie (Quiz)",       description: "Formez-vous sur les compétences managériales avec des quiz et gagnez des badges.",         href: "/academie",                  emoji: "🎓" },
 ];
