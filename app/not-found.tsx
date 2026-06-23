@@ -5,9 +5,12 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="text-center max-w-sm">
-        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-          <span className="text-3xl">🗺️</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://media0.giphy.com/media/ji6zzUZwNIuLS/giphy.gif"
+          alt=""
+          className="w-40 h-40 object-contain mx-auto mb-6 rounded-2xl"
+        />
 
         <p className="text-xs font-bold uppercase tracking-[0.1em] text-gray-400 dark:text-gray-500 mb-2">
           Erreur 404
