@@ -7,7 +7,7 @@ import {
   Loader2, Check, Lock, Trash2, AlertTriangle,
   RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp,
   TrendingUp, X, Download, Target, Plus, Building2, BookUser, Copy, Link2,
-  CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid,
+  CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid, Pencil,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { createClient } from "@/lib/supabase/client";
@@ -86,26 +86,104 @@ function SkillRow({
   skill,
   selfLevel,
   onUpdate,
+  onFieldUpdate,
+  onDelete,
+  defaultEditing = false,
 }: {
   skill: CareerSkill;
   selfLevel?: ExpertiseLevel;
   onUpdate: (level: ExpertiseLevel) => void;
+  onFieldUpdate: (field: keyof CareerSkill, value: string) => void;
+  onDelete: () => void;
+  defaultEditing?: boolean;
 }) {
   const { t } = useI18n();
+  const [editing, setEditing] = useState(defaultEditing);
   const currentIdx = LEVELS.indexOf(skill.level as ExpertiseLevel);
   const targetIdx  = LEVELS.indexOf(skill.target as ExpertiseLevel);
   const selfIdx    = selfLevel ? LEVELS.indexOf(selfLevel) : -1;
   const gap = targetIdx - currentIdx;
 
+  if (editing) {
+    return (
+      <div className="py-3.5 border-b border-gray-100 dark:border-gray-800 last:border-0 space-y-3">
+        {/* Nom */}
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            value={skill.skill}
+            onChange={(e) => onFieldUpdate("skill", e.target.value)}
+            placeholder="Nom de la compétence"
+            className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button onClick={onDelete}
+            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors flex-shrink-0">
+            <Trash2 size={14} />
+          </button>
+        </div>
+
+        {/* Niveau actuel (manager) */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Niveau actuel</span>
+          <div className="flex items-center gap-1.5">
+            {LEVELS.map((level, i) => (
+              <button key={level} onClick={() => onUpdate(level)} title={level}
+                className={[
+                  "w-4 h-4 rounded-full transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500",
+                  i <= currentIdx ? (DOT_FILL[currentIdx] ?? "bg-gray-400") : "bg-gray-100 dark:bg-gray-800",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+          <span className={`text-xs font-medium ${LEVEL_TEXT_COLOR[currentIdx] ?? "text-gray-500"}`}>{skill.level}</span>
+        </div>
+
+        {/* Niveau cible */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">Objectif</span>
+          <div className="flex items-center gap-1.5">
+            {LEVELS.map((level, i) => (
+              <button key={level} onClick={() => onFieldUpdate("target", level)} title={level}
+                className={[
+                  "w-4 h-4 rounded-full transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-400",
+                  i <= targetIdx ? "bg-amber-400" : "bg-gray-100 dark:bg-gray-800",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{skill.target}</span>
+        </div>
+
+        {/* Attente concrète */}
+        <div>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Attente concrète <span className="font-normal text-gray-400">(optionnel)</span></label>
+          <textarea
+            value={skill.expectation ?? ""}
+            onChange={(e) => onFieldUpdate("expectation", e.target.value)}
+            placeholder="Ex : capable de mener un code review seul·e"
+            rows={2}
+            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+        </div>
+
+        <button onClick={() => setEditing(false)}
+          disabled={!skill.skill.trim()}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 disabled:opacity-40 transition-opacity">
+          <Check size={12} /> Valider
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="py-3.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <div className="group py-3.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
       {/* Ligne manager */}
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 min-w-0">{skill.skill}</span>
         <div className="flex items-center gap-1.5">
           {LEVELS.map((level, i) => {
-            const isFilled  = i <= currentIdx;
-            const isTarget  = i === targetIdx;
+            const isFilled = i <= currentIdx;
+            const isTarget = i === targetIdx;
             return (
               <button key={level} onClick={() => onUpdate(level)} title={level}
                 className={[
@@ -120,7 +198,7 @@ function SkillRow({
         <span className={`text-xs font-medium w-24 text-right ${LEVEL_TEXT_COLOR[currentIdx] ?? "text-gray-500"}`}>
           {skill.level}
         </span>
-        <div className="w-32 text-right">
+        <div className="w-24 text-right">
           {gap > 0 ? (
             <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
               <Target size={10} className="text-amber-400" />
@@ -134,8 +212,12 @@ function SkillRow({
             <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">{t.coach.beyondLabel}</span>
           )}
         </div>
+        <button onClick={() => setEditing(true)}
+          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all rounded flex-shrink-0">
+          <Pencil size={13} />
+        </button>
       </div>
-      {/* Ligne auto-évaluation collaborateur */}
+      {/* Auto-évaluation collaborateur */}
       {selfLevel && (
         <div className="flex items-center gap-4 mt-1.5">
           <span className="text-xs text-green-600 dark:text-green-400 flex-1 min-w-0 pl-0.5">Auto-éval.</span>
@@ -147,23 +229,16 @@ function SkillRow({
               ].join(" ")} />
             ))}
           </div>
-          <span className="text-xs font-medium w-24 text-right text-green-600 dark:text-green-400">
-            {selfLevel}
-          </span>
-          <div className="w-32 text-right">
-            {selfIdx > currentIdx && (
-              <span className="text-xs text-green-600 dark:text-green-400 font-medium">+{selfIdx - currentIdx}</span>
-            )}
-            {selfIdx < currentIdx && (
-              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{selfIdx - currentIdx}</span>
-            )}
-            {selfIdx === currentIdx && selfLevel && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">=</span>
-            )}
+          <span className="text-xs font-medium w-24 text-right text-green-600 dark:text-green-400">{selfLevel}</span>
+          <div className="w-24 text-right">
+            {selfIdx > currentIdx && <span className="text-xs text-green-600 dark:text-green-400 font-medium">+{selfIdx - currentIdx}</span>}
+            {selfIdx < currentIdx && <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{selfIdx - currentIdx}</span>}
+            {selfIdx === currentIdx && selfLevel && <span className="text-xs text-gray-400 dark:text-gray-500">=</span>}
           </div>
+          <div className="w-5 flex-shrink-0" />
         </div>
       )}
-      {skill.expectation && gap > 0 && (
+      {skill.expectation && (
         <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 italic leading-relaxed pl-0.5">
           <span className="text-amber-500 dark:text-amber-400 not-italic font-medium">{t.coach.expectedLabel} </span>
           {skill.expectation}
@@ -700,12 +775,8 @@ function CollaboratorPageContent() {
 
   // ── Career path ───────────────────────────────────────────────────────────
 
-  function updateSkillLevel(category: "soft_skills" | "hard_skills", index: number, level: ExpertiseLevel) {
-    if (!careerDraft || !plan) return;
-    const updated: CareerPath = {
-      ...careerDraft,
-      [category]: (careerDraft[category] as CareerSkill[]).map((s, i) => i === index ? { ...s, level } : s),
-    };
+  function saveCareerPath(updated: CareerPath) {
+    if (!plan) return;
     setCareerDraft(updated);
     if (careerDebounceRef.current) clearTimeout(careerDebounceRef.current);
     careerDebounceRef.current = setTimeout(async () => {
@@ -715,6 +786,39 @@ function CollaboratorPageContent() {
       setPlan((prev) => prev ? { ...prev, raw_content: { ...prev.raw_content, career_path: updated } } : prev);
       setSavingCareer(false);
     }, 600);
+  }
+
+  function updateSkillLevel(category: "soft_skills" | "hard_skills", index: number, level: ExpertiseLevel) {
+    if (!careerDraft) return;
+    saveCareerPath({
+      ...careerDraft,
+      [category]: careerDraft[category].map((s, i) => i === index ? { ...s, level } : s),
+    });
+  }
+
+  function updateSkillField(category: "soft_skills" | "hard_skills", index: number, field: keyof CareerSkill, value: string) {
+    if (!careerDraft) return;
+    saveCareerPath({
+      ...careerDraft,
+      [category]: careerDraft[category].map((s, i) => i === index ? { ...s, [field]: value } : s),
+    });
+  }
+
+  function addSkill(category: "soft_skills" | "hard_skills") {
+    if (!careerDraft) return;
+    const newSkill: CareerSkill = { skill: "", level: "débutant", target: "intermédiaire", expectation: "" };
+    saveCareerPath({
+      ...careerDraft,
+      [category]: [...careerDraft[category], newSkill],
+    });
+  }
+
+  function deleteSkill(category: "soft_skills" | "hard_skills", index: number) {
+    if (!careerDraft) return;
+    saveCareerPath({
+      ...careerDraft,
+      [category]: careerDraft[category].filter((_, i) => i !== index),
+    });
   }
 
   // ── Sessions ─────────────────────────────────────────────────────────────
@@ -1513,12 +1617,21 @@ function CollaboratorPageContent() {
                   <div className="px-5">
                     {careerDraft.soft_skills.map((skill, i) => (
                       <SkillRow
-                        key={i}
+                        key={`soft-${i}`}
                         skill={skill as CareerSkill}
                         selfLevel={(careerSelfAssessment?.self_levels as CareerSelfLevels | undefined)?.[skill.skill]}
+                        defaultEditing={!skill.skill}
                         onUpdate={(level) => updateSkillLevel("soft_skills", i, level)}
+                        onFieldUpdate={(field, value) => updateSkillField("soft_skills", i, field, value)}
+                        onDelete={() => deleteSkill("soft_skills", i)}
                       />
                     ))}
+                  </div>
+                  <div className="px-5 py-3 border-t border-gray-50 dark:border-gray-800/60">
+                    <button onClick={() => addSkill("soft_skills")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                      <Plus size={12} /> Ajouter un soft skill
+                    </button>
                   </div>
                 </div>
 
@@ -1532,12 +1645,21 @@ function CollaboratorPageContent() {
                   <div className="px-5">
                     {careerDraft.hard_skills.map((skill, i) => (
                       <SkillRow
-                        key={i}
+                        key={`hard-${i}`}
                         skill={skill as CareerSkill}
                         selfLevel={(careerSelfAssessment?.self_levels as CareerSelfLevels | undefined)?.[skill.skill]}
+                        defaultEditing={!skill.skill}
                         onUpdate={(level) => updateSkillLevel("hard_skills", i, level)}
+                        onFieldUpdate={(field, value) => updateSkillField("hard_skills", i, field, value)}
+                        onDelete={() => deleteSkill("hard_skills", i)}
                       />
                     ))}
+                  </div>
+                  <div className="px-5 py-3 border-t border-gray-50 dark:border-gray-800/60">
+                    <button onClick={() => addSkill("hard_skills")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                      <Plus size={12} /> Ajouter un hard skill
+                    </button>
                   </div>
                 </div>
 
