@@ -498,6 +498,19 @@ export interface CollaboratorManual {
   updated_at: string;
 }
 
+export type CareerSelfLevels = Record<string, ExpertiseLevel>; // skillName → niveau auto-évalué
+
+export interface CareerSelfAssessment {
+  id: string;
+  collaborator_id: string;
+  user_id: string;
+  token: string;
+  self_levels: CareerSelfLevels;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Suggestions IA hebdomadaires ─────────────────────────────────────────
 
 export interface CollaboratorSuggestions {

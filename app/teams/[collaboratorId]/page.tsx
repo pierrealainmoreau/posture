@@ -15,6 +15,7 @@ import type {
   Collaborator, CoachSeniority, CollaboratorPeriod,
   ManagerialPlan, WeeklySession, ExpertiseLevel, CareerSkill, CareerPath,
   CompanyOkr, CollaboratorOkr, KeyResult, CollaboratorManual, CollaboratorSuggestions,
+  CareerSelfAssessment, CareerSelfLevels,
 } from "@/lib/types";
 import { MANUAL_SECTIONS } from "@/lib/manual-questions";
 import { COACH_CONFIG, LEVELS } from "@/lib/types";
@@ -79,26 +80,37 @@ const LEVEL_TEXT_COLOR = ["text-gray-500", "text-blue-500", "text-violet-500", "
 
 // ── Skill level editor ─────────────────────────────────────────────────────
 
-function SkillRow({ skill, onUpdate }: { skill: CareerSkill; onUpdate: (level: ExpertiseLevel) => void }) {
+const SELF_DOT_FILL = ["bg-green-400", "bg-green-400", "bg-green-500", "bg-emerald-500"];
+
+function SkillRow({
+  skill,
+  selfLevel,
+  onUpdate,
+}: {
+  skill: CareerSkill;
+  selfLevel?: ExpertiseLevel;
+  onUpdate: (level: ExpertiseLevel) => void;
+}) {
   const { t } = useI18n();
   const currentIdx = LEVELS.indexOf(skill.level as ExpertiseLevel);
   const targetIdx  = LEVELS.indexOf(skill.target as ExpertiseLevel);
+  const selfIdx    = selfLevel ? LEVELS.indexOf(selfLevel) : -1;
   const gap = targetIdx - currentIdx;
 
   return (
     <div className="py-3.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+      {/* Ligne manager */}
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 min-w-0">{skill.skill}</span>
         <div className="flex items-center gap-1.5">
           {LEVELS.map((level, i) => {
             const isFilled  = i <= currentIdx;
             const isTarget  = i === targetIdx;
-            const isAboveTarget = i > targetIdx;
             return (
               <button key={level} onClick={() => onUpdate(level)} title={level}
                 className={[
                   "w-4 h-4 rounded-full transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500",
-                  isFilled ? DOT_FILL[currentIdx] ?? "bg-gray-400" : isAboveTarget ? "bg-gray-100 dark:bg-gray-800" : "bg-gray-100 dark:bg-gray-800",
+                  isFilled ? DOT_FILL[currentIdx] ?? "bg-gray-400" : "bg-gray-100 dark:bg-gray-800",
                   !isFilled && isTarget ? "ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-gray-900" : "",
                 ].filter(Boolean).join(" ")}
               />
@@ -123,6 +135,34 @@ function SkillRow({ skill, onUpdate }: { skill: CareerSkill; onUpdate: (level: E
           )}
         </div>
       </div>
+      {/* Ligne auto-évaluation collaborateur */}
+      {selfLevel && (
+        <div className="flex items-center gap-4 mt-1.5">
+          <span className="text-xs text-green-600 dark:text-green-400 flex-1 min-w-0 pl-0.5">Auto-éval.</span>
+          <div className="flex items-center gap-1.5">
+            {LEVELS.map((_, i) => (
+              <span key={i} className={[
+                "w-4 h-4 rounded-full",
+                i <= selfIdx ? (SELF_DOT_FILL[selfIdx] ?? "bg-green-400") : "bg-gray-100 dark:bg-gray-800",
+              ].join(" ")} />
+            ))}
+          </div>
+          <span className="text-xs font-medium w-24 text-right text-green-600 dark:text-green-400">
+            {selfLevel}
+          </span>
+          <div className="w-32 text-right">
+            {selfIdx > currentIdx && (
+              <span className="text-xs text-green-600 dark:text-green-400 font-medium">+{selfIdx - currentIdx}</span>
+            )}
+            {selfIdx < currentIdx && (
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">{selfIdx - currentIdx}</span>
+            )}
+            {selfIdx === currentIdx && selfLevel && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">=</span>
+            )}
+          </div>
+        </div>
+      )}
       {skill.expectation && gap > 0 && (
         <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 italic leading-relaxed pl-0.5">
           <span className="text-amber-500 dark:text-amber-400 not-italic font-medium">{t.coach.expectedLabel} </span>
@@ -274,6 +314,10 @@ function CollaboratorPageContent() {
   const [savingCareer, setSavingCareer] = useState(false);
   const careerDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [careerSelfAssessment, setCareerSelfAssessment] = useState<CareerSelfAssessment | null>(null);
+  const [creatingCareerLink, setCreatingCareerLink] = useState(false);
+  const [careerLinkCopied, setCareerLinkCopied] = useState(false);
+
   const [generatingWeek, setGeneratingWeek] = useState<number | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [confirmingWeek, setConfirmingWeek] = useState<number | null>(null);
@@ -319,7 +363,7 @@ function CollaboratorPageContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.replace("/login"); return; }
 
-    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes] = await Promise.all([
+    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes, careerSelfRes] = await Promise.all([
       supabase.from("collaborators").select("*").eq("id", collaboratorId).eq("user_id", user.id).single<Collaborator>(),
       supabase.from("managerial_plans").select("*").eq("collaborator_id", collaboratorId).maybeSingle<ManagerialPlan>(),
       supabase.from("weekly_sessions").select("*").eq("collaborator_id", collaboratorId).order("week_number", { ascending: true }),
@@ -327,6 +371,7 @@ function CollaboratorPageContent() {
       fetch(`/api/teams/okr/collaborator?collaborator_id=${collaboratorId}`),
       fetch(`/api/teams/manual/${collaboratorId}`),
       fetch(`/api/teams/suggestions/${collaboratorId}`),
+      fetch(`/api/teams/career/${collaboratorId}`),
     ]);
 
     if (collabRes.error || !collabRes.data) { setNotFound(true); setLoading(false); return; }
@@ -354,6 +399,9 @@ function CollaboratorPageContent() {
 
     const suggestionsData: CollaboratorSuggestions | null = suggestionsRes.ok ? await suggestionsRes.json() : null;
     setSuggestions(suggestionsData);
+
+    const careerSelfData: CareerSelfAssessment | null = careerSelfRes.ok ? await careerSelfRes.json() : null;
+    setCareerSelfAssessment(careerSelfData);
 
     setLoading(false);
     if (isNew && !fetchedPlan) navigateToTab("plan");
@@ -452,6 +500,28 @@ function CollaboratorPageContent() {
     await navigator.clipboard.writeText(manualLink(token));
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
+  }
+
+  function careerLink(token: string) {
+    return `${window.location.origin}/teams/career/${token}`;
+  }
+
+  async function createCareerLink() {
+    setCreatingCareerLink(true);
+    try {
+      const res = await fetch(`/api/teams/career/${collaboratorId}`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      const data: CareerSelfAssessment = await res.json();
+      setCareerSelfAssessment(data);
+    } finally {
+      setCreatingCareerLink(false);
+    }
+  }
+
+  async function copyCareerLink(token: string) {
+    await navigator.clipboard.writeText(careerLink(token));
+    setCareerLinkCopied(true);
+    setTimeout(() => setCareerLinkCopied(false), 2000);
   }
 
   useEffect(() => {
@@ -1357,6 +1427,50 @@ function CollaboratorPageContent() {
                   )}
                 </div>
 
+                {/* ── Partager pour auto-évaluation ── */}
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl px-5 py-4">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Link2 size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-green-800 dark:text-green-200">
+                      Auto-évaluation de {collaborator.first_name}
+                    </span>
+                  </div>
+                  <p className="text-xs text-green-700 dark:text-green-400 mb-3 leading-relaxed">
+                    Partagez ce lien à {collaborator.first_name} pour qu&apos;il·elle s&apos;auto-évalue sur chaque compétence.
+                    Vous verrez ensuite sa perception à côté de la vôtre.
+                  </p>
+                  {!careerSelfAssessment ? (
+                    <button
+                      onClick={createCareerLink}
+                      disabled={creatingCareerLink}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors"
+                    >
+                      {creatingCareerLink ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />}
+                      {creatingCareerLink ? "Génération du lien…" : "Générer le lien"}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs font-mono truncate text-green-700 dark:text-green-300 bg-white/60 dark:bg-green-900/40 border border-green-200 dark:border-green-700 px-3 py-2 rounded-xl">
+                        {typeof window !== "undefined" ? careerLink(careerSelfAssessment.token) : "…"}
+                      </code>
+                      <button
+                        onClick={() => copyCareerLink(careerSelfAssessment.token)}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-green-900/50 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 text-xs font-medium rounded-xl hover:bg-green-50 dark:hover:bg-green-900 transition-colors"
+                      >
+                        {careerLinkCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                        {careerLinkCopied ? t.common.copied : t.common.copy}
+                      </button>
+                    </div>
+                  )}
+                  {careerSelfAssessment?.completed_at && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400 font-medium">
+                      <Check size={11} />
+                      Auto-évaluation reçue le{" "}
+                      {new Date(careerSelfAssessment.completed_at).toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1.5">
@@ -1374,8 +1488,13 @@ function CollaboratorPageContent() {
 
                 <div className="flex items-center gap-5 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-violet-500 inline-block" /> {t.coach.currentLevelLabel}
+                    <span className="w-3.5 h-3.5 rounded-full bg-violet-500 inline-block" /> {t.coach.currentLevelLabel} (manager)
                   </span>
+                  {careerSelfAssessment?.completed_at && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 rounded-full bg-green-400 inline-block" /> Auto-éval. ({collaborator.first_name})
+                    </span>
+                  )}
                   <span className="flex items-center gap-1.5">
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-amber-400 inline-block" /> {t.coach.okrKrTargetLabel}
                   </span>
@@ -1393,7 +1512,12 @@ function CollaboratorPageContent() {
                   </div>
                   <div className="px-5">
                     {careerDraft.soft_skills.map((skill, i) => (
-                      <SkillRow key={i} skill={skill as CareerSkill} onUpdate={(level) => updateSkillLevel("soft_skills", i, level)} />
+                      <SkillRow
+                        key={i}
+                        skill={skill as CareerSkill}
+                        selfLevel={(careerSelfAssessment?.self_levels as CareerSelfLevels | undefined)?.[skill.skill]}
+                        onUpdate={(level) => updateSkillLevel("soft_skills", i, level)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -1407,7 +1531,12 @@ function CollaboratorPageContent() {
                   </div>
                   <div className="px-5">
                     {careerDraft.hard_skills.map((skill, i) => (
-                      <SkillRow key={i} skill={skill as CareerSkill} onUpdate={(level) => updateSkillLevel("hard_skills", i, level)} />
+                      <SkillRow
+                        key={i}
+                        skill={skill as CareerSkill}
+                        selfLevel={(careerSelfAssessment?.self_levels as CareerSelfLevels | undefined)?.[skill.skill]}
+                        onUpdate={(level) => updateSkillLevel("hard_skills", i, level)}
+                      />
                     ))}
                   </div>
                 </div>
