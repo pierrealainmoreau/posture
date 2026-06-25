@@ -57,10 +57,10 @@ export async function middleware(request: NextRequest) {
   // Reunion-maker guest pages (Kudo Cards, ABCDE…) are public for the same reason.
   const isReunionMakerGuestPage = pathSegments[1] === "reunion-maker";
 
-  // Coach manual & career self-assessment pages are public — the token is the access credential.
+  // Coach manual, career & mid-year self-assessment pages are public — token = access credential.
   const isCoachManualPage =
     pathSegments[1] === "teams" &&
-    (pathSegments[2] === "manual" || pathSegments[2] === "career") &&
+    (pathSegments[2] === "manual" || pathSegments[2] === "career" || pathSegments[2] === "mid-year") &&
     pathSegments[3] !== undefined;
 
   // Toolbox mini-jeux participant pages are public — no account needed to join a session.

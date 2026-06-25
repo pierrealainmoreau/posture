@@ -581,3 +581,121 @@ export const FEEDBACK_FORMAT_LABELS: Record<FeedbackFormat, string> = {
   written_slack: "Écrit — message Slack",
   written_email: "Écrit — email",
 };
+
+// ── Entretiens collaborateur ──────────────────────────────────────────────
+
+export type ChecklistItem = {
+  id: string;
+  text: string;
+  checked: boolean;
+};
+
+export type ChecklistAxis = {
+  name: string;
+  items: ChecklistItem[];
+};
+
+export type OnboardingChecklist = {
+  axes: ChecklistAxis[];
+};
+
+export type OnboardingMilestoneType = "j7" | "j30" | "j90";
+
+export interface OnboardingMilestone {
+  id: string;
+  interview_id: string;
+  milestone_type: OnboardingMilestoneType;
+  is_completed: boolean;
+  scheduled_date: string | null;
+  checklist: OnboardingChecklist | null;
+  manager_notes: string | null;
+  generated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CollabInterviewType = "onboarding" | "mid_year";
+
+// ── Onboarding interview ──────────────────────────────────────────────────
+export interface CollabInterview {
+  id: string;
+  collaborator_id: string;
+  user_id: string;
+  type: "onboarding";
+  status: "active" | "completed";
+  milestones: OnboardingMilestone[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Entretien mi-année ────────────────────────────────────────────────────
+
+export type ObjectifRating = "non_atteint" | "partiel" | "atteint" | "depasse";
+
+export interface MidYearObjectif {
+  id: string;
+  title: string;
+  rating: ObjectifRating | null;
+  manager_comment: string;
+}
+
+export type FeelingPoste = 1 | 2 | 3 | 4 | 5;
+export type Score5 = 1 | 2 | 3 | 4 | 5;
+
+export interface MidYearPast {
+  bilan_global: string;
+  moments_forts: string[];
+  kifs: string[];
+  frustrations: string[];
+  objectifs_s1: MidYearObjectif[];
+  apprentissages: string[];
+  manager_notes: string;
+}
+
+export interface MidYearPresent {
+  feeling_poste: FeelingPoste | null;
+  entreprise_vision: Score5 | null;
+  entreprise_mission: Score5 | null;
+  entreprise_forces: Score5 | null;
+  entreprise_challenges: Score5 | null;
+  equipe_mission: Score5 | null;
+  equipe_forces: Score5 | null;
+  equipe_challenges: Score5 | null;
+  bien_etre_notes: string;
+  manager_notes: string;
+}
+
+export interface MidYearFuture {
+  succes_si: string[];
+  daki_drop: string;
+  daki_add: string;
+  daki_keep: string;
+  daki_improve: string;
+  feedback_manager: string;
+  objectifs_s2: MidYearObjectif[];
+  demandes: string;
+  manager_notes: string;
+}
+
+export type MidYearStatus = "draft" | "collab_sent" | "completed";
+
+export interface MidYearInterview {
+  id: string;
+  collaborator_id: string;
+  user_id: string;
+  type: "mid_year";
+  year: number;
+  status: MidYearStatus;
+  share_token: string | null;
+  collaborator_submitted_at: string | null;
+  past: MidYearPast | null;
+  present: MidYearPresent | null;
+  future: MidYearFuture | null;
+  collab_past: Partial<MidYearPast> | null;
+  collab_present: Partial<MidYearPresent> | null;
+  collab_future: Partial<MidYearFuture> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AnyCollabInterview = CollabInterview | MidYearInterview;

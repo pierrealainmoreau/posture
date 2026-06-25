@@ -8,6 +8,7 @@ import {
   RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp,
   TrendingUp, X, Download, Target, Plus, Building2, BookUser, Copy, Link2,
   CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid, Pencil,
+  Rocket, BarChart3,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { createClient } from "@/lib/supabase/client";
@@ -16,12 +17,14 @@ import type {
   ManagerialPlan, WeeklySession, ExpertiseLevel, CareerSkill, CareerPath,
   CompanyOkr, CollaboratorOkr, KeyResult, CollaboratorManual, CollaboratorSuggestions,
   CareerSelfAssessment, CareerSelfLevels,
+  CollabInterview, OnboardingMilestone, OnboardingMilestoneType, OnboardingChecklist, ChecklistAxis,
+  MidYearInterview, MidYearPast, MidYearPresent, MidYearFuture, MidYearObjectif, ObjectifRating, FeelingPoste, Score5,
 } from "@/lib/types";
 import { MANUAL_SECTIONS } from "@/lib/manual-questions";
 import { COACH_CONFIG, LEVELS } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 
-type Tab = "overview" | "plan" | "career" | "sessions" | "okr" | "settings";
+type Tab = "overview" | "plan" | "career" | "entretiens" | "okr" | "settings";
 type SettingsSubTab = "profile" | "manual" | "ateliers";
 
 type AtelierActivity = {
@@ -305,6 +308,1042 @@ function PlanProgressGauge({ step, firstName }: { step: 0 | 1 | 2 | 3 | 4; first
   );
 }
 
+// ── MidYearCard ────────────────────────────────────────────────────────────
+
+const RATING_OPTIONS: { value: ObjectifRating; label: string; color: string }[] = [
+  { value: "non_atteint", label: "Non atteint", color: "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800" },
+  { value: "partiel",     label: "Partiel",     color: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800" },
+  { value: "atteint",     label: "Atteint",     color: "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" },
+  { value: "depasse",     label: "Dépassé",     color: "bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800" },
+];
+
+const FEELING_CONFIG: Record<FeelingPoste, { label: string; sub: string; dot: string }> = {
+  1: { label: "Pas bien dans mon poste",          sub: "En difficulté, peu motivé",               dot: "bg-red-500" },
+  2: { label: "Moyennement bien",                  sub: "Jours avec et sans",                      dot: "bg-amber-400" },
+  3: { label: "À ma place, je monte en puissance", sub: "J'apprends, je progresse",                dot: "bg-blue-500" },
+  4: { label: "Vraiment bon et j'adore",           sub: "Référence dans mon domaine, fort impact", dot: "bg-green-500" },
+  5: { label: "Je m'ennuie, ça tourne en rond",    sub: "Zone de confort, plus vraiment motivé",   dot: "bg-gray-400" },
+};
+
+function MYTextarea({ value, onChange, placeholder, rows = 3, disabled }: {
+  value: string; onChange?: (v: string) => void; placeholder?: string; rows?: number; disabled?: boolean;
+}) {
+  return (
+    <textarea value={value} onChange={e => onChange?.(e.target.value)} placeholder={placeholder} rows={rows}
+      disabled={disabled}
+      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:opacity-50" />
+  );
+}
+
+function MYLabel({ label, hint }: { label: string; hint?: string }) {
+  return (
+    <div className="mb-1.5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
+      {hint && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function MYScore({ label, value, collab, onChange }: {
+  label: string; value: Score5 | null; collab?: Score5 | null; onChange: (v: Score5) => void;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 min-w-0 pt-0.5">{label}</span>
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1">
+          {([1, 2, 3, 4, 5] as Score5[]).map(n => (
+            <button key={n} type="button" onClick={() => onChange(n)}
+              className={`w-7 h-7 rounded-full text-xs font-semibold transition-all ${
+                value === n ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}>{n}</button>
+          ))}
+        </div>
+        {collab !== undefined && collab !== null && (
+          <div className="flex items-center gap-1">
+            {([1, 2, 3, 4, 5] as Score5[]).map(n => (
+              <div key={n}
+                className={`w-7 h-2 rounded-full ${collab === n ? "bg-green-400" : "bg-gray-100 dark:bg-gray-800"}`} />
+            ))}
+            <span className="text-[10px] text-green-600 dark:text-green-400 ml-0.5">collab</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MidYearCard({
+  interview,
+  collaboratorId,
+  onUpdate,
+}: {
+  interview: MidYearInterview;
+  collaboratorId: string;
+  onUpdate: (updated: MidYearInterview) => void;
+}) {
+  type MYTab = "past" | "present" | "future";
+  const [activeTab, setActiveTab] = useState<MYTab>("past");
+  const [miroir, setMiroir] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [copyOk, setCopyOk] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState<string[] | null>(null);
+  const [aiSection, setAiSection] = useState<MYTab | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Local copies of sections
+  const [past, setPast] = useState<MidYearPast>(() => interview.past ?? {
+    bilan_global: "", moments_forts: ["","",""], kifs: ["","",""],
+    frustrations: ["","",""], objectifs_s1: [], apprentissages: ["","",""], manager_notes: "",
+  });
+  const [present, setPresent] = useState<MidYearPresent>(() => interview.present ?? {
+    feeling_poste: null, entreprise_vision: null, entreprise_mission: null,
+    entreprise_forces: null, entreprise_challenges: null,
+    equipe_mission: null, equipe_forces: null, equipe_challenges: null,
+    bien_etre_notes: "", manager_notes: "",
+  });
+  const [future, setFuture] = useState<MidYearFuture>(() => interview.future ?? {
+    succes_si: ["","",""], daki_drop: "", daki_add: "", daki_keep: "", daki_improve: "",
+    feedback_manager: "", objectifs_s2: [], demandes: "", manager_notes: "",
+  });
+
+  const debounceSave = (newPast?: MidYearPast, newPresent?: MidYearPresent, newFuture?: MidYearFuture) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      setSaving(true);
+      const res = await fetch(`/api/teams/entretiens/mid-year/${interview.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ past: newPast ?? past, present: newPresent ?? present, future: newFuture ?? future }),
+      });
+      if (res.ok) {
+        const updated = await res.json() as MidYearInterview;
+        onUpdate({ ...interview, ...updated });
+      }
+      setSaving(false);
+    }, 700);
+  };
+
+  const updatePast = (patch: Partial<MidYearPast>) => {
+    const next = { ...past, ...patch };
+    setPast(next);
+    debounceSave(next, undefined, undefined);
+  };
+  const updatePresent = (patch: Partial<MidYearPresent>) => {
+    const next = { ...present, ...patch };
+    setPresent(next);
+    debounceSave(undefined, next, undefined);
+  };
+  const updateFuture = (patch: Partial<MidYearFuture>) => {
+    const next = { ...future, ...patch };
+    setFuture(next);
+    debounceSave(undefined, undefined, next);
+  };
+
+  const updateList = (
+    field: "moments_forts" | "kifs" | "frustrations" | "apprentissages" | "succes_si",
+    idx: number, val: string, section: "past" | "future",
+  ) => {
+    if (section === "past") {
+      const arr = [...(past[field as keyof MidYearPast] as string[])];
+      arr[idx] = val;
+      updatePast({ [field]: arr } as Partial<MidYearPast>);
+    } else {
+      const arr = [...(future[field as keyof MidYearFuture] as string[])];
+      arr[idx] = val;
+      updateFuture({ [field]: arr } as Partial<MidYearFuture>);
+    }
+  };
+
+  // Objectifs helpers
+  const addObjectif = (section: "s1" | "s2") => {
+    const newObj: MidYearObjectif = { id: crypto.randomUUID(), title: "", rating: null, manager_comment: "" };
+    if (section === "s1") updatePast({ objectifs_s1: [...past.objectifs_s1, newObj] });
+    else updateFuture({ objectifs_s2: [...future.objectifs_s2, newObj] });
+  };
+  const removeObjectif = (section: "s1" | "s2", id: string) => {
+    if (section === "s1") updatePast({ objectifs_s1: past.objectifs_s1.filter(o => o.id !== id) });
+    else updateFuture({ objectifs_s2: future.objectifs_s2.filter(o => o.id !== id) });
+  };
+  const updateObjectif = (section: "s1" | "s2", id: string, patch: Partial<MidYearObjectif>) => {
+    if (section === "s1") {
+      updatePast({ objectifs_s1: past.objectifs_s1.map(o => o.id === id ? { ...o, ...patch } : o) });
+    } else {
+      updateFuture({ objectifs_s2: future.objectifs_s2.map(o => o.id === id ? { ...o, ...patch } : o) });
+    }
+  };
+
+  const shareLink = `${typeof window !== "undefined" ? window.location.origin : ""}/teams/mid-year/${interview.share_token}`;
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareLink).then(() => {
+      setCopyOk(true);
+      setTimeout(() => setCopyOk(false), 2000);
+    });
+  };
+
+  const generateAiQuestions = async (section: MYTab) => {
+    setAiLoading(true);
+    setAiSection(section);
+    setAiQuestions(null);
+    const res = await fetch(`/api/teams/entretiens/mid-year/${interview.id}/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ section }),
+    });
+    if (res.ok) {
+      const { questions } = await res.json() as { questions: string[] };
+      setAiQuestions(questions);
+    }
+    setAiLoading(false);
+  };
+
+  const hasCollab = !!interview.collaborator_submitted_at;
+  const cp = interview.collab_past;
+  const cpr = interview.collab_present;
+  const cf = interview.collab_future;
+
+  const TABS: { id: MYTab; label: string }[] = [
+    { id: "past",    label: "Les 6 derniers mois" },
+    { id: "present", label: "Le présent" },
+    { id: "future",  label: "Le S2" },
+  ];
+
+  const mf  = past.moments_forts as string[];
+  const kfs = past.kifs as string[];
+  const frs = past.frustrations as string[];
+  const app = past.apprentissages as string[];
+  const scs = future.succes_si as string[];
+
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
+            <BarChart3 size={16} className="text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Mi-année {interview.year}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {interview.status === "completed" ? "Complété" : interview.status === "collab_sent" ? "En attente du collaborateur" : "En préparation"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {saving && <Loader2 size={12} className="animate-spin text-gray-400" />}
+          {hasCollab && (
+            <button type="button" onClick={() => setMiroir(v => !v)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                miroir ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                       : "border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}>
+              Vue miroir
+            </button>
+          )}
+          <button type="button" onClick={copyLink}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            {copyOk ? <Check size={11} className="text-green-500" /> : <Link2 size={11} />}
+            {copyOk ? "Copié !" : "Partager"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-100 dark:border-gray-800">
+        {TABS.map(t => (
+          <button key={t.id} type="button" onClick={() => setActiveTab(t.id)}
+            className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
+              activeTab === t.id
+                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* AI questions panel */}
+      {aiQuestions && aiSection === activeTab && (
+        <div className="mx-5 mt-4 p-4 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">Questions IA — à poser en entretien</p>
+            <button type="button" onClick={() => setAiQuestions(null)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300">
+              <X size={13} />
+            </button>
+          </div>
+          <ul className="space-y-2">
+            {aiQuestions.map((q, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-indigo-800 dark:text-indigo-200">
+                <span className="mt-1 w-1 h-1 rounded-full bg-indigo-400 flex-shrink-0" />{q}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="p-5 space-y-5">
+
+        {/* ── Passé ──────────────────────────────────────────────────── */}
+        {activeTab === "past" && (
+          <div className="space-y-5">
+            {/* Bilan global */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <MYLabel label="Bilan global" hint="Si ces 6 mois étaient un film, ce serait lequel ?" />
+                <button type="button" onClick={() => generateAiQuestions("past")} disabled={aiLoading}
+                  className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50">
+                  {aiLoading && aiSection === "past" ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  Questions IA
+                </button>
+              </div>
+              <MYTextarea value={past.bilan_global} onChange={v => updatePast({ bilan_global: v })}
+                placeholder="Résumé macro des 6 derniers mois…" rows={3} />
+              {miroir && cp?.bilan_global && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">Collaborateur</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{cp.bilan_global}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Moments forts */}
+            <div>
+              <MYLabel label="Moments forts" hint="3 grands moments de ces 6 mois" />
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i}>
+                    <MYTextarea value={mf[i] ?? ""} onChange={v => updateList("moments_forts", i, v, "past")}
+                      placeholder={`Moment fort ${i + 1}…`} rows={2} />
+                    {miroir && (cp?.moments_forts as string[] | undefined)?.[i] && (
+                      <div className="mt-1 px-3 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-xs text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{(cp?.moments_forts as string[])[i]}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Kifs */}
+            <div>
+              <MYLabel label="Kifs — satisfactions & fiertés" hint="3 principales sources de satisfaction" />
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i}>
+                    <MYTextarea value={kfs[i] ?? ""} onChange={v => updateList("kifs", i, v, "past")}
+                      placeholder={`Satisfaction ${i + 1}…`} rows={2} />
+                    {miroir && (cp?.kifs as string[] | undefined)?.[i] && (
+                      <div className="mt-1 px-3 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-xs text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{(cp?.kifs as string[])[i]}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Frustrations */}
+            <div>
+              <MYLabel label="Frustrations & difficultés" hint="3 principales frustrations" />
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i}>
+                    <MYTextarea value={frs[i] ?? ""} onChange={v => updateList("frustrations", i, v, "past")}
+                      placeholder={`Frustration ${i + 1}…`} rows={2} />
+                    {miroir && (cp?.frustrations as string[] | undefined)?.[i] && (
+                      <div className="mt-1 px-3 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-xs text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{(cp?.frustrations as string[])[i]}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Objectifs S1 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <MYLabel label="Objectifs S1 — bilan" />
+                <button type="button" onClick={() => addObjectif("s1")}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                  <Plus size={11} /> Ajouter
+                </button>
+              </div>
+              {past.objectifs_s1.length === 0 && (
+                <p className="text-xs text-gray-400 italic">Aucun objectif — clique sur Ajouter pour commencer</p>
+              )}
+              <div className="space-y-3">
+                {past.objectifs_s1.map(obj => (
+                  <div key={obj.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 space-y-2">
+                    <div className="flex gap-2">
+                      <input type="text" value={obj.title}
+                        onChange={e => updateObjectif("s1", obj.id, { title: e.target.value })}
+                        placeholder="Objectif…"
+                        className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <button type="button" onClick={() => removeObjectif("s1", obj.id)}
+                        className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {RATING_OPTIONS.map(r => (
+                        <button key={r.value} type="button" onClick={() => updateObjectif("s1", obj.id, { rating: r.value })}
+                          className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                            obj.rating === r.value ? r.color : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300"
+                          }`}>
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                    <MYTextarea value={obj.manager_comment}
+                      onChange={v => updateObjectif("s1", obj.id, { manager_comment: v })}
+                      placeholder="Commentaire…" rows={2} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Apprentissages */}
+            <div>
+              <MYLabel label="Apprentissages" hint="3 principaux enseignements" />
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i}>
+                    <MYTextarea value={app[i] ?? ""} onChange={v => updateList("apprentissages", i, v, "past")}
+                      placeholder={`Enseignement ${i + 1}…`} rows={2} />
+                    {miroir && (cp?.apprentissages as string[] | undefined)?.[i] && (
+                      <div className="mt-1 px-3 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-xs text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{(cp?.apprentissages as string[])[i]}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes manager */}
+            <div>
+              <MYLabel label="Notes du manager (privées)" />
+              <MYTextarea value={past.manager_notes} onChange={v => updatePast({ manager_notes: v })}
+                placeholder="Tes observations personnelles sur la séquence passé…" rows={3} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Présent ────────────────────────────────────────────────── */}
+        {activeTab === "present" && (
+          <div className="space-y-5">
+            {/* Feeling poste */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <MYLabel label="Feeling par rapport au poste" hint="Catégorie dans laquelle le collaborateur se place" />
+                <button type="button" onClick={() => generateAiQuestions("present")} disabled={aiLoading}
+                  className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50">
+                  {aiLoading && aiSection === "present" ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  Questions IA
+                </button>
+              </div>
+              <div className="space-y-2">
+                {([1, 2, 3, 4, 5] as FeelingPoste[]).map(n => (
+                  <button key={n} type="button" onClick={() => updatePresent({ feeling_poste: n })}
+                    className={`w-full flex items-center gap-3 text-left px-4 py-2.5 rounded-xl border-2 transition-all ${
+                      present.feeling_poste === n
+                        ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                    }`}>
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${FEELING_CONFIG[n].dot}`} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{FEELING_CONFIG[n].label}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{FEELING_CONFIG[n].sub}</p>
+                    </div>
+                    {miroir && cpr?.feeling_poste === n && (
+                      <span className="ml-auto text-xs text-green-600 dark:text-green-400 font-medium">collab</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Entreprise */}
+            <div>
+              <MYLabel label="L'entreprise" hint="Clarté du collaborateur · 5 = super clair · 1 = pas du tout clair" />
+              <div className="space-y-3 mt-2">
+                <MYScore label="La vision de l'entreprise (là où elle va)"
+                  value={present.entreprise_vision} collab={miroir ? cpr?.entreprise_vision ?? null : undefined}
+                  onChange={v => updatePresent({ entreprise_vision: v })} />
+                <MYScore label="La mission de l'entreprise (à quoi elle sert)"
+                  value={present.entreprise_mission} collab={miroir ? cpr?.entreprise_mission ?? null : undefined}
+                  onChange={v => updatePresent({ entreprise_mission: v })} />
+                <MYScore label="Les forces de l'entreprise"
+                  value={present.entreprise_forces} collab={miroir ? cpr?.entreprise_forces ?? null : undefined}
+                  onChange={v => updatePresent({ entreprise_forces: v })} />
+                <MYScore label="Les challenges à relever par l'entreprise"
+                  value={present.entreprise_challenges} collab={miroir ? cpr?.entreprise_challenges ?? null : undefined}
+                  onChange={v => updatePresent({ entreprise_challenges: v })} />
+              </div>
+            </div>
+
+            {/* Equipe */}
+            <div>
+              <MYLabel label="L'équipe" hint="Clarté du collaborateur · 5 = super clair · 1 = pas du tout clair" />
+              <div className="space-y-3 mt-2">
+                <MYScore label="La mission de l'équipe (à quoi elle sert, son impact)"
+                  value={present.equipe_mission} collab={miroir ? cpr?.equipe_mission ?? null : undefined}
+                  onChange={v => updatePresent({ equipe_mission: v })} />
+                <MYScore label="Les forces de notre équipe"
+                  value={present.equipe_forces} collab={miroir ? cpr?.equipe_forces ?? null : undefined}
+                  onChange={v => updatePresent({ equipe_forces: v })} />
+                <MYScore label="Les challenges à relever par l'équipe"
+                  value={present.equipe_challenges} collab={miroir ? cpr?.equipe_challenges ?? null : undefined}
+                  onChange={v => updatePresent({ equipe_challenges: v })} />
+              </div>
+            </div>
+
+            {/* Bien-être */}
+            <div>
+              <MYLabel label="Bien-être & motivations" />
+              <MYTextarea value={present.bien_etre_notes} onChange={v => updatePresent({ bien_etre_notes: v })}
+                placeholder="Observations sur l'engagement, la charge de travail, l'équilibre…" rows={3} />
+              {miroir && cpr?.bien_etre_notes && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">Collaborateur</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{cpr.bien_etre_notes}</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <MYLabel label="Notes du manager (privées)" />
+              <MYTextarea value={present.manager_notes} onChange={v => updatePresent({ manager_notes: v })}
+                placeholder="Tes observations personnelles sur la séquence présent…" rows={3} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Futur S2 ───────────────────────────────────────────────── */}
+        {activeTab === "future" && (
+          <div className="space-y-5">
+            {/* Succès si */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <MYLabel label="Mon S2 sera réussi si…" hint="3 critères de succès pour le 2e semestre" />
+                <button type="button" onClick={() => generateAiQuestions("future")} disabled={aiLoading}
+                  className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50">
+                  {aiLoading && aiSection === "future" ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  Questions IA
+                </button>
+              </div>
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => (
+                  <div key={i}>
+                    <MYTextarea value={scs[i] ?? ""} onChange={v => updateList("succes_si", i, v, "future")}
+                      placeholder={`Critère de succès ${i + 1}…`} rows={2} />
+                    {miroir && (cf?.succes_si as string[] | undefined)?.[i] && (
+                      <div className="mt-1 px-3 py-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-xs text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{(cf?.succes_si as string[])[i]}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* DAKI */}
+            <div>
+              <MYLabel label="DAKI — plan d'actions S2" />
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "daki_drop" as const, label: "Drop — arrêter", placeholder: "Ce que j'arrête de faire…" },
+                  { key: "daki_add"  as const, label: "Add — commencer", placeholder: "Ce que je commence à faire…" },
+                  { key: "daki_keep" as const, label: "Keep — continuer", placeholder: "Ce que je maintiens…" },
+                  { key: "daki_improve" as const, label: "Improve — améliorer", placeholder: "Ce que j'améliore…" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key} className="border border-gray-200 dark:border-gray-700 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">{label}</p>
+                    <MYTextarea value={future[key] as string} onChange={v => updateFuture({ [key]: v } as Partial<MidYearFuture>)}
+                      placeholder={placeholder} rows={3} />
+                    {miroir && cf?.[key as keyof typeof cf] && (
+                      <div className="mt-2 px-2 py-1.5 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <span className="text-[10px] text-green-600 dark:text-green-400">Collab : </span>
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{cf[key as keyof typeof cf] as string}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Feedback manager */}
+            <div>
+              <MYLabel label="Un encore meilleur binôme" hint="Feedback du collaborateur sur le management" />
+              {miroir && cf?.feedback_manager ? (
+                <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Ce que dit le collaborateur</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{cf.feedback_manager}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic px-1">Visible après que le collaborateur ait soumis ses réponses via le lien de partage.</p>
+              )}
+            </div>
+
+            {/* Objectifs S2 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <MYLabel label="Objectifs S2" hint="Objectifs pour le 2e semestre" />
+                <button type="button" onClick={() => addObjectif("s2")}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                  <Plus size={11} /> Ajouter
+                </button>
+              </div>
+              {future.objectifs_s2.length === 0 && (
+                <p className="text-xs text-gray-400 italic">Aucun objectif S2 défini</p>
+              )}
+              <div className="space-y-2">
+                {future.objectifs_s2.map(obj => (
+                  <div key={obj.id} className="flex gap-2 items-center">
+                    <input type="text" value={obj.title}
+                      onChange={e => updateObjectif("s2", obj.id, { title: e.target.value })}
+                      placeholder="Objectif S2…"
+                      className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button type="button" onClick={() => removeObjectif("s2", obj.id)}
+                      className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Demandes */}
+            <div>
+              <MYLabel label="Demandes du collaborateur" />
+              {miroir && cf?.demandes ? (
+                <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Ce que demande le collaborateur</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{cf.demandes}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic px-1">Visible après la soumission du collaborateur.</p>
+              )}
+            </div>
+
+            <div>
+              <MYLabel label="Notes du manager (privées)" />
+              <MYTextarea value={future.manager_notes} onChange={v => updateFuture({ manager_notes: v })}
+                placeholder="Tes observations et décisions pour le S2…" rows={3} />
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ── OnboardingCard ─────────────────────────────────────────────────────────
+
+const MILESTONE_ORDER: OnboardingMilestoneType[] = ["j7", "j30", "j90"];
+
+const MILESTONE_LABELS: Record<OnboardingMilestoneType, { title: string; sub: string }> = {
+  j7:  { title: "Jour 7",  sub: "Premières impressions" },
+  j30: { title: "Jour 30", sub: "Intégration active" },
+  j90: { title: "Jour 90", sub: "Autonomie & projection" },
+};
+
+function axisScore(axis: ChecklistAxis) {
+  const checked = axis.items.filter((i) => i.checked).length;
+  const total   = axis.items.length;
+  return { checked, total, pct: total > 0 ? Math.round((checked / total) * 100) : 0 };
+}
+
+function OnboardingCard({
+  interview,
+  onUpdate,
+}: {
+  interview: CollabInterview;
+  onUpdate: (updated: CollabInterview) => void;
+}) {
+  const [generatingMilestone, setGeneratingMilestone] = useState<string | null>(null);
+  const [milestoneError, setMilestoneError]           = useState<string | null>(null);
+  const [expandedMilestone, setExpandedMilestone]     = useState<string | null>(null);
+  const [editingItem, setEditingItem]                 = useState<{ milestoneId: string; axisName: string; itemId: string; text: string } | null>(null);
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const sortedMilestones = MILESTONE_ORDER
+    .map((type) => interview.milestones.find((m) => m.milestone_type === type))
+    .filter(Boolean) as OnboardingMilestone[];
+
+  function isUnlocked(milestoneType: OnboardingMilestoneType): boolean {
+    const idx = MILESTONE_ORDER.indexOf(milestoneType);
+    if (idx === 0) return true;
+    const prev = interview.milestones.find((m) => m.milestone_type === MILESTONE_ORDER[idx - 1]);
+    return prev?.is_completed === true;
+  }
+
+  function updateLocal(milestoneId: string, patch: Partial<OnboardingMilestone>) {
+    onUpdate({
+      ...interview,
+      milestones: interview.milestones.map((m) => m.id === milestoneId ? { ...m, ...patch } : m),
+    });
+  }
+
+  function scheduleSave(milestoneId: string, updates: Record<string, unknown>) {
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => {
+      fetch(`/api/teams/entretiens/milestones/${milestoneId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    }, 500);
+  }
+
+  async function generateChecklist(milestoneId: string) {
+    setGeneratingMilestone(milestoneId);
+    setMilestoneError(null);
+    try {
+      const res  = await fetch(`/api/teams/entretiens/milestones/${milestoneId}/generate`, { method: "POST" });
+      const data = await res.json() as OnboardingMilestone & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Erreur de génération");
+      updateLocal(milestoneId, data);
+      setExpandedMilestone(milestoneId);
+    } catch (e) {
+      setMilestoneError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setGeneratingMilestone(null);
+    }
+  }
+
+  function toggleItem(milestoneId: string, axisName: string, itemId: string) {
+    const milestone = interview.milestones.find((m) => m.id === milestoneId);
+    if (!milestone?.checklist) return;
+    const newChecklist: OnboardingChecklist = {
+      axes: milestone.checklist.axes.map((axis) =>
+        axis.name !== axisName ? axis : {
+          ...axis,
+          items: axis.items.map((item) => item.id !== itemId ? item : { ...item, checked: !item.checked }),
+        }
+      ),
+    };
+    updateLocal(milestoneId, { checklist: newChecklist });
+    scheduleSave(milestoneId, { checklist: newChecklist });
+  }
+
+  async function toggleComplete(milestoneId: string) {
+    const milestone = interview.milestones.find((m) => m.id === milestoneId);
+    if (!milestone) return;
+    const newCompleted = !milestone.is_completed;
+    updateLocal(milestoneId, { is_completed: newCompleted });
+    await fetch(`/api/teams/entretiens/milestones/${milestoneId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_completed: newCompleted }),
+    });
+  }
+
+  function addItem(milestoneId: string, axisName: string) {
+    const milestone = interview.milestones.find((m) => m.id === milestoneId);
+    if (!milestone?.checklist) return;
+    const newItemId = `item_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newChecklist: OnboardingChecklist = {
+      axes: milestone.checklist.axes.map((axis) =>
+        axis.name !== axisName ? axis : {
+          ...axis,
+          items: [...axis.items, { id: newItemId, text: "", checked: false }],
+        }
+      ),
+    };
+    updateLocal(milestoneId, { checklist: newChecklist });
+    setEditingItem({ milestoneId, axisName, itemId: newItemId, text: "" });
+  }
+
+  function deleteItem(milestoneId: string, axisName: string, itemId: string) {
+    const milestone = interview.milestones.find((m) => m.id === milestoneId);
+    if (!milestone?.checklist) return;
+    const newChecklist: OnboardingChecklist = {
+      axes: milestone.checklist.axes.map((axis) =>
+        axis.name !== axisName ? axis : {
+          ...axis,
+          items: axis.items.filter((item) => item.id !== itemId),
+        }
+      ),
+    };
+    updateLocal(milestoneId, { checklist: newChecklist });
+    scheduleSave(milestoneId, { checklist: newChecklist });
+    if (editingItem?.itemId === itemId) setEditingItem(null);
+  }
+
+  function commitItemText(milestoneId: string, axisName: string, itemId: string, text: string) {
+    const milestone = interview.milestones.find((m) => m.id === milestoneId);
+    if (!milestone?.checklist) return;
+    const newChecklist: OnboardingChecklist = {
+      axes: milestone.checklist.axes.map((axis) =>
+        axis.name !== axisName ? axis : {
+          ...axis,
+          items: axis.items
+            .map((item) => item.id !== itemId ? item : { ...item, text })
+            .filter((item) => item.text.trim()),
+        }
+      ),
+    };
+    updateLocal(milestoneId, { checklist: newChecklist });
+    scheduleSave(milestoneId, { checklist: newChecklist });
+    setEditingItem(null);
+  }
+
+  function updateNotes(milestoneId: string, notes: string) {
+    updateLocal(milestoneId, { manager_notes: notes });
+    scheduleSave(milestoneId, { manager_notes: notes });
+  }
+
+  const completedCount  = interview.milestones.filter((m) => m.is_completed).length;
+  const totalMilestones = interview.milestones.length;
+  const isAllDone       = completedCount === totalMilestones && totalMilestones > 0;
+
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+      {/* ── Card header ── */}
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+          <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Démarré le {new Date(interview.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+          isAllDone
+            ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+            : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+        }`}>
+          {isAllDone ? "Terminé" : `${completedCount}/${totalMilestones} jalons`}
+        </span>
+      </div>
+
+      {/* ── Milestones ── */}
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+        {sortedMilestones.map((milestone) => {
+          const locked        = !isUnlocked(milestone.milestone_type);
+          const label         = MILESTONE_LABELS[milestone.milestone_type];
+          const isGenerating  = generatingMilestone === milestone.id;
+          const isExpanded    = expandedMilestone === milestone.id && !locked;
+          const hasChecklist  = (milestone.checklist?.axes?.length ?? 0) > 0;
+          const allItems      = hasChecklist ? milestone.checklist!.axes.flatMap((a) => a.items) : [];
+          const checkedItems  = allItems.filter((i) => i.checked).length;
+
+          return (
+            <div key={milestone.id} className={locked ? "opacity-50" : ""}>
+              {/* Row */}
+              <button
+                onClick={() => !locked && setExpandedMilestone(isExpanded ? null : milestone.id)}
+                disabled={locked}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors disabled:cursor-not-allowed"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold border ${
+                  milestone.is_completed
+                    ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
+                    : locked
+                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700"
+                    : "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                }`}>
+                  {milestone.is_completed ? <Check size={12} /> : label.title.split(" ")[1]}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${locked ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
+                    {label.title} — {label.sub}
+                  </p>
+                  {hasChecklist && !milestone.is_completed && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      {checkedItems}/{allItems.length} objectifs validés
+                    </p>
+                  )}
+                  {locked && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      Disponible après validation du jalon précédent
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {milestone.is_completed ? (
+                    <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                      <Check size={11} /> Réalisé
+                    </span>
+                  ) : !hasChecklist && !locked ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); generateChecklist(milestone.id); }}
+                      disabled={isGenerating}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 text-white text-xs font-medium rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                    >
+                      {isGenerating ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                      {isGenerating ? "Génération…" : "Préparer"}
+                    </button>
+                  ) : null}
+                  {!locked && <ChevronDown size={14} className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />}
+                </div>
+              </button>
+
+              {/* Expanded: no checklist yet */}
+              {isExpanded && !hasChecklist && (
+                <div className="px-5 pb-5 pt-1 bg-gray-50/50 dark:bg-gray-800/20">
+                  <p className="text-sm text-gray-400 dark:text-gray-500 italic mb-3">
+                    Clique sur "Préparer" pour générer la checklist d'objectifs de ce jalon avec l'IA.
+                  </p>
+                  <button
+                    onClick={() => generateChecklist(milestone.id)}
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                  >
+                    {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                    {isGenerating ? "Génération en cours…" : "Préparer ce jalon"}
+                  </button>
+                  {milestoneError && <p className="text-xs text-red-500 dark:text-red-400 mt-2">{milestoneError}</p>}
+                </div>
+              )}
+
+              {/* Expanded: checklist */}
+              {isExpanded && hasChecklist && (
+                <div className="px-5 pb-5 pt-3 space-y-5 bg-gray-50/50 dark:bg-gray-800/20">
+                  {/* Axis progress bars */}
+                  <div className="space-y-2">
+                    {milestone.checklist!.axes.map((axis) => {
+                      const score = axisScore(axis);
+                      return (
+                        <div key={axis.name} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 w-40 flex-shrink-0">{axis.name}</span>
+                          <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 dark:bg-blue-400 rounded-full transition-all duration-300" style={{ width: `${score.pct}%` }} />
+                          </div>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 w-8 text-right tabular-nums">
+                            {score.checked}/{score.total}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Per-axis checklists */}
+                  {milestone.checklist!.axes.map((axis) => (
+                    <div key={axis.name} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">{axis.name}</p>
+                      <div className="space-y-0.5">
+                        {axis.items.map((item) => {
+                          const isEditingThis =
+                            editingItem?.milestoneId === milestone.id &&
+                            editingItem?.axisName === axis.name &&
+                            editingItem?.itemId === item.id;
+                          return (
+                            <div key={item.id} className="group flex items-start gap-2.5 py-1.5">
+                              <button
+                                onClick={() => toggleItem(milestone.id, axis.name, item.id)}
+                                className={`mt-0.5 w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${
+                                  item.checked
+                                    ? "bg-blue-600 border-blue-600"
+                                    : "border-gray-300 dark:border-gray-600 hover:border-blue-400"
+                                }`}
+                              >
+                                {item.checked && <Check size={10} className="text-white" />}
+                              </button>
+                              {isEditingThis ? (
+                                <input
+                                  autoFocus
+                                  value={editingItem.text}
+                                  onChange={(e) => setEditingItem({ ...editingItem, text: e.target.value })}
+                                  onBlur={() => commitItemText(milestone.id, axis.name, item.id, editingItem.text)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") commitItemText(milestone.id, axis.name, item.id, editingItem.text);
+                                    if (e.key === "Escape") setEditingItem(null);
+                                  }}
+                                  className="flex-1 text-sm px-2 py-0.5 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                              ) : (
+                                <span
+                                  onClick={() => setEditingItem({ milestoneId: milestone.id, axisName: axis.name, itemId: item.id, text: item.text })}
+                                  className={`flex-1 text-sm cursor-text leading-snug select-none ${
+                                    item.checked
+                                      ? "line-through text-gray-400 dark:text-gray-500"
+                                      : "text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {item.text || <span className="italic text-gray-400">Cliquer pour saisir…</span>}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => deleteItem(milestone.id, axis.name, item.id)}
+                                className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-0.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-all"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                        <button
+                          onClick={() => addItem(milestone.id, axis.name)}
+                          className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        >
+                          <Plus size={12} /> Ajouter un objectif
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                      Mes notes
+                    </label>
+                    <textarea
+                      value={milestone.manager_notes ?? ""}
+                      onChange={(e) => updateNotes(milestone.id, e.target.value)}
+                      rows={3}
+                      placeholder="Notes de l'entretien…"
+                      className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => toggleComplete(milestone.id)}
+                      className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+                        milestone.is_completed
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90"
+                      }`}
+                    >
+                      <Check size={13} />
+                      {milestone.is_completed ? "Jalon réalisé ✓" : "Marquer comme réalisé"}
+                    </button>
+                    <button
+                      onClick={() => generateChecklist(milestone.id)}
+                      disabled={isGenerating}
+                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                    >
+                      {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                      Regénérer
+                    </button>
+                  </div>
+                  {milestoneError && <p className="text-xs text-red-500 dark:text-red-400">{milestoneError}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Misc helpers ───────────────────────────────────────────────────────────
 
 function initials(c: Collaborator) {
@@ -420,6 +1459,10 @@ function CollaboratorPageContent() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
+  const [interviews, setInterviews]               = useState<CollabInterview[]>([]);
+  const [midYearInterviews, setMidYearInterviews] = useState<MidYearInterview[]>([]);
+  const [creatingInterview, setCreatingInterview] = useState(false);
+
   const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("profile");
 
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
@@ -438,7 +1481,7 @@ function CollaboratorPageContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.replace("/login"); return; }
 
-    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes, careerSelfRes] = await Promise.all([
+    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes, careerSelfRes, interviewsRes] = await Promise.all([
       supabase.from("collaborators").select("*").eq("id", collaboratorId).eq("user_id", user.id).single<Collaborator>(),
       supabase.from("managerial_plans").select("*").eq("collaborator_id", collaboratorId).maybeSingle<ManagerialPlan>(),
       supabase.from("weekly_sessions").select("*").eq("collaborator_id", collaboratorId).order("week_number", { ascending: true }),
@@ -447,6 +1490,7 @@ function CollaboratorPageContent() {
       fetch(`/api/teams/manual/${collaboratorId}`),
       fetch(`/api/teams/suggestions/${collaboratorId}`),
       fetch(`/api/teams/career/${collaboratorId}`),
+      fetch(`/api/teams/entretiens/${collaboratorId}`),
     ]);
 
     if (collabRes.error || !collabRes.data) { setNotFound(true); setLoading(false); return; }
@@ -477,6 +1521,10 @@ function CollaboratorPageContent() {
 
     const careerSelfData: CareerSelfAssessment | null = careerSelfRes.ok ? await careerSelfRes.json() : null;
     setCareerSelfAssessment(careerSelfData);
+
+    const allInterviews: (CollabInterview | MidYearInterview)[] = interviewsRes.ok ? await interviewsRes.json() : [];
+    setInterviews(allInterviews.filter((i) => i.type === "onboarding") as CollabInterview[]);
+    setMidYearInterviews(allInterviews.filter((i) => i.type === "mid_year") as MidYearInterview[]);
 
     setLoading(false);
     if (isNew && !fetchedPlan) navigateToTab("plan");
@@ -821,6 +1869,44 @@ function CollaboratorPageContent() {
     });
   }
 
+  // ── Entretiens ───────────────────────────────────────────────────────────
+
+  async function createOnboardingInterview() {
+    setCreatingInterview(true);
+    try {
+      const res  = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "onboarding" }),
+      });
+      const data = await res.json() as CollabInterview & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Erreur de création");
+      setInterviews((prev) => [...prev, data]);
+    } catch {
+      // silently ignore — user will see empty state and can retry
+    } finally {
+      setCreatingInterview(false);
+    }
+  }
+
+  async function createMidYearInterview() {
+    setCreatingInterview(true);
+    try {
+      const res = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "mid_year", year: new Date().getFullYear() }),
+      });
+      const data = await res.json() as MidYearInterview & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Erreur de création");
+      setMidYearInterviews((prev) => [...prev, data]);
+    } catch {
+      // silently ignore
+    } finally {
+      setCreatingInterview(false);
+    }
+  }
+
   // ── Sessions ─────────────────────────────────────────────────────────────
 
   async function generateWeek(weekNumber: number) {
@@ -970,7 +2056,7 @@ function CollaboratorPageContent() {
   const TABS: { id: Tab; label: string; badge?: string; count?: number }[] = [
     { id: "overview",  label: t.coach.tabOverview },
     { id: "plan",      label: t.coach.tabPlan },
-    { id: "sessions",  label: t.coach.tabSessions, count: sessions.length > 0 ? sessions.length : undefined },
+    { id: "entretiens", label: "Entretiens", count: (sessions.length + interviews.length + midYearInterviews.length) > 0 ? sessions.length + interviews.length + midYearInterviews.length : undefined },
     { id: "career",    label: t.coach.tabCareer, badge: allSkills.length > 0 ? `${skillsAtTarget}/${allSkills.length}` : undefined },
     { id: "okr",       label: t.coach.tabOkr },
     { id: "settings",  label: t.coach.tabSettings },
@@ -1151,9 +2237,9 @@ function CollaboratorPageContent() {
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed border-l-2 border-blue-200 dark:border-blue-800 pl-3">
                     {suggestions.session_suggestion}
                   </p>
-                  <button onClick={() => navigateToTab("sessions")}
+                  <button onClick={() => navigateToTab("entretiens")}
                     className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                    Voir les sessions <TrendingUp size={11} />
+                    Voir les entretiens <TrendingUp size={11} />
                   </button>
                 </div>
 
@@ -1918,9 +3004,114 @@ function CollaboratorPageContent() {
           </div>
         )}
 
-        {/* ─── Sessions ────────────────────────────────────────────── */}
-        {tab === "sessions" && (
-          <div className="space-y-5">
+        {/* ─── Entretiens ──────────────────────────────────────────── */}
+        {tab === "entretiens" && (
+          <div className="space-y-6">
+
+            {/* Section onboarding */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Rocket size={14} className="text-blue-500" /> Onboarding
+                </h2>
+                {interviews.some((i) => i.type === "onboarding") && (
+                  <button
+                    onClick={createOnboardingInterview}
+                    disabled={creatingInterview}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
+                  >
+                    {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                    Nouveau parcours
+                  </button>
+                )}
+              </div>
+
+              {interviews.filter((i) => i.type === "onboarding").length === 0 ? (
+                <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center mx-auto mb-3">
+                    <Rocket size={24} className="text-blue-500" />
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
+                    Structurez l&apos;intégration de {collaborator.first_name} avec des jalons J7, J30 et J90.
+                  </p>
+                  <button
+                    onClick={createOnboardingInterview}
+                    disabled={creatingInterview}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                  >
+                    {creatingInterview ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                    {creatingInterview ? "Création…" : "Démarrer l'onboarding"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {interviews.filter((i) => i.type === "onboarding").map((interview) => (
+                    <OnboardingCard
+                      key={interview.id}
+                      interview={interview}
+                      onUpdate={(updated) => setInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Section mi-année */}
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <BarChart3 size={14} className="text-indigo-500" /> Entretien mi-année
+                </h2>
+                {midYearInterviews.length > 0 && (
+                  <button
+                    onClick={createMidYearInterview}
+                    disabled={creatingInterview}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
+                  >
+                    {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                    Nouvelle année
+                  </button>
+                )}
+              </div>
+
+              {midYearInterviews.length === 0 ? (
+                <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center mx-auto mb-3">
+                    <BarChart3 size={24} className="text-indigo-500" />
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
+                    Structurez le bilan de mi-année de {collaborator.first_name} en 3 séquences : passé, présent, futur.
+                  </p>
+                  <button
+                    onClick={createMidYearInterview}
+                    disabled={creatingInterview}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-700 text-white text-sm font-medium rounded-xl hover:bg-indigo-800 disabled:opacity-50 transition-colors"
+                  >
+                    {creatingInterview ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                    {creatingInterview ? "Création…" : "Démarrer le mi-année"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {midYearInterviews.map((myi) => (
+                    <MidYearCard
+                      key={myi.id}
+                      interview={myi}
+                      collaboratorId={collaboratorId}
+                      onUpdate={(updated) => setMidYearInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Section 1:1 hebdomadaires */}
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
+                <MessageSquare size={14} className="text-blue-500" /> 1:1 hebdomadaires
+              </h2>
+
+            <div className="space-y-5">
             {!plan && (
               <div className="px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
                 <AlertTriangle size={15} /> {t.coach.noPlanForSessions}
@@ -2181,6 +3372,8 @@ function CollaboratorPageContent() {
                 {t.coach.becomePremiumBtn}
               </Link>
             </div>
+            </div>
+          </div>
           </div>
         )}
 
