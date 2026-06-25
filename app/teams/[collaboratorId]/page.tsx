@@ -1434,7 +1434,8 @@ function CollaboratorPageContent() {
 
   const [generatingWeek, setGeneratingWeek] = useState<number | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
-  const [confirmingWeek, setConfirmingWeek] = useState<number | null>(null);
+  const [pickerWeek, setPickerWeek]     = useState<number | null>(null);
+  const [pickerStep, setPickerStep]     = useState<"type" | "confirm_1on1">("type");
 
   const [companyOkr, setCompanyOkr]   = useState<CompanyOkr | null>(null);
   const [collabOkr, setCollabOkr]     = useState<CollaboratorOkr | null>(null);
@@ -1462,7 +1463,6 @@ function CollaboratorPageContent() {
   const [interviews, setInterviews]               = useState<CollabInterview[]>([]);
   const [midYearInterviews, setMidYearInterviews] = useState<MidYearInterview[]>([]);
   const [creatingInterview, setCreatingInterview] = useState(false);
-  const [showInterviewTypePicker, setShowInterviewTypePicker] = useState(false);
   const [selectedInterviewId, setSelectedInterviewId]         = useState<string | null>(null);
   const [isAdmin, setIsAdmin]                                 = useState(false);
 
@@ -1477,7 +1477,6 @@ function CollaboratorPageContent() {
   const [regenerating, setRegenerating] = useState(false);
   const notesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const confirmRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -1667,9 +1666,6 @@ function CollaboratorPageContent() {
   useEffect(() => {
     if (expandedWeek !== null) setTimeout(() => cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
   }, [expandedWeek]);
-  useEffect(() => {
-    if (confirmingWeek !== null) setTimeout(() => confirmRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
-  }, [confirmingWeek]);
 
   // ── Profile ──────────────────────────────────────────────────────────────
 
@@ -1919,7 +1915,7 @@ function CollaboratorPageContent() {
   async function generateWeek(weekNumber: number) {
     if (!plan) { setSessionError(t.coach.noPlanForSessions); return; }
     setGeneratingWeek(weekNumber);
-    setConfirmingWeek(null);
+    setPickerWeek(null);
     setSessionError(null);
     const res = await fetch("/api/teams/generate-session", {
       method: "POST",
@@ -1946,11 +1942,10 @@ function CollaboratorPageContent() {
     if (locked) { setSessionError(t.coach.premiumRequired); return; }
     const existing = sessions.find((s) => s.week_number === weekNumber);
     if (existing) {
-      setConfirmingWeek(null);
       setExpandedWeek((prev) => prev === weekNumber ? null : weekNumber);
     } else {
-      setExpandedWeek(null);
-      setConfirmingWeek((prev) => prev === weekNumber ? null : weekNumber);
+      setPickerStep("type");
+      setPickerWeek(weekNumber);
     }
   }
 
@@ -3013,115 +3008,8 @@ function CollaboratorPageContent() {
 
         {/* ─── Entretiens ──────────────────────────────────────────── */}
         {tab === "entretiens" && (
-          <div className="space-y-6">
+          <div className="space-y-5">
 
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Entretiens</h2>
-              <button
-                onClick={() => setShowInterviewTypePicker(true)}
-                disabled={creatingInterview}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-                Nouvel entretien
-              </button>
-            </div>
-
-            {/* Onboarding */}
-            {interviews.filter((i) => i.type === "onboarding").length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                  <Rocket size={11} /> Onboarding
-                </p>
-                {interviews.filter((i) => i.type === "onboarding").map((interview) => (
-                  <button
-                    key={interview.id}
-                    onClick={() => setSelectedInterviewId(interview.id)}
-                    className="w-full flex items-center gap-4 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-blue-300 dark:hover:border-blue-700 transition-colors text-left group"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                      <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        Démarré le {new Date(interview.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                        interview.milestones.every((m) => m.is_completed)
-                          ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
-                          : interview.milestones.some((m) => m.is_completed)
-                          ? "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                      }`}>
-                        {interview.milestones.filter((m) => m.is_completed).length}/{interview.milestones.length} jalons
-                      </span>
-                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Mi-année */}
-            {midYearInterviews.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                  <BarChart3 size={11} /> Mi-année
-                </p>
-                {midYearInterviews.map((myi) => (
-                  <button
-                    key={myi.id}
-                    onClick={() => setSelectedInterviewId(myi.id)}
-                    className="w-full flex items-center gap-4 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors text-left group"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
-                      <BarChart3 size={16} className="text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Mi-année {myi.year}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        {myi.collaborator_submitted_at
-                          ? "Auto-évaluation reçue"
-                          : myi.status === "collab_sent"
-                          ? "En attente du collaborateur"
-                          : "En préparation"}
-                      </p>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Empty state */}
-            {interviews.filter((i) => i.type === "onboarding").length === 0 && midYearInterviews.length === 0 && sessions.length === 0 && (
-              <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
-                  <MessageSquare size={22} className="text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Aucun entretien structuré pour {collaborator.first_name}.
-                </p>
-                <button
-                  onClick={() => setShowInterviewTypePicker(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  <Plus size={13} /> Créer un entretien
-                </button>
-              </div>
-            )}
-
-            {/* 1:1 hebdomadaires */}
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2 mb-4">
-                <MessageSquare size={11} /> 1:1 hebdomadaires
-              </p>
-
-            <div className="space-y-5">
             {!plan && (
               <div className="px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
                 <AlertTriangle size={15} /> {t.coach.noPlanForSessions}
@@ -3133,24 +3021,21 @@ function CollaboratorPageContent() {
               </div>
             )}
 
-            {/* Timeline grid */}
+            {/* Grille unifiée */}
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: 12 }, (_, i) => i + 1).map((week) => {
-                const session    = sessions.find((s) => s.week_number === week);
-                const locked     = week > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
+                const session      = sessions.find((s) => s.week_number === week);
+                const locked       = week > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
                 const isGenerating = generatingWeek === week;
-                const isExpanded = expandedWeek === week;
-                const isConfirming = confirmingWeek === week;
+                const isSelected   = expandedWeek === week || pickerWeek === week;
 
                 return (
                   <button key={week}
                     onClick={() => !locked && !isGenerating && handleWeekClick(week)}
                     disabled={locked || isGenerating || !plan}
                     className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
-                      isExpanded
+                      isSelected
                         ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
-                        : isConfirming
-                        ? "border-violet-400 dark:border-violet-600 bg-violet-50 dark:bg-violet-950/30 ring-2 ring-violet-200 dark:ring-violet-800"
                         : locked || !plan
                         ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-50 cursor-not-allowed"
                         : session
@@ -3166,18 +3051,18 @@ function CollaboratorPageContent() {
                     ) : (
                       <>
                         <span className={`text-lg font-bold leading-none ${
-                          isExpanded || isConfirming ? "text-blue-600 dark:text-blue-400"
+                          isSelected ? "text-blue-600 dark:text-blue-400"
                           : session?.is_completed ? "text-green-600 dark:text-green-400"
                           : session ? "text-blue-600 dark:text-blue-400"
                           : "text-gray-400 dark:text-gray-500"
                         }`}>{week}</span>
-                        {session?.scheduled_date && !isExpanded && (
+                        {session?.scheduled_date && !isSelected && (
                           <span className="text-[9px] leading-none text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
                             {formatSessionDate(session.scheduled_date)}
                           </span>
                         )}
-                        {session?.is_completed && !isExpanded && !session.scheduled_date && <Check size={12} className="text-green-500 mt-0.5" />}
-                        {session && !session.is_completed && !isExpanded && !isConfirming && !session.scheduled_date && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5" />}
+                        {session?.is_completed && !isSelected && !session.scheduled_date && <Check size={12} className="text-green-500 mt-0.5" />}
+                        {session && !session.is_completed && !isSelected && !session.scheduled_date && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5" />}
                       </>
                     )}
                     {week > COACH_CONFIG.freeWeeksLimit && !locked && (
@@ -3186,204 +3071,72 @@ function CollaboratorPageContent() {
                   </button>
                 );
               })}
+
+              {/* Carrés Onboarding */}
+              {interviews.filter((i) => i.type === "onboarding").map((interview) => (
+                <button
+                  key={interview.id}
+                  onClick={() => setSelectedInterviewId(interview.id)}
+                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
+                    selectedInterviewId === interview.id
+                      ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
+                      : interview.milestones.every((m) => m.is_completed)
+                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                      : "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-300"
+                  }`}
+                >
+                  <Rocket size={14} className="text-blue-500 mb-1" />
+                  <span className="text-[10px] font-semibold leading-none text-blue-600 dark:text-blue-400">Onboarding</span>
+                  <span className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
+                    {interview.milestones.filter((m) => m.is_completed).length}/{interview.milestones.length}
+                  </span>
+                </button>
+              ))}
+
+              {/* Carrés Mi-année */}
+              {midYearInterviews.map((myi) => (
+                <button
+                  key={myi.id}
+                  onClick={() => setSelectedInterviewId(myi.id)}
+                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
+                    selectedInterviewId === myi.id
+                      ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 ring-2 ring-indigo-200 dark:ring-indigo-800"
+                      : myi.status === "completed"
+                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                      : "border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 hover:border-indigo-300"
+                  }`}
+                >
+                  <BarChart3 size={14} className="text-indigo-500 mb-1" />
+                  <span className="text-[10px] font-semibold leading-none text-indigo-600 dark:text-indigo-400">Mi-{myi.year}</span>
+                  {myi.collaborator_submitted_at && <Check size={10} className="text-green-500 mt-0.5" />}
+                </button>
+              ))}
             </div>
 
-            {/* Legend */}
+            {/* Légende */}
             <div className="flex items-center gap-5 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-dashed border-gray-300 dark:border-gray-600" /> {t.coach.weekNotGenerated}</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30" /> {t.common.inProgress}</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded border-2 border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30" /> {t.coach.weekCompleted}</span>
-              <span className="flex items-center gap-1.5"><Lock size={10} /> {t.coach.premiumRequired}</span>
+              {!isAdmin && <span className="flex items-center gap-1.5"><Lock size={10} /> {t.coach.premiumRequired}</span>}
             </div>
 
-            {/* Generation confirmation */}
-            {confirmingWeek !== null && !sessions.find((s) => s.week_number === confirmingWeek) && (
-              <div ref={confirmRef} className="bg-white dark:bg-gray-900 border border-violet-200 dark:border-violet-800 rounded-2xl p-5">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {t.coach.generateSessionPrefix} {t.coach.weekLabel} {confirmingWeek}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                      {t.coach.generateSessionAiDescPrefix} {collaborator.first_name}
-                      {t.coach.generateSessionAiDescMiddle}
-                      {sessions.length > 0 ? ` ${t.coach.generateSessionAiDescWithPrev}` : "."}
-                    </p>
-                  </div>
-                  <button onClick={() => setConfirmingWeek(null)}
-                    className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <X size={14} />
-                  </button>
+            {/* Bloc premium — masqué pour les admins */}
+            {!isAdmin && !collaborator.is_premium && (
+              <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+                    <Crown size={14} /> {t.coach.premiumModeLabel}
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t.coach.premiumUnlockDesc}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => generateWeek(confirmingWeek)} disabled={generatingWeek !== null}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
-                    {generatingWeek === confirmingWeek ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                    {generatingWeek === confirmingWeek ? t.coach.generatingSessionBtn : t.coach.generateSessionBtn}
-                  </button>
-                  <button onClick={() => setConfirmingWeek(null)}
-                    className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    {t.common.cancel}
-                  </button>
-                </div>
+                <Link href="/premium"
+                  className="px-3 py-1.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors">
+                  {t.coach.becomePremiumBtn}
+                </Link>
               </div>
             )}
 
-            {/* Inline session card */}
-            {expandedSession && (
-              <div ref={cardRef} className="bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded-2xl overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center gap-3">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${axisCls(expandedSession.development_axis)}`}>
-                      <Sparkles size={11} /> {expandedSession.development_axis}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {t.coach.weekLabel} {expandedSession.week_number}
-                    </span>
-                    {expandedSession.is_completed && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                        <Check size={10} /> {t.coach.weekCompleted}
-                      </span>
-                    )}
-                  </div>
-                  <button onClick={() => setExpandedWeek(null)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <X size={15} />
-                  </button>
-                </div>
-
-                <div className="px-6 py-5 space-y-5">
-
-                  {/* Date du 1:1 */}
-                  <div className="flex items-center gap-3">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                      Date du 1:1
-                    </label>
-                    <input
-                      type="date"
-                      defaultValue={expandedSession.scheduled_date ?? suggestDate(expandedSession.week_number)}
-                      onBlur={(e) => saveSessionDate(expandedSession.week_number, e.target.value)}
-                      className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {savingDate && <Loader2 size={13} className="animate-spin text-gray-400" />}
-                    {!expandedSession.scheduled_date && (
-                      <span className="text-xs text-gray-400 italic">suggestion auto</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
-                      {t.coach.priorityTopics}
-                    </h3>
-                    <div className="space-y-3">
-                      {[
-                        { topic: expandedSession.priority_topic_1, rationale: expandedSession.raw_content.priority_topic_1_rationale },
-                        { topic: expandedSession.priority_topic_2, rationale: expandedSession.raw_content.priority_topic_2_rationale },
-                      ].map(({ topic, rationale }, i) => (
-                        <div key={i} className="flex gap-3">
-                          <div className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-white dark:text-gray-900 text-xs font-bold">{i + 1}</span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{topic}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{rationale}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-                      {t.coach.exploration}
-                    </h3>
-                    <p className="font-serif text-sm leading-relaxed text-gray-800 dark:text-gray-200">{expandedSession.exploration_topic}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{expandedSession.raw_content.exploration_rationale}</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/40 dark:to-blue-950/40 border border-violet-100 dark:border-violet-900 rounded-xl p-4">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-500 dark:text-violet-400 mb-2">
-                      {t.coach.unexpectedQuestion}
-                    </h3>
-                    <p className="font-serif text-sm leading-relaxed text-gray-900 dark:text-white">{expandedSession.unexpected_question}</p>
-                  </div>
-
-                  <div className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
-                    <button onClick={() => setInlineFollowUpsOpen((v) => !v)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      {t.coach.followUps}
-                      {inlineFollowUpsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {inlineFollowUpsOpen && (
-                      <ul className="px-4 pb-4 pt-1 space-y-2 border-t border-gray-100 dark:border-gray-800">
-                        {expandedSession.raw_content.suggested_follow_ups.map((f, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />{f}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                        {t.coach.myNotesLabel}
-                      </label>
-                      {savingInlineNotes && (
-                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                          <Loader2 size={11} className="animate-spin" /> {t.coach.saving}
-                        </span>
-                      )}
-                    </div>
-                    <textarea value={inlineNotes} onChange={(e) => handleInlineNotesChange(e.target.value)}
-                      placeholder={t.coach.notesPlaceholder} rows={4}
-                      className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    <button onClick={() => toggleComplete(expandedSession.week_number)} disabled={togglingComplete}
-                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 ${
-                        expandedSession.is_completed
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90"
-                      }`}>
-                      {togglingComplete ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                      {expandedSession.is_completed ? t.coach.sessionCompletedCheck : t.coach.markAsDoneBtn}
-                    </button>
-                    <button onClick={() => regenerateSession(expandedSession.week_number)} disabled={regenerating}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors">
-                      {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-                      {t.coach.regenerateBtn}
-                    </button>
-                    <button onClick={() => exportMarkdown(expandedSession, collaborator)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <Download size={13} /> {t.coach.exportMdBtn}
-                    </button>
-                    <button onClick={() => setExpandedWeek(null)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                      <X size={13} /> {t.common.close}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Premium block */}
-            <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-              <div>
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
-                  <Crown size={14} /> {t.coach.premiumModeLabel}
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t.coach.premiumUnlockDesc}</p>
-              </div>
-              <Link href="/premium"
-                className="px-3 py-1.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors">
-                {t.coach.becomePremiumBtn}
-              </Link>
-            </div>
-            </div>
-          </div>
           </div>
         )}
 
@@ -3519,70 +3272,269 @@ function CollaboratorPageContent() {
           );
         })()}
 
-        {/* ─── Modal — choix du type d'entretien ───────────────────── */}
-        {showInterviewTypePicker && (
+        {/* ─── Modal — picker type d'entretien (2 étapes) ─────────── */}
+        {pickerWeek !== null && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-              onClick={() => setShowInterviewTypePicker(false)}
+              onClick={() => setPickerWeek(null)}
             />
             <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10">
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-base font-semibold text-gray-900 dark:text-white">
-                  Quel type d&apos;entretien ?
-                </p>
-                <button
-                  onClick={() => setShowInterviewTypePicker(false)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <div className="space-y-2">
-                <button
-                  onClick={() => setShowInterviewTypePicker(false)}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
+              {pickerStep === "type" && (
+                <>
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">
+                      Semaine {pickerWeek} — quel type ?
+                    </p>
+                    <button
+                      onClick={() => setPickerWeek(null)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdomadaire</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Suivi régulier sur 12 semaines</p>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setPickerStep("confirm_1on1")}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdomadaire</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Suivi régulier généré par l&apos;IA</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setPickerWeek(null);
+                        await createOnboardingInterview();
+                      }}
+                      disabled={creatingInterview}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                        <Rocket size={18} className="text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jalons J7, J30 et J90</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setPickerWeek(null);
+                        await createMidYearInterview();
+                      }}
+                      disabled={creatingInterview}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
+                        <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Entretien mi-année</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
+                      </div>
+                    </button>
                   </div>
-                </button>
-                <button
-                  onClick={async () => {
-                    setShowInterviewTypePicker(false);
-                    await createOnboardingInterview();
-                  }}
-                  disabled={creatingInterview}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left disabled:opacity-50"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                    <Rocket size={18} className="text-blue-600 dark:text-blue-400" />
+                </>
+              )}
+
+              {pickerStep === "confirm_1on1" && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => setPickerStep("type")}
+                      className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      ← Retour
+                    </button>
+                    <button
+                      onClick={() => setPickerWeek(null)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jalons J7, J30 et J90</p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                    {t.coach.generateSessionPrefix} {t.coach.weekLabel} {pickerWeek}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
+                    {t.coach.generateSessionAiDescPrefix} {collaborator.first_name}
+                    {t.coach.generateSessionAiDescMiddle}
+                    {sessions.length > 0 ? ` ${t.coach.generateSessionAiDescWithPrev}` : "."}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { generateWeek(pickerWeek); }}
+                      disabled={generatingWeek !== null}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    >
+                      {generatingWeek === pickerWeek ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                      {generatingWeek === pickerWeek ? t.coach.generatingSessionBtn : t.coach.generateSessionBtn}
+                    </button>
+                    <button
+                      onClick={() => setPickerWeek(null)}
+                      className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {t.common.cancel}
+                    </button>
                   </div>
-                </button>
-                <button
-                  onClick={async () => {
-                    setShowInterviewTypePicker(false);
-                    await createMidYearInterview();
-                  }}
-                  disabled={creatingInterview}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all text-left disabled:opacity-50"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
-                    <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Modal — session 1:1 ──────────────────────────────────── */}
+        {expandedSession && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="min-h-full flex items-start justify-center p-4 py-6">
+              <div
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+                onClick={() => setExpandedWeek(null)}
+              />
+              <div className="relative w-full max-w-2xl z-10">
+                <div className="flex items-center justify-end mb-2">
+                  <button
+                    onClick={() => setExpandedWeek(null)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="bg-white dark:bg-gray-900 border border-blue-200 dark:border-blue-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${axisCls(expandedSession.development_axis)}`}>
+                        <Sparkles size={11} /> {expandedSession.development_axis}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {t.coach.weekLabel} {expandedSession.week_number}
+                      </span>
+                      {expandedSession.is_completed && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                          <Check size={10} /> {t.coach.weekCompleted}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Entretien mi-année</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
+
+                  <div className="px-6 py-5 space-y-5">
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                        Date du 1:1
+                      </label>
+                      <input
+                        type="date"
+                        defaultValue={expandedSession.scheduled_date ?? suggestDate(expandedSession.week_number)}
+                        onBlur={(e) => saveSessionDate(expandedSession.week_number, e.target.value)}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {savingDate && <Loader2 size={13} className="animate-spin text-gray-400" />}
+                      {!expandedSession.scheduled_date && (
+                        <span className="text-xs text-gray-400 italic">suggestion auto</span>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                        {t.coach.priorityTopics}
+                      </h3>
+                      <div className="space-y-3">
+                        {[
+                          { topic: expandedSession.priority_topic_1, rationale: expandedSession.raw_content.priority_topic_1_rationale },
+                          { topic: expandedSession.priority_topic_2, rationale: expandedSession.raw_content.priority_topic_2_rationale },
+                        ].map(({ topic, rationale }, i) => (
+                          <div key={i} className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-white dark:text-gray-900 text-xs font-bold">{i + 1}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{topic}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{rationale}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                        {t.coach.exploration}
+                      </h3>
+                      <p className="font-serif text-sm leading-relaxed text-gray-800 dark:text-gray-200">{expandedSession.exploration_topic}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{expandedSession.raw_content.exploration_rationale}</p>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/40 dark:to-blue-950/40 border border-violet-100 dark:border-violet-900 rounded-xl p-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-500 dark:text-violet-400 mb-2">
+                        {t.coach.unexpectedQuestion}
+                      </h3>
+                      <p className="font-serif text-sm leading-relaxed text-gray-900 dark:text-white">{expandedSession.unexpected_question}</p>
+                    </div>
+
+                    <div className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
+                      <button onClick={() => setInlineFollowUpsOpen((v) => !v)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        {t.coach.followUps}
+                        {inlineFollowUpsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                      {inlineFollowUpsOpen && (
+                        <ul className="px-4 pb-4 pt-1 space-y-2 border-t border-gray-100 dark:border-gray-800">
+                          {expandedSession.raw_content.suggested_follow_ups.map((f, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600 flex-shrink-0" />{f}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                          {t.coach.myNotesLabel}
+                        </label>
+                        {savingInlineNotes && (
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <Loader2 size={11} className="animate-spin" /> {t.coach.saving}
+                          </span>
+                        )}
+                      </div>
+                      <textarea value={inlineNotes} onChange={(e) => handleInlineNotesChange(e.target.value)}
+                        placeholder={t.coach.notesPlaceholder} rows={4}
+                        className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      <button onClick={() => toggleComplete(expandedSession.week_number)} disabled={togglingComplete}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 ${
+                          expandedSession.is_completed
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90"
+                        }`}>
+                        {togglingComplete ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                        {expandedSession.is_completed ? t.coach.sessionCompletedCheck : t.coach.markAsDoneBtn}
+                      </button>
+                      <button onClick={() => regenerateSession(expandedSession.week_number)} disabled={regenerating}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors">
+                        {regenerating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                        {t.coach.regenerateBtn}
+                      </button>
+                      <button onClick={() => exportMarkdown(expandedSession, collaborator)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <Download size={13} /> {t.coach.exportMdBtn}
+                      </button>
+                      <button onClick={() => setExpandedWeek(null)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <X size={13} /> {t.common.close}
+                      </button>
+                    </div>
                   </div>
-                </button>
+                </div>
               </div>
             </div>
           </div>
