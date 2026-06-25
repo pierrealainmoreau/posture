@@ -1526,12 +1526,29 @@ function CollaboratorPageContent() {
     setCareerSelfAssessment(careerSelfData);
 
     const allInterviews: (CollabInterview | MidYearInterview)[] = interviewsRes.ok ? await interviewsRes.json() : [];
-    setInterviews(allInterviews.filter((i) => i.type === "onboarding") as CollabInterview[]);
-    setMidYearInterviews(allInterviews.filter((i) => i.type === "mid_year") as MidYearInterview[]);
+    const onboardingInterviews = allInterviews.filter((i) => i.type === "onboarding") as CollabInterview[];
+    const midYearData          = allInterviews.filter((i) => i.type === "mid_year")  as MidYearInterview[];
+    setInterviews(onboardingInterviews);
+    setMidYearInterviews(midYearData);
     setIsAdmin(profileRes.data?.role === "admin");
 
     setLoading(false);
-    if (isNew && !fetchedPlan) navigateToTab("plan");
+    if (isNew && !fetchedPlan) { navigateToTab("plan"); return; }
+
+    // Deep-link : ?tab=entretiens&slot=N
+    const slotParam = searchParams.get("slot");
+    if (slotParam) {
+      const slot = parseInt(slotParam, 10);
+      if (!isNaN(slot)) {
+        navigateToTab("entretiens");
+        const linkedSession    = ((sessionsRes.data as WeeklySession[]) ?? []).find((s) => s.week_number === slot);
+        const linkedOnboarding = onboardingInterviews.find((i) => i.slot_number === slot);
+        const linkedMidYear    = midYearData.find((i) => i.slot_number === slot);
+        if (linkedSession)    setExpandedWeek(slot);
+        else if (linkedOnboarding) setSelectedInterviewId(linkedOnboarding.id);
+        else if (linkedMidYear)    setSelectedInterviewId(linkedMidYear.id);
+      }
+    }
   }, [collaboratorId, router, isNew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchData(); }, [fetchData]);
