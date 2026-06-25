@@ -26,40 +26,28 @@ function SelfSkillRow({
   onUpdate: (level: ExpertiseLevel) => void;
 }) {
   const selfIdx = selfLevel ? LEVELS.indexOf(selfLevel) : -1;
-  const targetIdx = LEVELS.indexOf(skill.target as ExpertiseLevel);
 
   return (
     <div className="py-3.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
       <div className="flex items-center gap-4">
         <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 min-w-0">{skill.skill}</span>
         <div className="flex items-center gap-1.5">
-          {LEVELS.map((level, i) => {
-            const isFilled = i <= selfIdx;
-            const isTarget = i === targetIdx;
-            return (
-              <button
-                key={level}
-                onClick={() => onUpdate(level)}
-                title={LEVEL_LABELS[level]}
-                className={[
-                  "w-5 h-5 rounded-full transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500",
-                  isFilled ? (DOT_FILL_COLLAB[selfIdx] ?? "bg-green-400") : "bg-gray-100 dark:bg-gray-800",
-                  !isFilled && isTarget ? "ring-2 ring-amber-400 ring-offset-1 dark:ring-offset-gray-900" : "",
-                ].filter(Boolean).join(" ")}
-              />
-            );
-          })}
+          {LEVELS.map((level, i) => (
+            <button
+              key={level}
+              onClick={() => onUpdate(level)}
+              title={LEVEL_LABELS[level]}
+              className={[
+                "w-5 h-5 rounded-full transition-all hover:scale-125 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500",
+                i <= selfIdx ? (DOT_FILL_COLLAB[selfIdx] ?? "bg-green-400") : "bg-gray-100 dark:bg-gray-800",
+              ].join(" ")}
+            />
+          ))}
         </div>
         <span className="text-xs font-medium w-24 text-right text-green-600 dark:text-green-400">
           {selfLevel ? LEVEL_LABELS[selfLevel] : <span className="text-gray-400">Non évalué</span>}
         </span>
       </div>
-      {skill.expectation && (
-        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic leading-relaxed pl-0.5">
-          <span className="text-amber-500 dark:text-amber-400 not-italic font-medium">Objectif : </span>
-          {skill.expectation}
-        </p>
-      )}
     </div>
   );
 }
@@ -271,9 +259,6 @@ function FillCareerContent() {
         <div className="mb-4 flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="w-3.5 h-3.5 rounded-full bg-green-400 inline-block" /> Mon niveau actuel
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-dashed border-amber-400 inline-block" /> Objectif
           </span>
         </div>
 
