@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Loader2, Check, Lock, Trash2, AlertTriangle,
-  RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp,
+  RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp, ChevronRight,
   TrendingUp, X, Download, Target, Plus, Building2, BookUser, Copy, Link2,
   CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid, Pencil,
   Rocket, BarChart3,
@@ -1197,7 +1197,7 @@ function OnboardingCard({
               {isExpanded && !hasChecklist && (
                 <div className="px-5 pb-5 pt-1 bg-gray-50/50 dark:bg-gray-800/20">
                   <p className="text-sm text-gray-400 dark:text-gray-500 italic mb-3">
-                    Clique sur "Préparer" pour générer la checklist d'objectifs de ce jalon avec l'IA.
+                    Clique sur &quot;Préparer&quot; pour générer la checklist d&apos;objectifs de ce jalon avec l&apos;IA.
                   </p>
                   <button
                     onClick={() => generateChecklist(milestone.id)}
@@ -1462,6 +1462,9 @@ function CollaboratorPageContent() {
   const [interviews, setInterviews]               = useState<CollabInterview[]>([]);
   const [midYearInterviews, setMidYearInterviews] = useState<MidYearInterview[]>([]);
   const [creatingInterview, setCreatingInterview] = useState(false);
+  const [showInterviewTypePicker, setShowInterviewTypePicker] = useState(false);
+  const [selectedInterviewId, setSelectedInterviewId]         = useState<string | null>(null);
+  const [isAdmin, setIsAdmin]                                 = useState(false);
 
   const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("profile");
 
@@ -1481,7 +1484,7 @@ function CollaboratorPageContent() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.replace("/login"); return; }
 
-    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes, careerSelfRes, interviewsRes] = await Promise.all([
+    const [collabRes, planRes, sessionsRes, companyOkrRes, collabOkrRes, manualRes, suggestionsRes, careerSelfRes, interviewsRes, profileRes] = await Promise.all([
       supabase.from("collaborators").select("*").eq("id", collaboratorId).eq("user_id", user.id).single<Collaborator>(),
       supabase.from("managerial_plans").select("*").eq("collaborator_id", collaboratorId).maybeSingle<ManagerialPlan>(),
       supabase.from("weekly_sessions").select("*").eq("collaborator_id", collaboratorId).order("week_number", { ascending: true }),
@@ -1491,6 +1494,7 @@ function CollaboratorPageContent() {
       fetch(`/api/teams/suggestions/${collaboratorId}`),
       fetch(`/api/teams/career/${collaboratorId}`),
       fetch(`/api/teams/entretiens/${collaboratorId}`),
+      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle<{ role: string }>(),
     ]);
 
     if (collabRes.error || !collabRes.data) { setNotFound(true); setLoading(false); return; }
@@ -1525,6 +1529,7 @@ function CollaboratorPageContent() {
     const allInterviews: (CollabInterview | MidYearInterview)[] = interviewsRes.ok ? await interviewsRes.json() : [];
     setInterviews(allInterviews.filter((i) => i.type === "onboarding") as CollabInterview[]);
     setMidYearInterviews(allInterviews.filter((i) => i.type === "mid_year") as MidYearInterview[]);
+    setIsAdmin(profileRes.data?.role === "admin");
 
     setLoading(false);
     if (isNew && !fetchedPlan) navigateToTab("plan");
@@ -1882,6 +1887,7 @@ function CollaboratorPageContent() {
       const data = await res.json() as CollabInterview & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur de création");
       setInterviews((prev) => [...prev, data]);
+      setSelectedInterviewId(data.id);
     } catch {
       // silently ignore — user will see empty state and can retry
     } finally {
@@ -1900,6 +1906,7 @@ function CollaboratorPageContent() {
       const data = await res.json() as MidYearInterview & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur de création");
       setMidYearInterviews((prev) => [...prev, data]);
+      setSelectedInterviewId(data.id);
     } catch {
       // silently ignore
     } finally {
@@ -1935,7 +1942,7 @@ function CollaboratorPageContent() {
   }
 
   function handleWeekClick(weekNumber: number) {
-    const locked = weekNumber > COACH_CONFIG.freeWeeksLimit && !collaborator?.is_premium;
+    const locked = weekNumber > COACH_CONFIG.freeWeeksLimit && !collaborator?.is_premium && !isAdmin;
     if (locked) { setSessionError(t.coach.premiumRequired); return; }
     const existing = sessions.find((s) => s.week_number === weekNumber);
     if (existing) {
@@ -3008,108 +3015,111 @@ function CollaboratorPageContent() {
         {tab === "entretiens" && (
           <div className="space-y-6">
 
-            {/* Section onboarding */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Rocket size={14} className="text-blue-500" /> Onboarding
-                </h2>
-                {interviews.some((i) => i.type === "onboarding") && (
-                  <button
-                    onClick={createOnboardingInterview}
-                    disabled={creatingInterview}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
-                  >
-                    {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-                    Nouveau parcours
-                  </button>
-                )}
-              </div>
-
-              {interviews.filter((i) => i.type === "onboarding").length === 0 ? (
-                <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center mx-auto mb-3">
-                    <Rocket size={24} className="text-blue-500" />
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
-                    Structurez l&apos;intégration de {collaborator.first_name} avec des jalons J7, J30 et J90.
-                  </p>
-                  <button
-                    onClick={createOnboardingInterview}
-                    disabled={creatingInterview}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-xl hover:bg-blue-800 disabled:opacity-50 transition-colors"
-                  >
-                    {creatingInterview ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                    {creatingInterview ? "Création…" : "Démarrer l'onboarding"}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {interviews.filter((i) => i.type === "onboarding").map((interview) => (
-                    <OnboardingCard
-                      key={interview.id}
-                      interview={interview}
-                      onUpdate={(updated) => setInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
-                    />
-                  ))}
-                </div>
-              )}
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Entretiens</h2>
+              <button
+                onClick={() => setShowInterviewTypePicker(true)}
+                disabled={creatingInterview}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                Nouvel entretien
+              </button>
             </div>
 
-            {/* Section mi-année */}
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <BarChart3 size={14} className="text-indigo-500" /> Entretien mi-année
-                </h2>
-                {midYearInterviews.length > 0 && (
+            {/* Onboarding */}
+            {interviews.filter((i) => i.type === "onboarding").length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                  <Rocket size={11} /> Onboarding
+                </p>
+                {interviews.filter((i) => i.type === "onboarding").map((interview) => (
                   <button
-                    onClick={createMidYearInterview}
-                    disabled={creatingInterview}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50 transition-colors"
+                    key={interview.id}
+                    onClick={() => setSelectedInterviewId(interview.id)}
+                    className="w-full flex items-center gap-4 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-blue-300 dark:hover:border-blue-700 transition-colors text-left group"
                   >
-                    {creatingInterview ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-                    Nouvelle année
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                      <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        Démarré le {new Date(interview.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                        interview.milestones.every((m) => m.is_completed)
+                          ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
+                          : interview.milestones.some((m) => m.is_completed)
+                          ? "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                      }`}>
+                        {interview.milestones.filter((m) => m.is_completed).length}/{interview.milestones.length} jalons
+                      </span>
+                      <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+                    </div>
                   </button>
-                )}
+                ))}
               </div>
+            )}
 
-              {midYearInterviews.length === 0 ? (
-                <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center mx-auto mb-3">
-                    <BarChart3 size={24} className="text-indigo-500" />
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mb-4">
-                    Structurez le bilan de mi-année de {collaborator.first_name} en 3 séquences : passé, présent, futur.
-                  </p>
+            {/* Mi-année */}
+            {midYearInterviews.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                  <BarChart3 size={11} /> Mi-année
+                </p>
+                {midYearInterviews.map((myi) => (
                   <button
-                    onClick={createMidYearInterview}
-                    disabled={creatingInterview}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-700 text-white text-sm font-medium rounded-xl hover:bg-indigo-800 disabled:opacity-50 transition-colors"
+                    key={myi.id}
+                    onClick={() => setSelectedInterviewId(myi.id)}
+                    className="w-full flex items-center gap-4 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors text-left group"
                   >
-                    {creatingInterview ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-                    {creatingInterview ? "Création…" : "Démarrer le mi-année"}
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
+                      <BarChart3 size={16} className="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Mi-année {myi.year}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        {myi.collaborator_submitted_at
+                          ? "Auto-évaluation reçue"
+                          : myi.status === "collab_sent"
+                          ? "En attente du collaborateur"
+                          : "En préparation"}
+                      </p>
+                    </div>
+                    <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
                   </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {midYearInterviews.map((myi) => (
-                    <MidYearCard
-                      key={myi.id}
-                      interview={myi}
-                      collaboratorId={collaboratorId}
-                      onUpdate={(updated) => setMidYearInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
 
-            {/* Section 1:1 hebdomadaires */}
+            {/* Empty state */}
+            {interviews.filter((i) => i.type === "onboarding").length === 0 && midYearInterviews.length === 0 && sessions.length === 0 && (
+              <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare size={22} className="text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Aucun entretien structuré pour {collaborator.first_name}.
+                </p>
+                <button
+                  onClick={() => setShowInterviewTypePicker(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  <Plus size={13} /> Créer un entretien
+                </button>
+              </div>
+            )}
+
+            {/* 1:1 hebdomadaires */}
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
-                <MessageSquare size={14} className="text-blue-500" /> 1:1 hebdomadaires
-              </h2>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center gap-2 mb-4">
+                <MessageSquare size={11} /> 1:1 hebdomadaires
+              </p>
 
             <div className="space-y-5">
             {!plan && (
@@ -3127,7 +3137,7 @@ function CollaboratorPageContent() {
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: 12 }, (_, i) => i + 1).map((week) => {
                 const session    = sessions.find((s) => s.week_number === week);
-                const locked     = week > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium;
+                const locked     = week > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
                 const isGenerating = generatingWeek === week;
                 const isExpanded = expandedWeek === week;
                 const isConfirming = confirmingWeek === week;
@@ -3466,6 +3476,115 @@ function CollaboratorPageContent() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── Modal — contenu d'un entretien ─────────────────────── */}
+        {selectedInterviewId && (() => {
+          const onboarding = interviews.find((i) => i.id === selectedInterviewId);
+          const midYear    = midYearInterviews.find((i) => i.id === selectedInterviewId);
+          if (!onboarding && !midYear) return null;
+          return (
+            <div className="fixed inset-0 z-50 overflow-y-auto">
+              <div className="min-h-full flex items-start justify-center p-4 py-6">
+                <div
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+                  onClick={() => setSelectedInterviewId(null)}
+                />
+                <div className="relative w-full max-w-2xl z-10">
+                  <div className="flex items-center justify-end mb-2">
+                    <button
+                      onClick={() => setSelectedInterviewId(null)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  {onboarding && (
+                    <OnboardingCard
+                      interview={onboarding}
+                      onUpdate={(updated) => setInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
+                    />
+                  )}
+                  {midYear && (
+                    <MidYearCard
+                      interview={midYear}
+                      collaboratorId={collaboratorId}
+                      onUpdate={(updated) => setMidYearInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ─── Modal — choix du type d'entretien ───────────────────── */}
+        {showInterviewTypePicker && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setShowInterviewTypePicker(false)}
+            />
+            <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10">
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-base font-semibold text-gray-900 dark:text-white">
+                  Quel type d&apos;entretien ?
+                </p>
+                <button
+                  onClick={() => setShowInterviewTypePicker(false)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowInterviewTypePicker(false)}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdomadaire</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Suivi régulier sur 12 semaines</p>
+                  </div>
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowInterviewTypePicker(false);
+                    await createOnboardingInterview();
+                  }}
+                  disabled={creatingInterview}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left disabled:opacity-50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                    <Rocket size={18} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jalons J7, J30 et J90</p>
+                  </div>
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowInterviewTypePicker(false);
+                    await createMidYearInterview();
+                  }}
+                  disabled={creatingInterview}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all text-left disabled:opacity-50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
+                    <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Entretien mi-année</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

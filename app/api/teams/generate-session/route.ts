@@ -68,8 +68,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Collaborateur introuvable" }, { status: 404 });
   }
 
-  // Paywall check
-  if (weekNumber > FREE_WEEKS_LIMIT && !collaborator.is_premium) {
+  // Paywall check — admins bypass the free weeks limit
+  const { data: userProfile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle<{ role: string }>();
+  const isAdmin = userProfile?.role === "admin";
+  if (weekNumber > FREE_WEEKS_LIMIT && !collaborator.is_premium && !isAdmin) {
     return NextResponse.json({ error: "premium_required" }, { status: 402 });
   }
 
