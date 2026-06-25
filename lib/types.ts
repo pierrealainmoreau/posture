@@ -623,6 +623,7 @@ export interface CollabInterview {
   user_id: string;
   type: "onboarding";
   status: "active" | "completed";
+  slot_number: number | null;
   milestones: OnboardingMilestone[];
   created_at: string;
   updated_at: string;
@@ -686,6 +687,7 @@ export interface MidYearInterview {
   type: "mid_year";
   year: number;
   status: MidYearStatus;
+  slot_number: number | null;
   share_token: string | null;
   collaborator_submitted_at: string | null;
   past: MidYearPast | null;

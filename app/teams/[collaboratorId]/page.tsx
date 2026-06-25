@@ -1872,39 +1872,39 @@ function CollaboratorPageContent() {
 
   // ── Entretiens ───────────────────────────────────────────────────────────
 
-  async function createOnboardingInterview() {
+  async function createOnboardingInterview(slotNumber: number) {
     setCreatingInterview(true);
     try {
       const res  = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "onboarding" }),
+        body: JSON.stringify({ type: "onboarding", slot_number: slotNumber }),
       });
       const data = await res.json() as CollabInterview & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur de création");
       setInterviews((prev) => [...prev, data]);
       setSelectedInterviewId(data.id);
-    } catch {
-      // silently ignore — user will see empty state and can retry
+    } catch (e) {
+      setSessionError(e instanceof Error ? e.message : "Erreur lors de la création de l'entretien");
     } finally {
       setCreatingInterview(false);
     }
   }
 
-  async function createMidYearInterview() {
+  async function createMidYearInterview(slotNumber: number) {
     setCreatingInterview(true);
     try {
       const res = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "mid_year", year: new Date().getFullYear() }),
+        body: JSON.stringify({ type: "mid_year", year: new Date().getFullYear(), slot_number: slotNumber }),
       });
       const data = await res.json() as MidYearInterview & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur de création");
       setMidYearInterviews((prev) => [...prev, data]);
       setSelectedInterviewId(data.id);
-    } catch {
-      // silently ignore
+    } catch (e) {
+      setSessionError(e instanceof Error ? e.message : "Erreur lors de la création de l'entretien");
     } finally {
       setCreatingInterview(false);
     }
@@ -3022,96 +3022,161 @@ function CollaboratorPageContent() {
             )}
 
             {/* Grille unifiée */}
-            <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((week) => {
-                const session      = sessions.find((s) => s.week_number === week);
-                const locked       = week > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
-                const isGenerating = generatingWeek === week;
-                const isSelected   = expandedWeek === week || pickerWeek === week;
+            {(() => {
+              const usedSlots = [
+                ...interviews.map((i) => i.slot_number).filter(Boolean) as number[],
+                ...midYearInterviews.map((i) => i.slot_number).filter(Boolean) as number[],
+              ];
+              const totalSlots = usedSlots.length > 0 ? Math.max(12, ...usedSlots) : 12;
 
-                return (
-                  <button key={week}
-                    onClick={() => !locked && !isGenerating && handleWeekClick(week)}
-                    disabled={locked || isGenerating || !plan}
-                    className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
-                      isSelected
-                        ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
-                        : locked || !plan
-                        ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-50 cursor-not-allowed"
-                        : session
-                        ? session.is_completed
-                          ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
-                          : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:border-blue-300"
-                        : "border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-700"
-                    }`}>
-                    {isGenerating ? (
-                      <Loader2 size={18} className="animate-spin text-blue-500" />
-                    ) : locked ? (
-                      <><Lock size={14} className="text-gray-400 mb-1" /><span className="text-xs font-medium text-gray-400">{week}</span></>
-                    ) : (
-                      <>
-                        <span className={`text-lg font-bold leading-none ${
-                          isSelected ? "text-blue-600 dark:text-blue-400"
-                          : session?.is_completed ? "text-green-600 dark:text-green-400"
-                          : session ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-400 dark:text-gray-500"
-                        }`}>{week}</span>
-                        {session?.scheduled_date && !isSelected && (
-                          <span className="text-[9px] leading-none text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
-                            {formatSessionDate(session.scheduled_date)}
-                          </span>
+              return (
+                <div className="grid grid-cols-4 gap-3">
+                  {Array.from({ length: totalSlots }, (_, i) => i + 1).map((slot) => {
+                    const session    = sessions.find((s) => s.week_number === slot);
+                    const onboarding = interviews.find((i) => i.slot_number === slot);
+                    const midYear    = midYearInterviews.find((i) => i.slot_number === slot);
+
+                    const type = session ? "session" : onboarding ? "onboarding" : midYear ? "midyear" : "empty";
+                    const hasContent = type !== "empty";
+
+                    // Premium lock: vide + pas premium → lock visuel seulement sur les carrés sans contenu
+                    const premiumLocked = !hasContent && slot > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
+                    const isGenerating  = generatingWeek === slot;
+
+                    const isSelected =
+                      pickerWeek === slot ||
+                      (type === "session"    && expandedWeek === slot) ||
+                      (type === "onboarding" && selectedInterviewId === onboarding?.id) ||
+                      (type === "midyear"    && selectedInterviewId === midYear?.id);
+
+                    // Indicateur de complétion
+                    const isDone =
+                      (type === "session"    && !!session?.is_completed) ||
+                      (type === "onboarding" && !!onboarding?.milestones.every((m) => m.is_completed)) ||
+                      (type === "midyear"    && midYear?.status === "completed");
+                    const inProgress = hasContent && !isDone;
+
+                    // Label de type
+                    const typeLabel =
+                      type === "session"    ? "1:1" :
+                      type === "onboarding" ? "Onboarding" :
+                      type === "midyear"    ? `Mi-${midYear!.year}` : null;
+
+                    function handleSlotClick() {
+                      if (isGenerating) return;
+                      if (type === "session") {
+                        setExpandedWeek((prev) => prev === slot ? null : slot);
+                      } else if (type === "onboarding") {
+                        setSelectedInterviewId(onboarding!.id);
+                      } else if (type === "midyear") {
+                        setSelectedInterviewId(midYear!.id);
+                      } else {
+                        if (!plan) { setSessionError(t.coach.noPlanForSessions); return; }
+                        setPickerStep("type");
+                        setPickerWeek(slot);
+                      }
+                    }
+
+                    // Couleurs selon le type
+                    const isMid = type === "midyear";
+                    const borderCls = isSelected
+                      ? isMid
+                        ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 ring-2 ring-indigo-200 dark:ring-indigo-800"
+                        : "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
+                      : premiumLocked
+                      ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-50 cursor-not-allowed"
+                      : isDone
+                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                      : hasContent
+                      ? isMid
+                        ? "border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 hover:border-indigo-300"
+                        : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:border-blue-300"
+                      : "border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-700";
+
+                    const numCls = isSelected
+                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400"
+                      : isDone ? "text-green-600 dark:text-green-400"
+                      : hasContent
+                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400"
+                      : "text-gray-400 dark:text-gray-500";
+
+                    return (
+                      <button key={slot}
+                        onClick={handleSlotClick}
+                        disabled={isGenerating || premiumLocked}
+                        className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${borderCls}`}
+                      >
+                        {isGenerating ? (
+                          <Loader2 size={18} className="animate-spin text-blue-500" />
+                        ) : premiumLocked ? (
+                          <>
+                            <Lock size={13} className="text-gray-400 mb-0.5" />
+                            <span className="text-xs font-medium text-gray-400">{slot}</span>
+                          </>
+                        ) : !hasContent ? (
+                          // Vide non bloqué
+                          <span className={`text-lg font-bold leading-none ${numCls}`}>{slot}</span>
+                        ) : (
+                          // Contenu : numéro + indicateur + type
+                          <>
+                            <span className={`text-xs font-bold leading-none ${numCls}`}>{slot}</span>
+                            {isDone
+                              ? <Check size={11} className="text-green-500 my-0.5" />
+                              : inProgress
+                              ? <span className={`w-1.5 h-1.5 rounded-full my-0.5 ${isMid ? "bg-indigo-400" : "bg-blue-400"}`} />
+                              : null
+                            }
+                            {type === "onboarding" && <Rocket size={9} className="text-blue-400 mb-0.5" />}
+                            {type === "midyear"    && <BarChart3 size={9} className="text-indigo-400 mb-0.5" />}
+                            <span className="text-[9px] leading-none font-medium text-gray-400 dark:text-gray-500 truncate max-w-full px-1">
+                              {typeLabel}
+                            </span>
+                          </>
                         )}
-                        {session?.is_completed && !isSelected && !session.scheduled_date && <Check size={12} className="text-green-500 mt-0.5" />}
-                        {session && !session.is_completed && !isSelected && !session.scheduled_date && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-0.5" />}
-                      </>
-                    )}
-                    {week > COACH_CONFIG.freeWeeksLimit && !locked && (
-                      <Crown size={9} className="absolute top-1.5 right-1.5 text-amber-400" />
-                    )}
-                  </button>
-                );
-              })}
+                        {/* Crown pour les cases premium vides */}
+                        {slot > COACH_CONFIG.freeWeeksLimit && !hasContent && !premiumLocked && (
+                          <Crown size={9} className="absolute top-1.5 right-1.5 text-amber-400" />
+                        )}
+                      </button>
+                    );
+                  })}
 
-              {/* Carrés Onboarding */}
-              {interviews.filter((i) => i.type === "onboarding").map((interview) => (
-                <button
-                  key={interview.id}
-                  onClick={() => setSelectedInterviewId(interview.id)}
-                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
-                    selectedInterviewId === interview.id
-                      ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
-                      : interview.milestones.every((m) => m.is_completed)
-                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
-                      : "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-300"
-                  }`}
-                >
-                  <Rocket size={14} className="text-blue-500 mb-1" />
-                  <span className="text-[10px] font-semibold leading-none text-blue-600 dark:text-blue-400">Onboarding</span>
-                  <span className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
-                    {interview.milestones.filter((m) => m.is_completed).length}/{interview.milestones.length}
-                  </span>
-                </button>
-              ))}
-
-              {/* Carrés Mi-année */}
-              {midYearInterviews.map((myi) => (
-                <button
-                  key={myi.id}
-                  onClick={() => setSelectedInterviewId(myi.id)}
-                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
-                    selectedInterviewId === myi.id
-                      ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 ring-2 ring-indigo-200 dark:ring-indigo-800"
-                      : myi.status === "completed"
-                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
-                      : "border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 hover:border-indigo-300"
-                  }`}
-                >
-                  <BarChart3 size={14} className="text-indigo-500 mb-1" />
-                  <span className="text-[10px] font-semibold leading-none text-indigo-600 dark:text-indigo-400">Mi-{myi.year}</span>
-                  {myi.collaborator_submitted_at && <Check size={10} className="text-green-500 mt-0.5" />}
-                </button>
-              ))}
-            </div>
+                  {/* Carrés legacy : interviews sans slot_number */}
+                  {interviews.filter((i) => !i.slot_number).map((interview) => (
+                    <button key={interview.id} onClick={() => setSelectedInterviewId(interview.id)}
+                      className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
+                        selectedInterviewId === interview.id
+                          ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
+                          : interview.milestones.every((m) => m.is_completed)
+                          ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                          : "border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 hover:border-blue-300"
+                      }`}>
+                      <Rocket size={12} className="text-blue-500 mb-0.5" />
+                      {interview.milestones.every((m) => m.is_completed)
+                        ? <Check size={11} className="text-green-500 my-0.5" />
+                        : <span className="w-1.5 h-1.5 rounded-full bg-blue-400 my-0.5" />}
+                      <span className="text-[9px] leading-none font-medium text-gray-400">Onboarding</span>
+                    </button>
+                  ))}
+                  {midYearInterviews.filter((i) => !i.slot_number).map((myi) => (
+                    <button key={myi.id} onClick={() => setSelectedInterviewId(myi.id)}
+                      className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
+                        selectedInterviewId === myi.id
+                          ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 ring-2 ring-indigo-200 dark:ring-indigo-800"
+                          : myi.status === "completed"
+                          ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                          : "border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 hover:border-indigo-300"
+                      }`}>
+                      <BarChart3 size={12} className="text-indigo-500 mb-0.5" />
+                      {myi.status === "completed"
+                        ? <Check size={11} className="text-green-500 my-0.5" />
+                        : <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 my-0.5" />}
+                      <span className="text-[9px] leading-none font-medium text-gray-400">Mi-{myi.year}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Légende */}
             <div className="flex items-center gap-5 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
@@ -3301,15 +3366,19 @@ function CollaboratorPageContent() {
                       <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
                         <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdomadaire</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Suivi régulier généré par l&apos;IA</p>
                       </div>
+                      {pickerWeek !== null && pickerWeek > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin && (
+                        <Crown size={13} className="text-amber-400 flex-shrink-0" />
+                      )}
                     </button>
                     <button
                       onClick={async () => {
+                        const slot = pickerWeek!;
                         setPickerWeek(null);
-                        await createOnboardingInterview();
+                        await createOnboardingInterview(slot);
                       }}
                       disabled={creatingInterview}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left disabled:opacity-50"
@@ -3324,8 +3393,9 @@ function CollaboratorPageContent() {
                     </button>
                     <button
                       onClick={async () => {
+                        const slot = pickerWeek!;
                         setPickerWeek(null);
-                        await createMidYearInterview();
+                        await createMidYearInterview(slot);
                       }}
                       disabled={creatingInterview}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all text-left disabled:opacity-50"
@@ -3342,48 +3412,65 @@ function CollaboratorPageContent() {
                 </>
               )}
 
-              {pickerStep === "confirm_1on1" && (
-                <>
-                  <div className="flex items-center justify-between mb-4">
-                    <button
-                      onClick={() => setPickerStep("type")}
-                      className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                    >
-                      ← Retour
-                    </button>
-                    <button
-                      onClick={() => setPickerWeek(null)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                    {t.coach.generateSessionPrefix} {t.coach.weekLabel} {pickerWeek}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
-                    {t.coach.generateSessionAiDescPrefix} {collaborator.first_name}
-                    {t.coach.generateSessionAiDescMiddle}
-                    {sessions.length > 0 ? ` ${t.coach.generateSessionAiDescWithPrev}` : "."}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { generateWeek(pickerWeek); }}
-                      disabled={generatingWeek !== null}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-                    >
-                      {generatingWeek === pickerWeek ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-                      {generatingWeek === pickerWeek ? t.coach.generatingSessionBtn : t.coach.generateSessionBtn}
-                    </button>
-                    <button
-                      onClick={() => setPickerWeek(null)}
-                      className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      {t.common.cancel}
-                    </button>
-                  </div>
-                </>
-              )}
+              {pickerStep === "confirm_1on1" && (() => {
+                const isLockedForSessions = pickerWeek !== null && pickerWeek > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={() => setPickerStep("type")}
+                        className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                      >
+                        ← Retour
+                      </button>
+                      <button
+                        onClick={() => setPickerWeek(null)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                      {t.coach.generateSessionPrefix} {t.coach.weekLabel} {pickerWeek}
+                    </p>
+                    {isLockedForSessions ? (
+                      <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                        <p className="text-sm text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                          <Crown size={14} /> {t.coach.premiumRequired}
+                        </p>
+                        <Link href="/premium"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-800 dark:text-amber-200 underline underline-offset-2">
+                          {t.coach.becomePremiumBtn} →
+                        </Link>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
+                          {t.coach.generateSessionAiDescPrefix} {collaborator.first_name}
+                          {t.coach.generateSessionAiDescMiddle}
+                          {sessions.length > 0 ? ` ${t.coach.generateSessionAiDescWithPrev}` : "."}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { generateWeek(pickerWeek!); }}
+                            disabled={generatingWeek !== null}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
+                          >
+                            {generatingWeek === pickerWeek ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                            {generatingWeek === pickerWeek ? t.coach.generatingSessionBtn : t.coach.generateSessionBtn}
+                          </button>
+                          <button
+                            onClick={() => setPickerWeek(null)}
+                            className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            {t.common.cancel}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
