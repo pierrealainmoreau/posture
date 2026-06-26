@@ -342,22 +342,32 @@ export default function Home() {
             {/* ── Col 3, ligne 1 : Quiz ── */}
             <Link
               href="/academie"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2.5 flex flex-col hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/30 dark:to-gray-900 border border-amber-200/70 dark:border-amber-800/50 rounded-xl px-3 py-2.5 flex flex-col hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 bg-amber-50 dark:bg-amber-950 rounded-[7px] flex items-center justify-center flex-shrink-0">
-                  <GraduationCap size={12} className="text-amber-600 dark:text-amber-400" />
+              {/* ligne 1 : icône + titre + CTA */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-amber-100 dark:bg-amber-900/60 rounded-[7px] flex items-center justify-center flex-shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                  <GraduationCap size={12} className="text-amber-700 dark:text-amber-300" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-900 dark:text-white flex-1">Quiz</span>
-                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                <span className="text-[11px] font-bold text-gray-900 dark:text-white flex-1 tracking-tight">Quiz</span>
+                <span className="text-[9px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-full flex-shrink-0">
                   {acadStats.badges === 0 ? t.home.quizStart : t.home.quizContinue}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <Trophy size={10} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                  {acadStats.badges} / {acadStats.totalQuizzes} badges
-                </span>
+              {/* ligne 2 : barre de progression + badge count */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1 bg-amber-100 dark:bg-amber-900/60 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-400 rounded-full transition-all duration-500"
+                    style={{ width: acadStats.totalQuizzes > 0 ? `${Math.round((acadStats.badges / acadStats.totalQuizzes) * 100)}%` : "0%" }}
+                  />
+                </div>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <Trophy size={9} className="text-amber-500 dark:text-amber-400" />
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 tabular-nums">
+                    {acadStats.badges}<span className="font-normal text-amber-500/70 dark:text-amber-500">/{acadStats.totalQuizzes}</span>
+                  </span>
+                </div>
               </div>
             </Link>
 
