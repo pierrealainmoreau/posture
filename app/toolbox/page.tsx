@@ -210,24 +210,6 @@ const GAMES_STATIC: GameBase[] = [
     tags:      ["fun", "cohesion", "seminar"],
     duration:  "30 min",
   },
-  {
-    key:       "emojionly",
-    href:      "/toolbox/emoji-only",
-    icon:      <Smile size={22} className="text-amber-500 dark:text-amber-400" />,
-    iconBg:    "bg-amber-50 dark:bg-amber-950",
-    available: true,
-    tags:      ["fun", "cohesion", "seminar"],
-    duration:  "7 min",
-  },
-  {
-    key:       "estimationexpress",
-    href:      "/toolbox/estimation-express",
-    icon:      <BarChart2 size={22} className="text-violet-600 dark:text-violet-400" />,
-    iconBg:    "bg-violet-50 dark:bg-violet-950",
-    available: true,
-    tags:      ["fun", "knowledge", "seminar"],
-    duration:  "5-10 min",
-  },
 ];
 
 const ALL_TAGS: Tag[] = [
@@ -240,9 +222,12 @@ const ALL_TAGS: Tag[] = [
   "seminar",
 ];
 
+const PAGE_SIZE = 10;
+
 export default function ToolboxPage() {
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
+  const [page, setPage] = useState(1);
 
   const TAG_LABELS: Record<Tag, string> = {
     onboarding:   t.miniJeux.tags.onboarding,
@@ -253,7 +238,7 @@ export default function ToolboxPage() {
     knowledge:    t.miniJeux.tags.knowledge,
     seminar:      t.miniJeux.tags.seminar,
   };
-  const [fromParams, setFromParams]     = useState("");
+  const [fromParams, setFromParams] = useState("");
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -267,6 +252,14 @@ export default function ToolboxPage() {
   const filtered = activeFilter
     ? GAMES_STATIC.filter((g) => g.tags.includes(activeFilter))
     : GAMES_STATIC;
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function changeFilter(tag: Tag | null) {
+    setActiveFilter(tag);
+    setPage(1);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
@@ -286,7 +279,7 @@ export default function ToolboxPage() {
         {/* Filter by moment */}
         <div className="flex flex-wrap gap-2 mb-8">
           <button
-            onClick={() => setActiveFilter(null)}
+            onClick={() => changeFilter(null)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               activeFilter === null
                 ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
@@ -298,7 +291,7 @@ export default function ToolboxPage() {
           {ALL_TAGS.map((tag) => (
             <button
               key={tag}
-              onClick={() => setActiveFilter(activeFilter === tag ? null : tag)}
+              onClick={() => changeFilter(activeFilter === tag ? null : tag)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activeFilter === tag
                   ? TAG_STYLES[tag]
@@ -312,7 +305,7 @@ export default function ToolboxPage() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map((game) => (
+          {paginated.map((game) => (
             <Link
               key={game.href}
               href={game.available ? `${game.href}${fromParams}` : "#"}
@@ -365,6 +358,39 @@ export default function ToolboxPage() {
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-16">
             {t.miniJeux.noGames}
           </p>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Précédent
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
+                  p === page
+                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                    : "border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Suivant →
+            </button>
+          </div>
         )}
       </main>
     </div>
