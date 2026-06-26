@@ -359,7 +359,7 @@ export default function Home() {
                 </span>
               </div>
               {/* ligne 3 : CTA style recrutement */}
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-white/60 dark:bg-amber-950/20 mb-2">
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all mb-2">
                 <GraduationCap size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
                 <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">Débloquer le prochain</p>
                 <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
