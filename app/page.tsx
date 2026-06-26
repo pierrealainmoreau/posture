@@ -342,57 +342,53 @@ export default function Home() {
             {/* ── Col 3, ligne 1 : Quiz ── */}
             <Link
               href="/academie"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2.5 flex flex-col hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="flex items-center gap-2.5 mb-2.5">
-                <div className="w-8 h-8 bg-amber-50 dark:bg-amber-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <GraduationCap size={15} className="text-amber-600 dark:text-amber-400" />
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 bg-amber-50 dark:bg-amber-950 rounded-[7px] flex items-center justify-center flex-shrink-0">
+                  <GraduationCap size={12} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">Quiz</span>
+                <span className="text-[11px] font-bold text-gray-900 dark:text-white flex-1">Quiz</span>
+                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                  {acadStats.badges === 0 ? t.home.quizStart : t.home.quizContinue}
+                </span>
               </div>
-              <div className="flex items-center gap-1.5 mt-auto">
-                <Trophy size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+              <div className="flex items-center gap-1">
+                <Trophy size={10} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                   {acadStats.badges} / {acadStats.totalQuizzes} badges
                 </span>
               </div>
-              <p className="mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                {acadStats.badges === 0 ? t.home.quizStart : t.home.quizContinue}
-              </p>
             </Link>
 
             {/* ── Col 3, ligne 2 : Recrutement ── */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150">
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 bg-pink-50 dark:bg-pink-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <UserPlus size={15} className="text-pink-700 dark:text-pink-400" />
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2.5 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-pink-50 dark:bg-pink-950 rounded-[7px] flex items-center justify-center flex-shrink-0">
+                  <UserPlus size={12} className="text-pink-700 dark:text-pink-400" />
                 </div>
-                <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
+                <span className="text-[11px] font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Link
                   href="/recruitment?tab=job-description"
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
                 >
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-100 dark:bg-pink-950">
-                    <ClipboardList size={12} className="text-pink-600 dark:text-pink-400" />
-                  </div>
-                  <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                  <ClipboardList size={12} className="text-pink-500 dark:text-pink-400 flex-shrink-0" />
+                  <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">
                     {t.home.jobDescription}
                   </p>
-                  <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                  <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                 </Link>
                 <Link
                   href="/recruitment?tab=recruiter"
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
                 >
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-100 dark:bg-pink-950">
-                    <UserRoundCheck size={12} className="text-pink-600 dark:text-pink-400" />
-                  </div>
-                  <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                  <UserRoundCheck size={12} className="text-pink-500 dark:text-pink-400 flex-shrink-0" />
+                  <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">
                     {t.home.interviewQuestions}
                   </p>
-                  <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                  <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                 </Link>
               </div>
             </div>
