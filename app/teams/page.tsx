@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Users, Plus, Loader2, ChevronRight, Crown, Lock, Check,
@@ -110,6 +110,7 @@ function initials(c: Collaborator) {
 
 export default function CoachPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [progress, setProgress] = useState<Record<string, CollabProgress>>({});
   const [isPremium, setIsPremium] = useState(false);
@@ -119,6 +120,14 @@ export default function CoachPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<AddForm>(EMPTY_FORM);
   const firstInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "add") {
+      setForm(EMPTY_FORM);
+      setAdding(true);
+      setTimeout(() => firstInputRef.current?.focus(), 100);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const supabase = createClient();
