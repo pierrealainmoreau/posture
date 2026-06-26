@@ -162,8 +162,8 @@ const fr = {
     quizStart: "Commencer →",
     quizContinue: "Continuer →",
     recruitment: "Recrutement",
-    jobDescription: "Fiche de poste",
-    interviewQuestions: "Questions entretien",
+    jobDescription: "Créer une fiche de poste",
+    interviewQuestions: "Générer une grille d'évaluation",
     coach: {
       title: "Mon équipe",
       noCollaborator: "Aucun collaborateur",
