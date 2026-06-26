@@ -3132,20 +3132,20 @@ function CollaboratorPageContent() {
                           </>
                         ) : !hasContent ? (
                           // Vide non bloqué
-                          <span className={`text-lg font-bold leading-none ${numCls}`}>{slot}</span>
+                          <span className={`text-4xl font-bold leading-none ${numCls}`}>{slot}</span>
                         ) : (
                           // Contenu : numéro + indicateur + type
                           <>
-                            <span className={`text-xs font-bold leading-none ${numCls}`}>{slot}</span>
+                            <span className={`text-3xl font-bold leading-none ${numCls}`}>{slot}</span>
                             {isDone
-                              ? <Check size={11} className="text-green-500 my-0.5" />
+                              ? <Check size={28} className="text-green-500 my-1" />
                               : inProgress
-                              ? <span className={`w-1.5 h-1.5 rounded-full my-0.5 ${isMid ? "bg-indigo-400" : "bg-blue-400"}`} />
+                              ? <span className={`w-4 h-4 rounded-full my-1 ${isMid ? "bg-indigo-400" : "bg-blue-400"}`} />
                               : null
                             }
-                            {type === "onboarding" && <Rocket size={9} className="text-blue-400 mb-0.5" />}
-                            {type === "midyear"    && <BarChart3 size={9} className="text-indigo-400 mb-0.5" />}
-                            <span className="text-[9px] leading-none font-medium text-gray-400 dark:text-gray-500 truncate max-w-full px-1">
+                            {type === "onboarding" && <Rocket size={24} className="text-blue-400 mb-1" />}
+                            {type === "midyear"    && <BarChart3 size={24} className="text-indigo-400 mb-1" />}
+                            <span className="text-xl leading-none font-medium text-gray-400 dark:text-gray-500 truncate max-w-full px-1">
                               {typeLabel}
                             </span>
                           </>
