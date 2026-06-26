@@ -376,10 +376,12 @@ function MYScore({ label, value, collab, onChange }: {
 function MidYearCard({
   interview,
   collaboratorId,
+  collaborator,
   onUpdate,
 }: {
   interview: MidYearInterview;
   collaboratorId: string;
+  collaborator: Collaborator;
   onUpdate: (updated: MidYearInterview) => void;
 }) {
   type MYTab = "past" | "present" | "future";
@@ -390,6 +392,7 @@ function MidYearCard({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiQuestions, setAiQuestions] = useState<string[] | null>(null);
   const [aiSection, setAiSection] = useState<MYTab | null>(null);
+  const [interviewDate, setInterviewDate] = useState<string>(interview.interview_date ?? "");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Local copies of sections
@@ -407,6 +410,16 @@ function MidYearCard({
     succes_si: ["","",""], daki_drop: "", daki_add: "", daki_keep: "", daki_improve: "",
     feedback_manager: "", objectifs_s2: [], demandes: "", manager_notes: "",
   });
+
+  async function saveInterviewDate(date: string) {
+    setInterviewDate(date);
+    await fetch(`/api/teams/entretiens/mid-year/${interview.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ interview_date: date || null }),
+    });
+    onUpdate({ ...interview, interview_date: date || null });
+  }
 
   const debounceSave = (newPast?: MidYearPast, newPresent?: MidYearPresent, newFuture?: MidYearFuture) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -519,7 +532,7 @@ function MidYearCard({
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3 flex-wrap">
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center flex-shrink-0">
             <BarChart3 size={16} className="text-indigo-600 dark:text-indigo-400" />
@@ -531,22 +544,61 @@ function MidYearCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {saving && <Loader2 size={12} className="animate-spin text-gray-400" />}
-          {hasCollab && (
-            <button type="button" onClick={() => setMiroir(v => !v)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                miroir ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
-                       : "border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}>
-              Vue miroir
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {saving && <Loader2 size={12} className="animate-spin text-gray-400" />}
+            {hasCollab && (
+              <button type="button" onClick={() => setMiroir(v => !v)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                  miroir ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                         : "border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                }`}>
+                Vue miroir
+              </button>
+            )}
+            <button type="button" onClick={copyLink}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+              {copyOk ? <Check size={11} className="text-green-500" /> : <Link2 size={11} />}
+              {copyOk ? "Copié !" : "Partager"}
             </button>
-          )}
-          <button type="button" onClick={copyLink}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-            {copyOk ? <Check size={11} className="text-green-500" /> : <Link2 size={11} />}
-            {copyOk ? "Copié !" : "Partager"}
-          </button>
+            <button
+              type="button"
+              onClick={() => exportMidYearMarkdown(interview, collaborator)}
+              title="Exporter en Markdown"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <Download size={11} /> MD
+            </button>
+            <button
+              type="button"
+              onClick={() => exportMidYearPDF(interview, collaborator)}
+              title="Exporter en PDF"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <Download size={11} /> PDF
+            </button>
+          </div>
+          {/* Date de l'entretien + ICS */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">Date entretien</label>
+            <input
+              type="date"
+              value={interviewDate}
+              onChange={(e) => setInterviewDate(e.target.value)}
+              onBlur={(e) => saveInterviewDate(e.target.value)}
+              className="px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            {interviewDate && (
+              <button
+                type="button"
+                onClick={() => downloadMidYearICS(interviewDate, `${collaborator.first_name} ${collaborator.last_name}`, interview.year)}
+                title="Ajouter à l'agenda (ICS)"
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+              >
+                <CalendarDays size={11} /> Agenda
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -965,9 +1017,11 @@ function axisScore(axis: ChecklistAxis) {
 
 function OnboardingCard({
   interview,
+  collaborator,
   onUpdate,
 }: {
   interview: CollabInterview;
+  collaborator: Collaborator;
   onUpdate: (updated: CollabInterview) => void;
 }) {
   const [generatingMilestone, setGeneratingMilestone] = useState<string | null>(null);
@@ -1117,16 +1171,43 @@ function OnboardingCard({
         <div className="flex-1">
           <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Démarré le {new Date(interview.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            {interview.start_date
+              ? `Démarrage : ${new Date(interview.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`
+              : `Créé le ${new Date(interview.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`}
           </p>
         </div>
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-          isAllDone
-            ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
-            : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-        }`}>
-          {isAllDone ? "Terminé" : `${completedCount}/${totalMilestones} jalons`}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {interview.start_date && (
+            <button
+              onClick={() => downloadOnboardingICS(interview.start_date!, `${collaborator.first_name} ${collaborator.last_name}`)}
+              title="Télécharger les invitations calendrier (J+7, J+30, J+90)"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              <CalendarDays size={11} /> ICS
+            </button>
+          )}
+          <button
+            onClick={() => exportOnboardingMarkdown(interview, collaborator)}
+            title="Exporter en Markdown"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            <Download size={11} /> MD
+          </button>
+          <button
+            onClick={() => exportOnboardingPDF(interview, collaborator)}
+            title="Exporter en PDF"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-lg hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            <Download size={11} /> PDF
+          </button>
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+            isAllDone
+              ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+              : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+          }`}>
+            {isAllDone ? "Terminé" : `${completedCount}/${totalMilestones} jalons`}
+          </span>
+        </div>
       </div>
 
       {/* ── Milestones ── */}
@@ -1350,6 +1431,202 @@ function initials(c: Collaborator) {
   return ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
 }
 
+// ── ICS helpers ────────────────────────────────────────────────────────────
+
+function buildICS(events: Array<{ title: string; start: Date; end: Date; description?: string }>): string {
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}@posture`;
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Posture//Copilot//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+  for (const ev of events) {
+    const startStr = ev.start.toISOString().slice(0, 10).replace(/-/g, "");
+    const end = new Date(ev.end); end.setDate(end.getDate() + 1);
+    const endStr = end.toISOString().slice(0, 10).replace(/-/g, "");
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${uid()}`,
+      `DTSTAMP:${fmt(new Date())}`,
+      `DTSTART;VALUE=DATE:${startStr}`,
+      `DTEND;VALUE=DATE:${endStr}`,
+      `SUMMARY:${ev.title}`,
+      ...(ev.description ? [`DESCRIPTION:${ev.description.replace(/\n/g, "\\n")}`] : []),
+      "END:VEVENT",
+    );
+  }
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+function downloadICS(content: string, filename: string): void {
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadOnboardingICS(startDate: string, collabName: string): void {
+  const base = new Date(startDate);
+  const addDays = (n: number) => { const d = new Date(base); d.setDate(d.getDate() + n); return d; };
+  downloadICS(buildICS([
+    { title: `Onboarding J+7 — ${collabName}`,  start: addDays(7),  end: addDays(7),  description: "Point onboarding J+7" },
+    { title: `Onboarding J+30 — ${collabName}`, start: addDays(30), end: addDays(30), description: "Point onboarding J+30" },
+    { title: `Onboarding J+90 — ${collabName}`, start: addDays(90), end: addDays(90), description: "Point onboarding J+90" },
+  ]), `onboarding-${collabName.toLowerCase().replace(/\s+/g, "-")}.ics`);
+}
+
+function downloadMidYearICS(interviewDate: string, collabName: string, year: number): void {
+  const d = new Date(interviewDate);
+  downloadICS(buildICS([
+    { title: `Entretien mi-année ${year} — ${collabName}`, start: d, end: d, description: "Entretien mi-année" },
+  ]), `mi-annee-${year}-${collabName.toLowerCase().replace(/\s+/g, "-")}.ics`);
+}
+
+// ── PDF export ─────────────────────────────────────────────────────────────
+
+function exportPDF(title: string, htmlContent: string): void {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title><style>
+    *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:760px;margin:2rem auto;color:#111;line-height:1.6;padding:0 1rem}
+    h1{font-size:1.4rem;margin-bottom:.25rem}h2{font-size:1.05rem;margin-top:1.5rem;border-bottom:1px solid #e5e7eb;padding-bottom:.2rem}
+    h3{font-size:.9rem;margin-top:1rem;color:#374151}ul{padding-left:1.5rem}li{margin-bottom:.2rem}
+    p{margin:.4rem 0}.meta{font-size:.8rem;color:#6b7280}.section{margin-top:1.2rem}
+    .badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
+    @media print{body{margin:0}a{display:none}}
+  </style></head><body>${htmlContent}<script>window.print();<\/script></body></html>`);
+  win.document.close();
+}
+
+function exportSessionPDF(session: WeeklySession, collaborator: Collaborator): void {
+  const followUps = (session.raw_content?.suggested_follow_ups ?? []).map((f: string) => `<li>${f}</li>`).join("");
+  exportPDF(
+    `1:1 — ${collaborator.first_name} ${collaborator.last_name} — Semaine ${session.week_number}`,
+    `<h1>1:1 — ${collaborator.first_name} ${collaborator.last_name}</h1>
+     <p class="meta">Semaine ${session.week_number} · Axe : ${session.development_axis}</p>
+     <h2>Sujets prioritaires</h2>
+     <h3>1. ${session.priority_topic_1}</h3><p>${session.raw_content?.priority_topic_1_rationale ?? ""}</p>
+     <h3>2. ${session.priority_topic_2}</h3><p>${session.raw_content?.priority_topic_2_rationale ?? ""}</p>
+     <h2>Exploration</h2><p>${session.exploration_topic}</p><p><em>${session.raw_content?.exploration_rationale ?? ""}</em></p>
+     <h2>Question inattendue</h2><blockquote>${session.unexpected_question}</blockquote>
+     <h2>Relances suggérées</h2><ul>${followUps}</ul>
+     <h2>Mes notes</h2><p>${(session.manager_notes ?? "").replace(/\n/g, "<br>")}</p>`,
+  );
+}
+
+function exportOnboardingPDF(interview: CollabInterview, collaborator: Collaborator): void {
+  const milestonesHtml = interview.milestones.map((m) => {
+    const label = MILESTONE_LABELS[m.milestone_type];
+    const axesHtml = (m.checklist?.axes ?? []).map((ax) => {
+      const items = ax.items.map((it) => `<li>${it.checked ? "✓" : "○"} ${it.text}</li>`).join("");
+      return `<h3>${ax.name}</h3><ul>${items}</ul>`;
+    }).join("");
+    return `<div class="section"><h2>${label.title} — ${label.sub}</h2>${axesHtml}${m.manager_notes ? `<p><strong>Notes :</strong> ${m.manager_notes.replace(/\n/g, "<br>")}</p>` : ""}<p class="badge">${m.is_completed ? "✓ Réalisé" : "En cours"}</p></div>`;
+  }).join("");
+  exportPDF(
+    `Onboarding — ${collaborator.first_name} ${collaborator.last_name}`,
+    `<h1>Onboarding — ${collaborator.first_name} ${collaborator.last_name}</h1>
+     ${interview.start_date ? `<p class="meta">Démarrage : ${new Date(interview.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>` : ""}
+     ${milestonesHtml}`,
+  );
+}
+
+function exportMidYearPDF(interview: MidYearInterview, collaborator: Collaborator): void {
+  const p = interview.past; const pr = interview.present; const f = interview.future;
+  const list = (arr: string[] | undefined) => (arr ?? []).filter(Boolean).map((x) => `<li>${x}</li>`).join("");
+  const objList = (arr: MidYearObjectif[] | undefined) => (arr ?? []).map((o) => `<li>${o.title}${o.rating ? ` [${o.rating}]` : ""}${o.manager_comment ? ` — ${o.manager_comment}` : ""}</li>`).join("");
+  exportPDF(
+    `Mi-année ${interview.year} — ${collaborator.first_name} ${collaborator.last_name}`,
+    `<h1>Entretien mi-année ${interview.year} — ${collaborator.first_name} ${collaborator.last_name}</h1>
+     ${interview.interview_date ? `<p class="meta">Date : ${new Date(interview.interview_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>` : ""}
+     <h2>Les 6 derniers mois</h2>
+     ${p?.bilan_global ? `<p><strong>Bilan :</strong> ${p.bilan_global}</p>` : ""}
+     ${list(p?.moments_forts) ? `<p><strong>Moments forts :</strong></p><ul>${list(p?.moments_forts)}</ul>` : ""}
+     ${list(p?.kifs) ? `<p><strong>Kifs :</strong></p><ul>${list(p?.kifs)}</ul>` : ""}
+     ${list(p?.frustrations) ? `<p><strong>Frustrations :</strong></p><ul>${list(p?.frustrations)}</ul>` : ""}
+     ${objList(p?.objectifs_s1) ? `<p><strong>Objectifs S1 :</strong></p><ul>${objList(p?.objectifs_s1)}</ul>` : ""}
+     ${list(p?.apprentissages) ? `<p><strong>Apprentissages :</strong></p><ul>${list(p?.apprentissages)}</ul>` : ""}
+     ${p?.manager_notes ? `<p><strong>Notes manager :</strong> ${p.manager_notes.replace(/\n/g, "<br>")}</p>` : ""}
+     <h2>Le présent</h2>
+     ${pr?.feeling_poste != null ? `<p><strong>Feeling poste :</strong> ${pr.feeling_poste}/5</p>` : ""}
+     ${pr?.bien_etre_notes ? `<p><strong>Bien-être :</strong> ${pr.bien_etre_notes.replace(/\n/g, "<br>")}</p>` : ""}
+     ${pr?.manager_notes ? `<p><strong>Notes manager :</strong> ${pr.manager_notes.replace(/\n/g, "<br>")}</p>` : ""}
+     <h2>Le S2</h2>
+     ${list(f?.succes_si) ? `<p><strong>Succès si :</strong></p><ul>${list(f?.succes_si)}</ul>` : ""}
+     ${f?.daki_drop ? `<p><strong>DAKI Drop :</strong> ${f.daki_drop}</p>` : ""}
+     ${f?.daki_add  ? `<p><strong>DAKI Add :</strong> ${f.daki_add}</p>`  : ""}
+     ${f?.daki_keep ? `<p><strong>DAKI Keep :</strong> ${f.daki_keep}</p>` : ""}
+     ${f?.daki_improve ? `<p><strong>DAKI Improve :</strong> ${f.daki_improve}</p>` : ""}
+     ${f?.feedback_manager ? `<p><strong>Feedback manager :</strong> ${f.feedback_manager.replace(/\n/g, "<br>")}</p>` : ""}
+     ${objList(f?.objectifs_s2) ? `<p><strong>Objectifs S2 :</strong></p><ul>${objList(f?.objectifs_s2)}</ul>` : ""}
+     ${f?.demandes ? `<p><strong>Demandes :</strong> ${f.demandes.replace(/\n/g, "<br>")}</p>` : ""}
+     ${f?.manager_notes ? `<p><strong>Notes manager :</strong> ${f.manager_notes.replace(/\n/g, "<br>")}</p>` : ""}`,
+  );
+}
+
+// ── Markdown exports ────────────────────────────────────────────────────────
+
+function exportOnboardingMarkdown(interview: CollabInterview, collaborator: Collaborator): void {
+  const lines: string[] = [
+    `# Onboarding — ${collaborator.first_name} ${collaborator.last_name}`,
+    "",
+    interview.start_date ? `**Démarrage :** ${new Date(interview.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}` : "",
+    "",
+  ];
+  for (const m of interview.milestones) {
+    const label = MILESTONE_LABELS[m.milestone_type];
+    lines.push(`## ${label.title} — ${label.sub}`, "");
+    for (const ax of m.checklist?.axes ?? []) {
+      lines.push(`### ${ax.name}`, "");
+      for (const it of ax.items) lines.push(`- [${it.checked ? "x" : " "}] ${it.text}`);
+      lines.push("");
+    }
+    if (m.manager_notes) lines.push(`**Notes :** ${m.manager_notes}`, "");
+    lines.push(`*${m.is_completed ? "✓ Réalisé" : "En cours"}*`, "", "---", "");
+  }
+  const blob = new Blob([lines.filter(Boolean).join("\n")], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `onboarding-${collaborator.last_name.toLowerCase()}.md`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportMidYearMarkdown(interview: MidYearInterview, collaborator: Collaborator): void {
+  const p = interview.past; const pr = interview.present; const f = interview.future;
+  const list = (arr: string[] | undefined) => (arr ?? []).filter(Boolean).map((x) => `- ${x}`).join("\n");
+  const objList = (arr: MidYearObjectif[] | undefined) => (arr ?? []).map((o) => `- ${o.title}${o.rating ? ` [${o.rating}]` : ""}${o.manager_comment ? ` — ${o.manager_comment}` : ""}`).join("\n");
+  const lines = [
+    `# Entretien mi-année ${interview.year} — ${collaborator.first_name} ${collaborator.last_name}`,
+    interview.interview_date ? `\n**Date :** ${new Date(interview.interview_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}` : "",
+    "\n## Les 6 derniers mois",
+    p?.bilan_global ? `\n**Bilan :** ${p.bilan_global}` : "",
+    list(p?.moments_forts) ? `\n**Moments forts :**\n${list(p?.moments_forts)}` : "",
+    list(p?.kifs) ? `\n**Kifs :**\n${list(p?.kifs)}` : "",
+    list(p?.frustrations) ? `\n**Frustrations :**\n${list(p?.frustrations)}` : "",
+    objList(p?.objectifs_s1) ? `\n**Objectifs S1 :**\n${objList(p?.objectifs_s1)}` : "",
+    list(p?.apprentissages) ? `\n**Apprentissages :**\n${list(p?.apprentissages)}` : "",
+    p?.manager_notes ? `\n**Notes manager :** ${p.manager_notes}` : "",
+    "\n## Le présent",
+    pr?.feeling_poste != null ? `\n**Feeling poste :** ${pr.feeling_poste}/5` : "",
+    pr?.bien_etre_notes ? `\n**Bien-être :** ${pr.bien_etre_notes}` : "",
+    pr?.manager_notes ? `\n**Notes manager :** ${pr.manager_notes}` : "",
+    "\n## Le S2",
+    list(f?.succes_si) ? `\n**Succès si :**\n${list(f?.succes_si)}` : "",
+    f?.daki_drop    ? `\n**DAKI Drop :** ${f.daki_drop}` : "",
+    f?.daki_add     ? `\n**DAKI Add :** ${f.daki_add}` : "",
+    f?.daki_keep    ? `\n**DAKI Keep :** ${f.daki_keep}` : "",
+    f?.daki_improve ? `\n**DAKI Improve :** ${f.daki_improve}` : "",
+    f?.feedback_manager ? `\n**Feedback manager :** ${f.feedback_manager}` : "",
+    objList(f?.objectifs_s2) ? `\n**Objectifs S2 :**\n${objList(f?.objectifs_s2)}` : "",
+    f?.demandes ? `\n**Demandes :** ${f.demandes}` : "",
+    f?.manager_notes ? `\n**Notes manager :** ${f.manager_notes}` : "",
+  ];
+  const blob = new Blob([lines.filter(Boolean).join("")], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `mi-annee-${interview.year}-${collaborator.last_name.toLowerCase()}.md`; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function exportMarkdown(session: WeeklySession, collaborator: Collaborator): void {
   const lines = [
     `# 1:1 — ${collaborator.first_name} ${collaborator.last_name} — Semaine ${session.week_number}`,
@@ -1434,8 +1711,9 @@ function CollaboratorPageContent() {
 
   const [generatingWeek, setGeneratingWeek] = useState<number | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
-  const [pickerWeek, setPickerWeek]     = useState<number | null>(null);
-  const [pickerStep, setPickerStep]     = useState<"type" | "confirm_1on1">("type");
+  const [pickerWeek, setPickerWeek]         = useState<number | null>(null);
+  const [pickerStep, setPickerStep]         = useState<"type" | "confirm_1on1" | "onboarding_date">("type");
+  const [pickerOnboardingDate, setPickerOnboardingDate] = useState<string>("");
 
   const [companyOkr, setCompanyOkr]   = useState<CompanyOkr | null>(null);
   const [collabOkr, setCollabOkr]     = useState<CollaboratorOkr | null>(null);
@@ -1889,18 +2167,21 @@ function CollaboratorPageContent() {
 
   // ── Entretiens ───────────────────────────────────────────────────────────
 
-  async function createOnboardingInterview(slotNumber: number) {
+  async function createOnboardingInterview(slotNumber: number, startDate?: string) {
     setCreatingInterview(true);
     try {
       const res  = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "onboarding", slot_number: slotNumber }),
+        body: JSON.stringify({ type: "onboarding", slot_number: slotNumber, start_date: startDate ?? null }),
       });
       const data = await res.json() as CollabInterview & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Erreur de création");
       setInterviews((prev) => [...prev, data]);
       setSelectedInterviewId(data.id);
+      if (startDate && collaborator) {
+        downloadOnboardingICS(startDate, `${collaborator.first_name} ${collaborator.last_name}`);
+      }
     } catch (e) {
       setSessionError(e instanceof Error ? e.message : "Erreur lors de la création de l'entretien");
     } finally {
@@ -3131,15 +3412,15 @@ function CollaboratorPageContent() {
                             <span className="text-xs font-medium text-gray-400">{slot}</span>
                           </>
                         ) : !hasContent ? (
-                          // Vide non bloqué
+                          // Vide non bloqué : numéro seul
                           <span className={`text-2xl font-bold leading-none ${numCls}`}>{slot}</span>
+                        ) : isDone ? (
+                          // Terminé : check seul
+                          <Check size={28} className="text-green-500" />
                         ) : (
-                          // Contenu : numéro + icône (ou check si terminé) + label type
+                          // En cours : icône + label, sans numéro
                           <>
-                            <span className={`text-xl font-bold leading-none ${numCls}`}>{slot}</span>
-                            {isDone
-                              ? <Check size={28} className="text-green-500 my-1" />
-                              : type === "session"
+                            {type === "session"
                               ? <Handshake size={24} className="text-blue-400 my-1" />
                               : type === "onboarding"
                               ? <Rocket size={24} className="text-blue-400 my-1" />
@@ -3338,6 +3619,7 @@ function CollaboratorPageContent() {
                   {onboarding && (
                     <OnboardingCard
                       interview={onboarding}
+                      collaborator={collaborator!}
                       onUpdate={(updated) => setInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
                     />
                   )}
@@ -3345,6 +3627,7 @@ function CollaboratorPageContent() {
                     <MidYearCard
                       interview={midYear}
                       collaboratorId={collaboratorId}
+                      collaborator={collaborator!}
                       onUpdate={(updated) => setMidYearInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
                     />
                   )}
@@ -3392,11 +3675,7 @@ function CollaboratorPageContent() {
                       )}
                     </button>
                     <button
-                      onClick={async () => {
-                        const slot = pickerWeek!;
-                        setPickerWeek(null);
-                        await createOnboardingInterview(slot);
-                      }}
+                      onClick={() => { setPickerOnboardingDate(""); setPickerStep("onboarding_date"); }}
                       disabled={creatingInterview}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left disabled:opacity-50"
                     >
@@ -3424,6 +3703,64 @@ function CollaboratorPageContent() {
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">Entretien mi-année</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
                       </div>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {pickerStep === "onboarding_date" && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => setPickerStep("type")}
+                      className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    >
+                      ← Retour
+                    </button>
+                    <button onClick={() => setPickerWeek(null)} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                      <Rocket size={16} className="text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">Onboarding</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Date de démarrage</p>
+                    </div>
+                  </div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                    Date d&apos;arrivée du collaborateur
+                  </label>
+                  <input
+                    type="date"
+                    value={pickerOnboardingDate}
+                    onChange={(e) => setPickerOnboardingDate(e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                  />
+                  {pickerOnboardingDate && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-1.5">
+                      <CalendarDays size={11} /> Invitations J+7, J+30 et J+90 téléchargées automatiquement
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        const slot = pickerWeek!;
+                        const date = pickerOnboardingDate;
+                        setPickerWeek(null);
+                        setPickerOnboardingDate("");
+                        await createOnboardingInterview(slot, date || undefined);
+                      }}
+                      disabled={creatingInterview}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-700 text-white rounded-xl hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                    >
+                      {creatingInterview ? <Loader2 size={13} className="animate-spin" /> : <Rocket size={13} />}
+                      Créer l&apos;onboarding
+                    </button>
+                    <button onClick={() => setPickerWeek(null)} className="px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                      Annuler
                     </button>
                   </div>
                 </>
@@ -3631,6 +3968,10 @@ function CollaboratorPageContent() {
                       <button onClick={() => exportMarkdown(expandedSession, collaborator)}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <Download size={13} /> {t.coach.exportMdBtn}
+                      </button>
+                      <button onClick={() => exportSessionPDF(expandedSession, collaborator)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <Download size={13} /> PDF
                       </button>
                       <button onClick={() => setExpandedWeek(null)}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">

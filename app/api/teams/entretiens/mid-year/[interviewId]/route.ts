@@ -27,13 +27,14 @@ export async function PUT(
       return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
     }
 
-    const updates = body as Partial<Pick<MidYearInterview, "past" | "present" | "future" | "status">>;
+    const updates = body as Partial<Pick<MidYearInterview, "past" | "present" | "future" | "status" | "interview_date">>;
 
     type AllowedUpdates = {
       past?: MidYearPast;
       present?: MidYearPresent;
       future?: MidYearFuture;
       status?: MidYearStatus;
+      interview_date?: string | null;
       updated_at: string;
     };
 
@@ -42,6 +43,7 @@ export async function PUT(
     if (updates.present != null) payload.present = updates.present;
     if (updates.future != null) payload.future = updates.future;
     if (updates.status !== undefined) payload.status = updates.status;
+    if ("interview_date" in updates) payload.interview_date = updates.interview_date ?? null;
 
     const { data: updated, error } = await supabase
       .from("interviews")
