@@ -8,7 +8,7 @@ import {
   RefreshCw, Sparkles, Crown, MessageSquare, ChevronDown, ChevronUp, ChevronRight,
   TrendingUp, X, Download, Target, Plus, Building2, BookUser, Copy, Link2,
   CalendarDays, Smile, Star, Camera, UserRound, BookOpen, LayoutGrid, Pencil,
-  Rocket, BarChart3,
+  Rocket, BarChart3, Handshake,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { createClient } from "@/lib/supabase/client";
@@ -3132,19 +3132,19 @@ function CollaboratorPageContent() {
                           </>
                         ) : !hasContent ? (
                           // Vide non bloqué
-                          <span className={`text-4xl font-bold leading-none ${numCls}`}>{slot}</span>
+                          <span className={`text-2xl font-bold leading-none ${numCls}`}>{slot}</span>
                         ) : (
-                          // Contenu : numéro + indicateur + type
+                          // Contenu : numéro + icône (ou check si terminé) + label type
                           <>
-                            <span className={`text-3xl font-bold leading-none ${numCls}`}>{slot}</span>
+                            <span className={`text-xl font-bold leading-none ${numCls}`}>{slot}</span>
                             {isDone
                               ? <Check size={28} className="text-green-500 my-1" />
-                              : inProgress
-                              ? <span className={`w-4 h-4 rounded-full my-1 ${isMid ? "bg-indigo-400" : "bg-blue-400"}`} />
-                              : null
+                              : type === "session"
+                              ? <Handshake size={24} className="text-blue-400 my-1" />
+                              : type === "onboarding"
+                              ? <Rocket size={24} className="text-blue-400 my-1" />
+                              : <BarChart3 size={24} className="text-indigo-400 my-1" />
                             }
-                            {type === "onboarding" && <Rocket size={24} className="text-blue-400 mb-1" />}
-                            {type === "midyear"    && <BarChart3 size={24} className="text-indigo-400 mb-1" />}
                             <span className="text-xl leading-none font-medium text-gray-400 dark:text-gray-500 truncate max-w-full px-1">
                               {typeLabel}
                             </span>
