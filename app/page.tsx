@@ -283,7 +283,7 @@ export default function Home() {
                 <div className="w-8 h-8 bg-blue-50 dark:bg-blue-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
                   <Users size={15} className="text-blue-700 dark:text-blue-400" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.myTeam}</span>
                   {collaborators.length > 0 && (
                     <p className="text-[10px] text-gray-400 dark:text-gray-500">
@@ -291,50 +291,51 @@ export default function Home() {
                     </p>
                   )}
                 </div>
+                <Link
+                  href="/teams"
+                  className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex-shrink-0"
+                >
+                  {t.home.viewTeam}
+                </Link>
               </div>
 
               {collaborators.length === 0 ? (
-                <>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
-                    {t.home.teamEmpty}
-                  </p>
-                  <Link
-                    href="/teams"
-                    className="mt-auto text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                  >
-                    {t.home.addMember}
-                  </Link>
-                </>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {t.home.teamEmpty}
+                </p>
               ) : (
-                <>
-                  <div className="flex flex-col flex-1 gap-1.5">
-                    {collaborators.map((c, i) => {
-                      const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                      const initials = ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
-                      return (
-                        <Link
-                          key={c.id}
-                          href={`/teams/${c.id}`}
-                          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all"
-                        >
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
-                            {initials}
-                          </div>
-                          <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
-                            {c.first_name} {c.last_name}
-                          </p>
-                          <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
-                        </Link>
-                      );
-                    })}
-                  </div>
+                <div className="flex flex-col flex-1 gap-1.5">
+                  {collaborators.map((c, i) => {
+                    const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                    const initials = ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
+                    return (
+                      <Link
+                        key={c.id}
+                        href={`/teams/${c.id}`}
+                        className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all"
+                      >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
+                          {initials}
+                        </div>
+                        <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                          {c.first_name} {c.last_name}
+                        </p>
+                        <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                      </Link>
+                    );
+                  })}
                   <Link
-                    href="/teams"
-                    className="mt-3 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    href="/teams?action=add"
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 transition-all"
                   >
-                    {t.home.viewTeam}
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                      <UserPlus size={12} className="text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <p className="text-[12px] font-medium text-gray-400 dark:text-gray-500">
+                      Ajouter un collaborateur
+                    </p>
                   </Link>
-                </>
+                </div>
               )}
             </div>
 
@@ -368,20 +369,30 @@ export default function Home() {
                 </div>
                 <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
               </div>
-              <div className="flex flex-col gap-1.5 mt-auto">
+              <div className="flex flex-col gap-1.5">
                 <Link
                   href="/recruitment?tab=job-description"
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
                 >
-                  <ClipboardList size={11} className="flex-shrink-0" />
-                  {t.home.jobDescription}
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-100 dark:bg-pink-950">
+                    <ClipboardList size={12} className="text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                    {t.home.jobDescription}
+                  </p>
+                  <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                 </Link>
                 <Link
                   href="/recruitment?tab=recruiter"
-                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-pink-200 dark:hover:border-pink-800 hover:bg-pink-50/40 dark:hover:bg-pink-950/20 transition-all"
                 >
-                  <UserRoundCheck size={11} className="flex-shrink-0" />
-                  {t.home.interviewQuestions}
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-pink-100 dark:bg-pink-950">
+                    <UserRoundCheck size={12} className="text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                    {t.home.interviewQuestions}
+                  </p>
+                  <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                 </Link>
               </div>
             </div>
