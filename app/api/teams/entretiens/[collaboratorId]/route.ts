@@ -71,7 +71,7 @@ export async function POST(
       return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
     }
 
-    const { type, slot_number } = body as { type: string; slot_number?: number };
+    const { type, slot_number, start_date } = body as { type: string; slot_number?: number; start_date?: string };
 
     if (type !== "onboarding" && type !== "mid_year") {
       return NextResponse.json({ error: "Type d'entretien non supporté" }, { status: 400 });
@@ -81,7 +81,7 @@ export async function POST(
     if (type === "onboarding") {
       const { data: interview, error: interviewError } = await supabase
         .from("interviews")
-        .insert({ collaborator_id: collaboratorId, user_id: user.id, type: "onboarding", status: "active", slot_number: slot_number ?? null })
+        .insert({ collaborator_id: collaboratorId, user_id: user.id, type: "onboarding", status: "active", slot_number: slot_number ?? null, start_date: start_date ?? null })
         .select("*")
         .single();
 
