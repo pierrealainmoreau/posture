@@ -358,18 +358,18 @@ export default function Home() {
                   {acadStats.badges} badge{acadStats.badges !== 1 ? "s" : ""} collecté{acadStats.badges !== 1 ? "s" : ""}
                 </span>
               </div>
-              {/* ligne 3 : CTA style recrutement */}
-              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all mb-2">
-                <GraduationCap size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">Débloquer le prochain</p>
-                <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
-              </div>
-              {/* ligne 4 : barre de progression */}
-              <div className="h-1 bg-amber-100 dark:bg-amber-900/60 rounded-full overflow-hidden">
+              {/* ligne 3 : barre de progression */}
+              <div className="h-1 bg-amber-100 dark:bg-amber-900/60 rounded-full overflow-hidden mb-2">
                 <div
                   className="h-full bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-400 rounded-full transition-all duration-500"
                   style={{ width: acadStats.totalQuizzes > 0 ? `${Math.round((acadStats.badges / acadStats.totalQuizzes) * 100)}%` : "0%" }}
                 />
+              </div>
+              {/* ligne 4 : CTA style recrutement */}
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all">
+                <GraduationCap size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">Débloquer le prochain</p>
+                <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
               </div>
             </Link>
 
