@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -108,7 +108,7 @@ function initials(c: Collaborator) {
   return ((c.first_name[0] ?? "") + (c.last_name[0] ?? "")).toUpperCase() || "?";
 }
 
-export default function CoachPage() {
+function CoachPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -520,5 +520,13 @@ export default function CoachPage() {
 
       </main>
     </div>
+  );
+}
+
+export default function CoachPage() {
+  return (
+    <Suspense>
+      <CoachPageInner />
+    </Suspense>
   );
 }
