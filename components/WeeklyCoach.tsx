@@ -162,7 +162,7 @@ export function WeeklyCoach() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 flex items-center justify-center min-h-[220px]">
+      <div className="rounded-xl p-6 flex items-center justify-center min-h-[220px]">
         <Loader2 size={18} className="animate-spin text-gray-400" />
       </div>
     );
@@ -172,7 +172,7 @@ export function WeeklyCoach() {
 
   if (setupMode || !data?.configured) {
     return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+      <div className="rounded-xl p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 bg-blue-50 dark:bg-blue-950 rounded-lg flex items-center justify-center flex-shrink-0">
             <CalendarDays size={18} className="text-blue-700 dark:text-blue-400" />
@@ -235,7 +235,7 @@ export function WeeklyCoach() {
   // ── Modal de confirmation changement de besoin ────────────────────────────
 
   const confirmModal = showConfirmModal ? (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-900 rounded-xl">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 rounded-xl">
       <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950 rounded-xl flex items-center justify-center mb-4">
         <CalendarDays size={20} className="text-amber-600 dark:text-amber-400" />
       </div>
@@ -266,7 +266,7 @@ export function WeeklyCoach() {
 
   if (data.is_weekend) {
     return (
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+      <div className="relative overflow-hidden rounded-xl p-5">
         {confirmModal}
         <CoachHeader onEdit={handleEditRequest} weekProgressLabel={weekProgressLabel} editLabel={t.weeklyCoach.edit} />
         <WeekDots progress={progress} todayJsDay={null} />
@@ -287,7 +287,7 @@ export function WeeklyCoach() {
   // ── Active / completed ────────────────────────────────────────────────────
 
   return (
-    <div className="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+    <div className="relative overflow-hidden rounded-xl p-5">
       {confirmModal}
       <CoachHeader onEdit={handleEditRequest} weekProgressLabel={weekProgressLabel} editLabel={t.weeklyCoach.edit} />
       <WeekDots progress={progress} todayJsDay={todayJsDay} />
