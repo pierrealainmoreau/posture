@@ -148,10 +148,10 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <Link
               href="/reunion-maker/preparer"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
+              className="group bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl p-4 text-center hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
-                <CalendarDays size={17} className="text-blue-700 dark:text-blue-400" />
+              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/60 rounded-[10px] mx-auto mb-3 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <CalendarDays size={17} className="text-blue-700 dark:text-blue-300" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
                 {t.home.prepareMeeting}
@@ -160,10 +160,10 @@ export default function Home() {
 
             <Link
               href="/feedback"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150"
+              className="group bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/30 dark:to-gray-900 border border-violet-200/70 dark:border-violet-800/50 rounded-xl p-4 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-9 h-9 bg-violet-100 dark:bg-violet-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
-                <Quote size={17} className="text-violet-700 dark:text-violet-400" />
+              <div className="w-9 h-9 bg-violet-100 dark:bg-violet-900/60 rounded-[10px] mx-auto mb-3 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <Quote size={17} className="text-violet-700 dark:text-violet-300" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
                 {t.home.generateFeedback}
@@ -172,10 +172,10 @@ export default function Home() {
 
             <Link
               href="/teams"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
+              className="group bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl p-4 text-center hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
-                <UserRoundCheck size={17} className="text-blue-700 dark:text-blue-400" />
+              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/60 rounded-[10px] mx-auto mb-3 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <UserRoundCheck size={17} className="text-blue-700 dark:text-blue-300" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
                 {t.home.prepareOneOnOne}
@@ -184,10 +184,10 @@ export default function Home() {
 
             <Link
               href="/teams/okr"
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-center hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150"
+              className="group bg-gradient-to-br from-pink-50 to-white dark:from-pink-950/30 dark:to-gray-900 border border-pink-200/70 dark:border-pink-800/50 rounded-xl p-4 text-center hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-9 h-9 bg-pink-100 dark:bg-pink-950 rounded-[10px] mx-auto mb-3 flex items-center justify-center">
-                <Target size={17} className="text-pink-700 dark:text-pink-400" />
+              <div className="w-9 h-9 bg-pink-100 dark:bg-pink-900/60 rounded-[10px] mx-auto mb-3 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <Target size={17} className="text-pink-700 dark:text-pink-300" />
               </div>
               <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
                 {t.home.trackOKRs}
@@ -203,50 +203,50 @@ export default function Home() {
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Link
               href="/toolbox/humeur"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm transition-all duration-150"
+              className="bg-gradient-to-br from-rose-50 to-white dark:from-rose-950/30 dark:to-gray-900 border border-rose-200/70 dark:border-rose-800/50 rounded-xl p-3 text-center hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <SmilePlus size={20} className="text-rose-500 dark:text-rose-400" />
+              <div className="w-8 h-8 bg-rose-100 dark:bg-rose-900/60 rounded-[9px] mx-auto mb-2 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <SmilePlus size={16} className="text-rose-600 dark:text-rose-300" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Humeur</p>
             </Link>
 
             <Link
               href="/icebreaker"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-sm transition-all duration-150"
+              className="bg-gradient-to-br from-cyan-50 to-white dark:from-cyan-950/30 dark:to-gray-900 border border-cyan-200/70 dark:border-cyan-800/50 rounded-xl p-3 text-center hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <Shuffle size={20} className="text-cyan-600 dark:text-cyan-400" />
+              <div className="w-8 h-8 bg-cyan-100 dark:bg-cyan-900/60 rounded-[9px] mx-auto mb-2 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <Shuffle size={16} className="text-cyan-700 dark:text-cyan-300" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Icebreaker</p>
             </Link>
 
             <Link
               href="/toolbox/anecdotes"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150"
+              className="bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/30 dark:to-gray-900 border border-emerald-200/70 dark:border-emerald-800/50 rounded-xl p-3 text-center hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <BookOpen size={20} className="text-emerald-600 dark:text-emerald-400" />
+              <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/60 rounded-[9px] mx-auto mb-2 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <BookOpen size={16} className="text-emerald-700 dark:text-emerald-300" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Anecdotes</p>
             </Link>
 
             <Link
               href="/toolbox/health-radar"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-sm transition-all duration-150"
+              className="bg-gradient-to-br from-teal-50 to-white dark:from-teal-950/30 dark:to-gray-900 border border-teal-200/70 dark:border-teal-800/50 rounded-xl p-3 text-center hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <Activity size={20} className="text-teal-600 dark:text-teal-400" />
+              <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/60 rounded-[9px] mx-auto mb-2 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <Activity size={16} className="text-teal-700 dark:text-teal-300" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Health Radar</p>
             </Link>
 
             <Link
               href="/toolbox/speed-retro"
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150"
+              className="bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/30 dark:to-gray-900 border border-violet-200/70 dark:border-violet-800/50 rounded-xl p-3 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm transition-all duration-150"
             >
-              <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
-                <Zap size={20} className="text-violet-600 dark:text-violet-400" />
+              <div className="w-8 h-8 bg-violet-100 dark:bg-violet-900/60 rounded-[9px] mx-auto mb-2 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                <Zap size={16} className="text-violet-700 dark:text-violet-300" />
               </div>
               <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 leading-tight">Speed Retro</p>
             </Link>
@@ -271,17 +271,17 @@ export default function Home() {
 
             {/* ── Col 1, lignes 1+2 : Weekly Coach ── */}
             <div
-              className="row-span-2 cursor-pointer"
+              className="row-span-2 cursor-pointer bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
               onClick={(e) => { if (!(e.target as Element).closest("a, button")) router.push("/teams/weekly"); }}
             >
               <WeeklyCoach />
             </div>
 
             {/* ── Col 2, lignes 1+2 : Mon équipe ── */}
-            <div className="row-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex flex-col hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-150">
+            <div className="row-span-2 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl p-4 flex flex-col hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-950 rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <Users size={15} className="text-blue-700 dark:text-blue-400" />
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/60 rounded-[10px] flex items-center justify-center flex-shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                  <Users size={15} className="text-blue-700 dark:text-blue-300" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.myTeam}</span>
@@ -372,10 +372,10 @@ export default function Home() {
             </Link>
 
             {/* ── Col 3, ligne 2 : Recrutement ── */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2.5 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150">
+            <div className="bg-gradient-to-br from-pink-50 to-white dark:from-pink-950/30 dark:to-gray-900 border border-pink-200/70 dark:border-pink-800/50 rounded-xl px-3 py-2.5 flex flex-col hover:border-pink-300 dark:hover:border-pink-700 hover:shadow-sm transition-all duration-150">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-pink-50 dark:bg-pink-950 rounded-[7px] flex items-center justify-center flex-shrink-0">
-                  <UserPlus size={12} className="text-pink-700 dark:text-pink-400" />
+                <div className="w-6 h-6 bg-pink-100 dark:bg-pink-900/60 rounded-[7px] flex items-center justify-center flex-shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                  <UserPlus size={12} className="text-pink-700 dark:text-pink-300" />
                 </div>
                 <span className="text-[11px] font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
               </div>
