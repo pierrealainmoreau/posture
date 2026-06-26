@@ -351,19 +351,20 @@ export default function Home() {
                 </div>
                 <span className="text-[11px] font-bold text-gray-900 dark:text-white flex-1 tracking-tight">Quiz</span>
               </div>
-              {/* ligne 2 : badges collectés + CTA */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1">
-                  <Trophy size={10} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
-                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
-                    {acadStats.badges} badge{acadStats.badges !== 1 ? "s" : ""} collecté{acadStats.badges !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                  Débloquer le prochain
+              {/* ligne 2 : badges collectés */}
+              <div className="flex items-center gap-1 mb-1.5">
+                <Trophy size={10} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 tabular-nums">
+                  {acadStats.badges} badge{acadStats.badges !== 1 ? "s" : ""} collecté{acadStats.badges !== 1 ? "s" : ""}
                 </span>
               </div>
-              {/* ligne 3 : barre de progression */}
+              {/* ligne 3 : CTA style recrutement */}
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-white/60 dark:bg-amber-950/20 mb-2">
+                <GraduationCap size={12} className="text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate flex-1 min-w-0">Débloquer le prochain</p>
+                <ChevronRight size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+              </div>
+              {/* ligne 4 : barre de progression */}
               <div className="h-1 bg-amber-100 dark:bg-amber-900/60 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-400 rounded-full transition-all duration-500"
