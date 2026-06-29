@@ -267,18 +267,18 @@ export default function Home() {
         <section>
           <SectionLabel>{t.home.sectionBetween}</SectionLabel>
 
-          <div className="grid grid-cols-3 grid-rows-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:grid-rows-2 gap-3">
 
             {/* ── Col 1, lignes 1+2 : Weekly Coach ── */}
             <div
-              className="row-span-2 cursor-pointer bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
+              className="sm:row-span-2 cursor-pointer bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150"
               onClick={(e) => { if (!(e.target as Element).closest("a, button")) router.push("/teams/weekly"); }}
             >
               <WeeklyCoach />
             </div>
 
             {/* ── Col 2, lignes 1+2 : Mon équipe ── */}
-            <div className="row-span-2 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl p-4 flex flex-col hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150">
+            <div className="sm:row-span-2 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 border border-blue-200/70 dark:border-blue-800/50 rounded-xl p-4 flex flex-col hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm transition-all duration-150">
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/60 rounded-[10px] flex items-center justify-center flex-shrink-0">
                   <Users size={15} className="text-blue-700 dark:text-blue-300" />

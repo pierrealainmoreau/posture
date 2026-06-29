@@ -178,7 +178,7 @@ export function WeeklyCoach() {
             <CalendarDays size={18} className="text-blue-700 dark:text-blue-400" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900 dark:text-white text-sm">Weekly Coach</p>
+            <p className="text-xs font-bold text-gray-900 dark:text-white">Weekly Coach</p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{t.weeklyCoach.mainNeed}</p>
           </div>
         </div>
@@ -359,7 +359,7 @@ function CoachHeader({
           <CalendarDays size={18} className="text-blue-700 dark:text-blue-400" />
         </div>
         <div>
-          <p className="font-semibold text-gray-900 dark:text-white text-sm">Weekly Coach</p>
+          <p className="text-xs font-bold text-gray-900 dark:text-white">Weekly Coach</p>
           <p className="text-xs text-gray-400 dark:text-gray-500">{weekProgressLabel}</p>
         </div>
       </div>
