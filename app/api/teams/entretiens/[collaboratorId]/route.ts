@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { CollabInterview, MidYearInterview } from "@/lib/types";
+import type { CollabInterview, MidYearInterview, MonthlyReviewInterview } from "@/lib/types";
 
 export async function GET(
   _req: NextRequest,
@@ -73,7 +73,7 @@ export async function POST(
 
     const { type, slot_number, start_date } = body as { type: string; slot_number?: number; start_date?: string };
 
-    if (type !== "onboarding" && type !== "mid_year") {
+    if (type !== "onboarding" && type !== "mid_year" && type !== "monthly_review") {
       return NextResponse.json({ error: "Type d'entretien non supporté" }, { status: 400 });
     }
 
@@ -109,6 +109,35 @@ export async function POST(
           return order.indexOf(a.milestone_type) - order.indexOf(b.milestone_type);
         }),
       };
+      return NextResponse.json(result, { status: 201 });
+    }
+
+    // ── Bilan mensuel ─────────────────────────────────────────────────────
+    if (type === "monthly_review") {
+      const { month, year } = body as { type: string; month?: number; year?: number };
+      const now = new Date();
+      const reviewMonth = month ?? (now.getMonth() + 1);
+      const reviewYear  = year  ?? now.getFullYear();
+
+      const { data: interview, error: interviewError } = await supabase
+        .from("interviews")
+        .insert({
+          collaborator_id: collaboratorId,
+          user_id: user.id,
+          type: "monthly_review",
+          status: "draft",
+          month: reviewMonth,
+          year: reviewYear,
+          slot_number: slot_number ?? null,
+        })
+        .select("*")
+        .single();
+
+      if (interviewError || !interview) {
+        return NextResponse.json({ error: "Erreur de création", details: interviewError?.message }, { status: 500 });
+      }
+
+      const result: MonthlyReviewInterview = { ...interview, data: null };
       return NextResponse.json(result, { status: 201 });
     }
 

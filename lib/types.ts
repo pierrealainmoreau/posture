@@ -614,7 +614,7 @@ export interface OnboardingMilestone {
   updated_at: string;
 }
 
-export type CollabInterviewType = "onboarding" | "mid_year";
+export type CollabInterviewType = "onboarding" | "mid_year" | "monthly_review";
 
 // ── Onboarding interview ──────────────────────────────────────────────────
 export interface CollabInterview {
@@ -702,4 +702,29 @@ export interface MidYearInterview {
   updated_at: string;
 }
 
-export type AnyCollabInterview = CollabInterview | MidYearInterview;
+// ── Bilan mensuel de développement ───────────────────────────────────────────
+
+export interface MonthlyReviewData {
+  apprentissages: string;
+  different_si: string;
+  competences_progressees: string;
+  focus_prochain_mois: string;
+  manager_notes: string;
+}
+
+export interface MonthlyReviewInterview {
+  id: string;
+  collaborator_id: string;
+  user_id: string;
+  type: "monthly_review";
+  month: number;
+  year: number;
+  status: "draft" | "completed";
+  slot_number: number | null;
+  interview_date: string | null;
+  data: MonthlyReviewData | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AnyCollabInterview = CollabInterview | MidYearInterview | MonthlyReviewInterview;

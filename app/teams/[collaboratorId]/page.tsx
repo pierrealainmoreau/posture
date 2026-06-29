@@ -19,6 +19,7 @@ import type {
   CareerSelfAssessment, CareerSelfLevels,
   CollabInterview, OnboardingMilestone, OnboardingMilestoneType, OnboardingChecklist, ChecklistAxis,
   MidYearInterview, MidYearPast, MidYearPresent, MidYearFuture, MidYearObjectif, ObjectifRating, FeelingPoste, Score5,
+  MonthlyReviewInterview, MonthlyReviewData,
 } from "@/lib/types";
 import { MANUAL_SECTIONS } from "@/lib/manual-questions";
 import { COACH_CONFIG, LEVELS } from "@/lib/types";
@@ -999,6 +1000,183 @@ function MidYearCard({
   );
 }
 
+// ── MonthlyReviewCard ──────────────────────────────────────────────────────
+
+const MONTH_NAMES = ["janv.", "févr.", "mars", "avr.", "mai", "juin",
+  "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+const MONTHLY_QUESTIONS: { field: keyof MonthlyReviewData; label: string; hint: string; placeholder: string }[] = [
+  {
+    field: "apprentissages",
+    label: "Ce qui m'a le plus appris",
+    hint: "Qu'est-ce que t'a le plus appris ces derniers mois ?",
+    placeholder: "Une situation, un projet, une rencontre qui t'a fait grandir…",
+  },
+  {
+    field: "different_si",
+    label: "Ce que je ferais différemment",
+    hint: "Qu'est-ce que tu ferais différemment si tu pouvais revenir en arrière ?",
+    placeholder: "Un choix, une approche, une réaction…",
+  },
+  {
+    field: "competences_progressees",
+    label: "Compétences où j'ai progressé",
+    hint: "Sur quelles compétences tu penses avoir progressé ?",
+    placeholder: "Techniques, relationnelles, managériales…",
+  },
+  {
+    field: "focus_prochain_mois",
+    label: "Mon focus le mois prochain",
+    hint: "Ce sur quoi tu vas te concentrer le mois prochain ?",
+    placeholder: "Une priorité, un objectif, une intention…",
+  },
+];
+
+function MonthlyReviewCard({
+  interview,
+  collaboratorId,
+  onUpdate,
+}: {
+  interview: MonthlyReviewInterview;
+  collaboratorId: string;
+  onUpdate: (updated: MonthlyReviewInterview) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [interviewDate, setInterviewDate] = useState<string>(interview.interview_date ?? "");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [reviewData, setReviewData] = useState<MonthlyReviewData>(() => interview.data ?? {
+    apprentissages: "",
+    different_si: "",
+    competences_progressees: "",
+    focus_prochain_mois: "",
+    manager_notes: "",
+  });
+
+  const debounceSave = (next: MonthlyReviewData) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      setSaving(true);
+      const res = await fetch(`/api/teams/entretiens/monthly-review/${interview.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: next }),
+      });
+      if (res.ok) {
+        const updated = await res.json() as MonthlyReviewInterview;
+        onUpdate({ ...interview, ...updated });
+      }
+      setSaving(false);
+    }, 700);
+  };
+
+  const updateField = (field: keyof MonthlyReviewData, value: string) => {
+    const next = { ...reviewData, [field]: value };
+    setReviewData(next);
+    debounceSave(next);
+  };
+
+  const saveDate = async (date: string) => {
+    setInterviewDate(date);
+    await fetch(`/api/teams/entretiens/monthly-review/${interview.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ interview_date: date || null }),
+    });
+    onUpdate({ ...interview, interview_date: date || null });
+  };
+
+  const toggleComplete = async () => {
+    const newStatus = interview.status === "completed" ? "draft" : "completed";
+    const res = await fetch(`/api/teams/entretiens/monthly-review/${interview.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) onUpdate({ ...interview, status: newStatus });
+  };
+
+  const monthLabel = MONTH_NAMES[(interview.month ?? 1) - 1];
+
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              Bilan mensuel — {monthLabel} {interview.year}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {interview.status === "completed" ? "Complété" : "En cours"}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {saving && <Loader2 size={12} className="animate-spin text-gray-400" />}
+            <button
+              type="button"
+              onClick={toggleComplete}
+              className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                interview.status === "completed"
+                  ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+                  : "border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
+            >
+              {interview.status === "completed" ? "✓ Terminé" : "Marquer terminé"}
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">Date</label>
+            <input
+              type="date"
+              value={interviewDate}
+              onChange={(e) => setInterviewDate(e.target.value)}
+              onBlur={(e) => saveDate(e.target.value)}
+              className="px-2 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Questions */}
+      <div className="p-5 space-y-5">
+        {MONTHLY_QUESTIONS.map(({ field, label, hint, placeholder }) => (
+          <div key={field}>
+            <div className="mb-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{label}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 italic">{hint}</p>
+            </div>
+            <textarea
+              value={reviewData[field]}
+              onChange={(e) => updateField(field, e.target.value)}
+              placeholder={placeholder}
+              rows={3}
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+            />
+          </div>
+        ))}
+
+        {/* Notes manager */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5">Notes du manager (privées)</p>
+          <textarea
+            value={reviewData.manager_notes}
+            onChange={(e) => updateField("manager_notes", e.target.value)}
+            placeholder="Tes observations, engagements pris, points de suivi…"
+            rows={3}
+            className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── OnboardingCard ─────────────────────────────────────────────────────────
 
 const MILESTONE_ORDER: OnboardingMilestoneType[] = ["j7", "j30", "j90"];
@@ -1712,7 +1890,7 @@ function CollaboratorPageContent() {
   const [generatingWeek, setGeneratingWeek] = useState<number | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [pickerWeek, setPickerWeek]         = useState<number | null>(null);
-  const [pickerStep, setPickerStep]         = useState<"type" | "confirm_1on1" | "onboarding_date">("type");
+  const [pickerStep, setPickerStep]         = useState<"type" | "confirm_1on1" | "onboarding_date" | "monthly_review_month">("type");
   const [pickerOnboardingDate, setPickerOnboardingDate] = useState<string>("");
 
   const [companyOkr, setCompanyOkr]   = useState<CompanyOkr | null>(null);
@@ -1740,6 +1918,7 @@ function CollaboratorPageContent() {
 
   const [interviews, setInterviews]               = useState<CollabInterview[]>([]);
   const [midYearInterviews, setMidYearInterviews] = useState<MidYearInterview[]>([]);
+  const [monthlyReviewInterviews, setMonthlyReviewInterviews] = useState<MonthlyReviewInterview[]>([]);
   const [creatingInterview, setCreatingInterview] = useState(false);
   const [selectedInterviewId, setSelectedInterviewId]         = useState<string | null>(null);
   const [isAdmin, setIsAdmin]                                 = useState(false);
@@ -1803,10 +1982,12 @@ function CollaboratorPageContent() {
     const careerSelfData: CareerSelfAssessment | null = careerSelfRes.ok ? await careerSelfRes.json() : null;
     setCareerSelfAssessment(careerSelfData);
 
-    const allInterviews: (CollabInterview | MidYearInterview)[] = interviewsRes.ok ? await interviewsRes.json() : [];
-    const onboardingInterviews = allInterviews.filter((i) => i.type === "onboarding") as CollabInterview[];
-    const midYearData          = allInterviews.filter((i) => i.type === "mid_year")  as MidYearInterview[];
+    const allInterviews: (CollabInterview | MidYearInterview | MonthlyReviewInterview)[] = interviewsRes.ok ? await interviewsRes.json() : [];
+    const onboardingInterviews    = allInterviews.filter((i) => i.type === "onboarding")      as CollabInterview[];
+    const midYearData             = allInterviews.filter((i) => i.type === "mid_year")         as MidYearInterview[];
+    const monthlyReviewData       = allInterviews.filter((i) => i.type === "monthly_review")   as MonthlyReviewInterview[];
     setInterviews(onboardingInterviews);
+    setMonthlyReviewInterviews(monthlyReviewData);
     setMidYearInterviews(midYearData);
     setIsAdmin(profileRes.data?.role === "admin");
 
@@ -2208,6 +2389,25 @@ function CollaboratorPageContent() {
     }
   }
 
+  async function createMonthlyReviewInterview(slotNumber: number, month: number, year: number) {
+    setCreatingInterview(true);
+    try {
+      const res = await fetch(`/api/teams/entretiens/${collaboratorId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "monthly_review", month, year, slot_number: slotNumber }),
+      });
+      const data = await res.json() as MonthlyReviewInterview & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Erreur de création");
+      setMonthlyReviewInterviews((prev) => [...prev, data]);
+      setSelectedInterviewId(data.id);
+    } catch (e) {
+      setSessionError(e instanceof Error ? e.message : "Erreur lors de la création du bilan mensuel");
+    } finally {
+      setCreatingInterview(false);
+    }
+  }
+
   // ── Sessions ─────────────────────────────────────────────────────────────
 
   async function generateWeek(weekNumber: number) {
@@ -2356,7 +2556,7 @@ function CollaboratorPageContent() {
   const TABS: { id: Tab; label: string; badge?: string; count?: number }[] = [
     { id: "overview",  label: t.coach.tabOverview },
     { id: "plan",      label: t.coach.tabPlan },
-    { id: "entretiens", label: "Entretiens", count: (sessions.length + interviews.length + midYearInterviews.length) > 0 ? sessions.length + interviews.length + midYearInterviews.length : undefined },
+    { id: "entretiens", label: "Entretiens", count: (sessions.length + interviews.length + midYearInterviews.length + monthlyReviewInterviews.length) > 0 ? sessions.length + interviews.length + midYearInterviews.length + monthlyReviewInterviews.length : undefined },
     { id: "career",    label: t.coach.tabCareer, badge: allSkills.length > 0 ? `${skillsAtTarget}/${allSkills.length}` : undefined },
     { id: "okr",       label: t.coach.tabOkr },
     { id: "settings",  label: t.coach.tabSettings },
@@ -3324,17 +3524,19 @@ function CollaboratorPageContent() {
               const usedSlots = [
                 ...interviews.map((i) => i.slot_number).filter(Boolean) as number[],
                 ...midYearInterviews.map((i) => i.slot_number).filter(Boolean) as number[],
+                ...monthlyReviewInterviews.map((i) => i.slot_number).filter(Boolean) as number[],
               ];
               const totalSlots = usedSlots.length > 0 ? Math.max(12, ...usedSlots) : 12;
 
               return (
                 <div className="grid grid-cols-4 gap-3">
                   {Array.from({ length: totalSlots }, (_, i) => i + 1).map((slot) => {
-                    const session    = sessions.find((s) => s.week_number === slot);
-                    const onboarding = interviews.find((i) => i.slot_number === slot);
-                    const midYear    = midYearInterviews.find((i) => i.slot_number === slot);
+                    const session       = sessions.find((s) => s.week_number === slot);
+                    const onboarding   = interviews.find((i) => i.slot_number === slot);
+                    const midYear      = midYearInterviews.find((i) => i.slot_number === slot);
+                    const monthlyReview = monthlyReviewInterviews.find((i) => i.slot_number === slot);
 
-                    const type = session ? "session" : onboarding ? "onboarding" : midYear ? "midyear" : "empty";
+                    const type = session ? "session" : onboarding ? "onboarding" : midYear ? "midyear" : monthlyReview ? "monthly" : "empty";
                     const hasContent = type !== "empty";
 
                     // Premium lock: vide + pas premium → lock visuel seulement sur les carrés sans contenu
@@ -3345,20 +3547,23 @@ function CollaboratorPageContent() {
                       pickerWeek === slot ||
                       (type === "session"    && expandedWeek === slot) ||
                       (type === "onboarding" && selectedInterviewId === onboarding?.id) ||
-                      (type === "midyear"    && selectedInterviewId === midYear?.id);
+                      (type === "midyear"    && selectedInterviewId === midYear?.id) ||
+                      (type === "monthly"    && selectedInterviewId === monthlyReview?.id);
 
                     // Indicateur de complétion
                     const isDone =
                       (type === "session"    && !!session?.is_completed) ||
                       (type === "onboarding" && !!onboarding?.milestones.every((m) => m.is_completed)) ||
-                      (type === "midyear"    && midYear?.status === "completed");
+                      (type === "midyear"    && midYear?.status === "completed") ||
+                      (type === "monthly"    && monthlyReview?.status === "completed");
                     const inProgress = hasContent && !isDone;
 
                     // Label de type
                     const typeLabel =
                       type === "session"    ? "1:1" :
                       type === "onboarding" ? "Onboarding" :
-                      type === "midyear"    ? `Mi-${midYear!.year}` : null;
+                      type === "midyear"    ? `Mi-${midYear!.year}` :
+                      type === "monthly"    ? `${MONTH_NAMES[(monthlyReview!.month ?? 1) - 1]}` : null;
 
                     function handleSlotClick() {
                       if (isGenerating) return;
@@ -3368,6 +3573,8 @@ function CollaboratorPageContent() {
                         setSelectedInterviewId(onboarding!.id);
                       } else if (type === "midyear") {
                         setSelectedInterviewId(midYear!.id);
+                      } else if (type === "monthly") {
+                        setSelectedInterviewId(monthlyReview!.id);
                       } else {
                         if (!plan) { setSessionError(t.coach.noPlanForSessions); return; }
                         setPickerStep("type");
@@ -3376,10 +3583,13 @@ function CollaboratorPageContent() {
                     }
 
                     // Couleurs selon le type
-                    const isMid = type === "midyear";
+                    const isMid     = type === "midyear";
+                    const isMonthly = type === "monthly";
                     const borderCls = isSelected
                       ? isMid
                         ? "border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 ring-2 ring-indigo-200 dark:ring-indigo-800"
+                        : isMonthly
+                        ? "border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 ring-2 ring-emerald-200 dark:ring-emerald-800"
                         : "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/40 ring-2 ring-blue-200 dark:ring-blue-800"
                       : premiumLocked
                       ? "border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-50 cursor-not-allowed"
@@ -3388,14 +3598,16 @@ function CollaboratorPageContent() {
                       : hasContent
                       ? isMid
                         ? "border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 hover:border-indigo-300"
+                        : isMonthly
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-300"
                         : "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 hover:border-blue-300"
                       : "border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-700";
 
                     const numCls = isSelected
-                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400"
+                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : isMonthly ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
                       : isDone ? "text-green-600 dark:text-green-400"
                       : hasContent
-                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400"
+                      ? isMid ? "text-indigo-600 dark:text-indigo-400" : isMonthly ? "text-emerald-600 dark:text-emerald-400" : "text-blue-600 dark:text-blue-400"
                       : "text-gray-400 dark:text-gray-500";
 
                     return (
@@ -3424,6 +3636,8 @@ function CollaboratorPageContent() {
                               ? <Handshake size={24} className="text-blue-400 my-1" />
                               : type === "onboarding"
                               ? <Rocket size={24} className="text-blue-400 my-1" />
+                              : type === "monthly"
+                              ? <TrendingUp size={24} className="text-emerald-400 my-1" />
                               : <BarChart3 size={24} className="text-indigo-400 my-1" />
                             }
                             <span className="text-xl leading-none font-medium text-gray-400 dark:text-gray-500 truncate max-w-full px-1">
@@ -3470,6 +3684,22 @@ function CollaboratorPageContent() {
                         ? <Check size={11} className="text-green-500 my-0.5" />
                         : <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 my-0.5" />}
                       <span className="text-[9px] leading-none font-medium text-gray-400">Mi-{myi.year}</span>
+                    </button>
+                  ))}
+                  {monthlyReviewInterviews.filter((i) => !i.slot_number).map((mr) => (
+                    <button key={mr.id} onClick={() => setSelectedInterviewId(mr.id)}
+                      className={`relative flex flex-col items-center justify-center rounded-2xl border-2 aspect-square transition-all ${
+                        selectedInterviewId === mr.id
+                          ? "border-emerald-500 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 ring-2 ring-emerald-200 dark:ring-emerald-800"
+                          : mr.status === "completed"
+                          ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/40 hover:border-green-400"
+                          : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 hover:border-emerald-300"
+                      }`}>
+                      <TrendingUp size={12} className="text-emerald-500 mb-0.5" />
+                      {mr.status === "completed"
+                        ? <Check size={11} className="text-green-500 my-0.5" />
+                        : <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 my-0.5" />}
+                      <span className="text-[9px] leading-none font-medium text-gray-400">{MONTH_NAMES[(mr.month ?? 1) - 1]}</span>
                     </button>
                   ))}
                 </div>
@@ -3597,9 +3827,10 @@ function CollaboratorPageContent() {
 
         {/* ─── Modal — contenu d'un entretien ─────────────────────── */}
         {selectedInterviewId && (() => {
-          const onboarding = interviews.find((i) => i.id === selectedInterviewId);
-          const midYear    = midYearInterviews.find((i) => i.id === selectedInterviewId);
-          if (!onboarding && !midYear) return null;
+          const onboarding    = interviews.find((i) => i.id === selectedInterviewId);
+          const midYear       = midYearInterviews.find((i) => i.id === selectedInterviewId);
+          const monthlyReview = monthlyReviewInterviews.find((i) => i.id === selectedInterviewId);
+          if (!onboarding && !midYear && !monthlyReview) return null;
           return (
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="min-h-full flex items-start justify-center p-4 py-6">
@@ -3629,6 +3860,13 @@ function CollaboratorPageContent() {
                       collaboratorId={collaboratorId}
                       collaborator={collaborator!}
                       onUpdate={(updated) => setMidYearInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
+                    />
+                  )}
+                  {monthlyReview && (
+                    <MonthlyReviewCard
+                      interview={monthlyReview}
+                      collaboratorId={collaboratorId}
+                      onUpdate={(updated) => setMonthlyReviewInterviews((prev) => prev.map((i) => i.id === updated.id ? updated : i))}
                     />
                   )}
                 </div>
@@ -3704,6 +3942,19 @@ function CollaboratorPageContent() {
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
                       </div>
                     </button>
+                    <button
+                      onClick={() => setPickerStep("monthly_review_month")}
+                      disabled={creatingInterview}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Bilan mensuel</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apprentissages · Progression · Focus</p>
+                      </div>
+                    </button>
                   </div>
                 </>
               )}
@@ -3765,6 +4016,59 @@ function CollaboratorPageContent() {
                   </div>
                 </>
               )}
+
+              {pickerStep === "monthly_review_month" && (() => {
+                const now = new Date();
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={() => setPickerStep("type")}
+                        className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                      >
+                        ← Retour
+                      </button>
+                      <button onClick={() => setPickerWeek(null)} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Bilan mensuel</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Quel mois ?</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {MONTH_NAMES.map((name, idx) => {
+                        const m = idx + 1;
+                        const isCurrentMonth = m === now.getMonth() + 1;
+                        return (
+                          <button
+                            key={m}
+                            onClick={async () => {
+                              const slot = pickerWeek!;
+                              setPickerWeek(null);
+                              await createMonthlyReviewInterview(slot, m, now.getFullYear());
+                            }}
+                            disabled={creatingInterview}
+                            className={`py-2 text-sm font-medium rounded-xl border transition-all disabled:opacity-50 ${
+                              isCurrentMonth
+                                ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                                : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{now.getFullYear()}</p>
+                  </>
+                );
+              })()}
 
               {pickerStep === "confirm_1on1" && (() => {
                 const isLockedForSessions = pickerWeek !== null && pickerWeek > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin;
