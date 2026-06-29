@@ -1108,7 +1108,7 @@ function MonthlyReviewCard({
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Bilan mensuel — {monthLabel} {interview.year}
+              1:1 mensuel — {monthLabel} {interview.year}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
               {interview.status === "completed" ? "Complété" : "En cours"}
@@ -3897,6 +3897,7 @@ function CollaboratorPageContent() {
                     </button>
                   </div>
                   <div className="space-y-2">
+                    {/* 1. 1:1 hebdo */}
                     <button
                       onClick={() => setPickerStep("confirm_1on1")}
                       className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all text-left"
@@ -3905,13 +3906,28 @@ function CollaboratorPageContent() {
                         <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdomadaire</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 hebdo</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Suivi régulier généré par l&apos;IA</p>
                       </div>
                       {pickerWeek !== null && pickerWeek > COACH_CONFIG.freeWeeksLimit && !collaborator.is_premium && !isAdmin && (
                         <Crown size={13} className="text-amber-400 flex-shrink-0" />
                       )}
                     </button>
+                    {/* 2. 1:1 mensuel */}
+                    <button
+                      onClick={() => setPickerStep("monthly_review_month")}
+                      disabled={creatingInterview}
+                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-left disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 mensuel</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apprentissages · Progression · Focus</p>
+                      </div>
+                    </button>
+                    {/* 3. Onboarding */}
                     <button
                       onClick={() => { setPickerOnboardingDate(""); setPickerStep("onboarding_date"); }}
                       disabled={creatingInterview}
@@ -3925,6 +3941,7 @@ function CollaboratorPageContent() {
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Jalons J7, J30 et J90</p>
                       </div>
                     </button>
+                    {/* 4. Bilan mi-année */}
                     <button
                       onClick={async () => {
                         const slot = pickerWeek!;
@@ -3938,21 +3955,8 @@ function CollaboratorPageContent() {
                         <BarChart3 size={18} className="text-indigo-600 dark:text-indigo-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Entretien mi-année</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Bilan mi-année</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Bilan S1 · Présent · Objectifs S2</p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setPickerStep("monthly_review_month")}
-                      disabled={creatingInterview}
-                      className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all text-left disabled:opacity-50"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center flex-shrink-0">
-                        <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Bilan mensuel</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apprentissages · Progression · Focus</p>
                       </div>
                     </button>
                   </div>
@@ -4037,7 +4041,7 @@ function CollaboratorPageContent() {
                         <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Bilan mensuel</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">1:1 mensuel</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Quel mois ?</p>
                       </div>
                     </div>
