@@ -317,7 +317,7 @@ export default function Home() {
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold ${color.bg} ${color.text}`}>
                           {initials}
                         </div>
-                        <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
                           {c.first_name} {c.last_name}
                         </p>
                         <ChevronRight size={13} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
@@ -331,7 +331,7 @@ export default function Home() {
                     <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 dark:bg-gray-800">
                       <UserPlus size={12} className="text-gray-400 dark:text-gray-500" />
                     </div>
-                    <p className="text-[12px] font-medium text-gray-400 dark:text-gray-500">
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500">
                       Ajouter un collaborateur
                     </p>
                   </Link>

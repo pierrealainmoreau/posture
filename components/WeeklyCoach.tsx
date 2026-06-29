@@ -179,7 +179,7 @@ export function WeeklyCoach() {
           </div>
           <div>
             <p className="text-xs font-bold text-gray-900 dark:text-white">Weekly Coach</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">{t.weeklyCoach.mainNeed}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">{t.weeklyCoach.mainNeed}</p>
           </div>
         </div>
 
@@ -328,7 +328,7 @@ export function WeeklyCoach() {
                 className="text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
               />
             </div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white leading-snug">{template.title}</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-white leading-snug">{template.title}</p>
             {template.description && (
               <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                 {template.description}
@@ -360,7 +360,7 @@ function CoachHeader({
         </div>
         <div>
           <p className="text-xs font-bold text-gray-900 dark:text-white">Weekly Coach</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{weekProgressLabel}</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500">{weekProgressLabel}</p>
         </div>
       </div>
       <button
