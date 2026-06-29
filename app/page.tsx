@@ -349,7 +349,7 @@ export default function Home() {
                 <div className="w-6 h-6 bg-amber-100 dark:bg-amber-900/60 rounded-[7px] flex items-center justify-center flex-shrink-0">
                   <GraduationCap size={12} className="text-amber-700 dark:text-amber-300" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-900 dark:text-white flex-1 tracking-tight">Quiz</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-white flex-1 tracking-tight">Quiz</span>
               </div>
               {/* ligne 2 : badges collectés */}
               <div className="flex items-center gap-1 mb-1.5">
@@ -379,7 +379,7 @@ export default function Home() {
                 <div className="w-6 h-6 bg-pink-100 dark:bg-pink-900/60 rounded-[7px] flex items-center justify-center flex-shrink-0">
                   <UserPlus size={12} className="text-pink-700 dark:text-pink-300" />
                 </div>
-                <span className="text-[11px] font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-white">{t.home.recruitment}</span>
               </div>
               <div className="flex flex-col gap-1.5">
                 <Link
