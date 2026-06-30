@@ -208,24 +208,55 @@ export default function Home() {
           <SectionLabel>{t.home.sectionDuring}</SectionLabel>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {[
-              { href: "/toolbox/humeur",       icon: SmilePlus,      label: "Humeur",       color: "rose"    },
-              { href: "/icebreaker",            icon: Shuffle,        label: "Icebreaker",   color: "cyan"    },
-              { href: "/toolbox/anecdotes",     icon: BookOpen,       label: "Anecdotes",    color: "emerald" },
-              { href: "/toolbox/health-radar",  icon: Activity,       label: "Health Radar", color: "teal"    },
-              { href: "/toolbox/speed-retro",   icon: Zap,            label: "Speed Retro",  color: "violet"  },
-            ].map(({ href, icon: Icon, label, color }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-${color}-300 dark:hover:border-${color}-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200`}
-              >
-                <div className={`w-8 h-8 bg-${color}-50 dark:bg-${color}-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-${color}-100 dark:group-hover:bg-${color}-900/60 transition-colors`}>
-                  <Icon size={15} className={`text-${color}-600 dark:text-${color}-400`} />
-                </div>
-                <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">{label}</p>
-              </Link>
-            ))}
+            <Link
+              href="/toolbox/humeur"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-8 h-8 bg-rose-50 dark:bg-rose-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900/60 transition-colors">
+                <SmilePlus size={15} className="text-rose-600 dark:text-rose-400" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">Humeur</p>
+            </Link>
+
+            <Link
+              href="/icebreaker"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-cyan-300 dark:hover:border-cyan-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-8 h-8 bg-cyan-50 dark:bg-cyan-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/60 transition-colors">
+                <Shuffle size={15} className="text-cyan-700 dark:text-cyan-400" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">Icebreaker</p>
+            </Link>
+
+            <Link
+              href="/toolbox/anecdotes"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 transition-colors">
+                <BookOpen size={15} className="text-emerald-700 dark:text-emerald-400" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">Anecdotes</p>
+            </Link>
+
+            <Link
+              href="/toolbox/health-radar"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-8 h-8 bg-teal-50 dark:bg-teal-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-teal-100 dark:group-hover:bg-teal-900/60 transition-colors">
+                <Activity size={15} className="text-teal-700 dark:text-teal-400" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">Health Radar</p>
+            </Link>
+
+            <Link
+              href="/toolbox/speed-retro"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-8 h-8 bg-violet-50 dark:bg-violet-950/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:bg-violet-100 dark:group-hover:bg-violet-900/60 transition-colors">
+                <Zap size={15} className="text-violet-600 dark:text-violet-400" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight">Speed Retro</p>
+            </Link>
 
             <Link
               href="/toolbox"
