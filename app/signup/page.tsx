@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, AlertCircle, Eye, EyeOff, Gift } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, Gift, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/brand/logo";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -193,6 +193,14 @@ function SignupForm() {
                 </Link>
               </p>
             </div>
+          </div>
+
+          {/* Bloc offre Beta */}
+          <div className="mt-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3.5">
+            <Sparkles size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800 dark:text-amber-300 leading-snug">
+              <strong>Création de compte gratuite pendant la Beta</strong> — bénéficiez d&apos;un accès gratuit de 3 mois à partir du 1er septembre.
+            </p>
           </div>
         </div>
     </AuthLayout>
