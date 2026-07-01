@@ -199,7 +199,7 @@ function SignupForm() {
           <div className="mt-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3.5">
             <Sparkles size={16} className="text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800 dark:text-amber-300 leading-snug">
-              <strong>Création de compte gratuite pendant la Beta</strong> — bénéficiez d&apos;un accès gratuit de 3 mois à partir du 1er septembre.
+              <strong>Accès gratuit pendant la Bêta</strong><br />Et bénéficiez de 2 mois offerts lors du lancement pour les 100 premiers inscrits.
             </p>
           </div>
         </div>
