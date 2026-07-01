@@ -227,6 +227,8 @@ const fr = {
     errorEmailExists: "Un compte existe déjà avec cet email. Connectez-vous ou renvoyez un email de confirmation.",
     alreadyAccount: "Déjà un compte ?",
     signIn: "Se connecter",
+    betaTitle: "Accès gratuit pendant la Bêta",
+    betaSubtitle: "Et bénéficiez de 2 mois offerts lors du lancement pour les 100 premiers inscrits.",
   },
   login: {
     tagline1: "La 3ème main",
@@ -1779,6 +1781,8 @@ const en: Translations = {
     errorEmailExists: "An account already exists with this email. Sign in or resend a confirmation email.",
     alreadyAccount: "Already have an account?",
     signIn: "Sign in",
+    betaTitle: "Free access during Beta",
+    betaSubtitle: "Get 2 months free at launch for the first 100 sign-ups.",
   },
   login: {
     tagline1: "The manager's",
@@ -3324,6 +3328,8 @@ const es: Translations = {
     errorEmailExists: "Ya existe una cuenta con este email. Inicia sesión o reenvía un email de confirmación.",
     alreadyAccount: "¿Ya tienes cuenta?",
     signIn: "Iniciar sesión",
+    betaTitle: "Acceso gratuito durante la Beta",
+    betaSubtitle: "Obtén 2 meses gratis en el lanzamiento para los primeros 100 inscritos.",
   },
   login: {
     tagline1: "La tercera mano",
